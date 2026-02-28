@@ -1,57 +1,24 @@
-let financeChart;
-let projectionChart;
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+    margin: 20px;
+}
 
-function analyze() {
+h1 {
+    text-align: center;
+}
 
-    let revenue = parseFloat(document.getElementById("revenue").value);
-    let expenses = parseFloat(document.getElementById("expenses").value);
-    let growth = parseFloat(document.getElementById("growth").value);
+.card {
+    background: white;
+    padding: 20px;
+    margin: 20px auto;
+    border-radius: 8px;
+    width: 80%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
 
-    let profit = revenue - expenses;
-    let margin = ((profit / revenue) * 100).toFixed(2);
-
-    document.getElementById("profit").innerText = "Monthly Profit: $" + profit;
-    document.getElementById("margin").innerText = "Profit Margin: " + margin + "%";
-    document.getElementById("burn").innerText = "Monthly Burn Rate: $" + expenses;
-
-    // Finance Chart
-    if (financeChart) financeChart.destroy();
-
-    financeChart = new Chart(document.getElementById("financeChart"), {
-        type: 'bar',
-        data: {
-            labels: ['Revenue', 'Expenses', 'Profit'],
-            datasets: [{
-                label: 'Financial Overview',
-                data: [revenue, expenses, profit],
-                backgroundColor: ['green', 'red', 'gold']
-            }]
-        }
-    });
-
-    // Projection Chart
-    let months = [];
-    let projections = [];
-    let currentRevenue = revenue;
-
-    for (let i = 1; i <= 12; i++) {
-        currentRevenue += currentRevenue * (growth / 100);
-        months.push("Month " + i);
-        projections.push(currentRevenue.toFixed(2));
-    }
-
-    if (projectionChart) projectionChart.destroy();
-
-    projectionChart = new Chart(document.getElementById("projectionChart"), {
-        type: 'line',
-        data: {
-            labels: months,
-            datasets: [{
-                label: '12 Month Revenue Projection',
-                data: projections,
-                borderColor: 'gold',
-                fill: false
-            }]
-        }
-    });
+button {
+    padding: 8px 12px;
+    margin-top: 10px;
+    cursor: pointer;
 }
