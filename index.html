@@ -1,141 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ImpactGrid Business Analytics</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #0e0e0e;
-    color: white;
-    text-align: center;
-    margin: 0;
-}
-
-h1 {
-    margin-top: 40px;
-}
-
-.container {
-    width: 80%;
-    margin: auto;
-    margin-top: 40px;
-}
-
-input {
-    display: block;
-    margin: 10px auto;
-    padding: 10px;
-    width: 300px;
-}
-
-button {
-    padding: 12px 25px;
-    background: gold;
-    border: none;
-    cursor: pointer;
-    margin-top: 10px;
-    font-weight: bold;
-}
-
-canvas {
-    background: white;
-    margin-top: 40px;
-    padding: 20px;
-}
-</style>
+    <title>Donmoyero Analytics</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
-<h1>ImpactGrid Business Analytics Engine</h1>
+    <h1>Donmoyero Analytical Tool</h1>
 
-<div class="container">
+    <!-- Data Upload Section -->
+    <section class="card">
+        <h2>Upload CSV Data</h2>
+        <input type="file" id="fileInput" accept=".csv">
+    </section>
 
-<h2>Enter Business Data</h2>
+    <!-- Data Summary -->
+    <section class="card">
+        <h2>Data Summary</h2>
+        <div id="summary"></div>
+    </section>
 
-<input type="number" id="revenue" placeholder="Monthly Revenue">
-<input type="number" id="expenses" placeholder="Monthly Expenses">
-<input type="number" id="growth" placeholder="Monthly Growth %">
+    <!-- Filter Section -->
+    <section class="card">
+        <h2>Filter Data</h2>
+        <select id="filterColumn"></select>
+        <input type="text" id="filterValue" placeholder="Enter value">
+        <button onclick="applyFilter()">Apply Filter</button>
+    </section>
 
-<button onclick="analyze()">Generate Analytics</button>
+    <!-- Aggregation Section -->
+    <section class="card">
+        <h2>Aggregation</h2>
+        <select id="groupColumn"></select>
+        <select id="aggColumn"></select>
+        <select id="aggFunction">
+            <option value="sum">Sum</option>
+            <option value="avg">Average</option>
+            <option value="count">Count</option>
+        </select>
+        <button onclick="aggregateData()">Run</button>
+    </section>
 
-<h2>Results</h2>
+    <!-- Chart Section -->
+    <section class="card">
+        <h2>Visualization</h2>
+        <canvas id="chartCanvas"></canvas>
+    </section>
 
-<p id="profit"></p>
-<p id="margin"></p>
-
-<canvas id="financeChart"></canvas>
-<canvas id="projectionChart"></canvas>
-
-</div>
-
-<script>
-
-var financeChart = null;
-var projectionChart = null;
-
-function analyze() {
-
-    var revenue = parseFloat(document.getElementById("revenue").value) || 0;
-    var expenses = parseFloat(document.getElementById("expenses").value) || 0;
-    var growth = parseFloat(document.getElementById("growth").value) || 0;
-
-    var profit = revenue - expenses;
-    var margin = revenue > 0 ? ((profit / revenue) * 100).toFixed(2) : 0;
-
-    document.getElementById("profit").innerText = "Monthly Profit: $" + profit;
-    document.getElementById("margin").innerText = "Profit Margin: " + margin + "%";
-
-    if (financeChart !== null) {
-        financeChart.destroy();
-    }
-
-    financeChart = new Chart(document.getElementById("financeChart"), {
-        type: 'bar',
-        data: {
-            labels: ['Revenue', 'Expenses', 'Profit'],
-            datasets: [{
-                label: 'Financial Overview',
-                data: [revenue, expenses, profit],
-                backgroundColor: ['green', 'red', 'gold']
-            }]
-        }
-    });
-
-    var months = [];
-    var projections = [];
-    var currentRevenue = revenue;
-
-    for (var i = 1; i <= 12; i++) {
-        currentRevenue += currentRevenue * (growth / 100);
-        months.push("Month " + i);
-        projections.push(currentRevenue.toFixed(2));
-    }
-
-    if (projectionChart !== null) {
-        projectionChart.destroy();
-    }
-
-    projectionChart = new Chart(document.getElementById("projectionChart"), {
-        type: 'line',
-        data: {
-            labels: months,
-            datasets: [{
-                label: '12 Month Revenue Projection',
-                data: projections,
-                borderColor: 'gold',
-                fill: false
-            }]
-        }
-    });
-}
-
-</script>
-
+    <script src="script.js"></script>
 </body>
 </html>
