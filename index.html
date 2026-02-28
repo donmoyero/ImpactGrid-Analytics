@@ -1,48 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>ImpactGrid - Predictive Intelligence</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<title>ImpactGrid AI Intelligence Platform</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body>
 
 <header>
-    <h1>ImpactGrid</h1>
-    <p>AI Predictive Business Intelligence Engine</p>
+<h1>ImpactGrid</h1>
+<p>AI Strategic Business Intelligence Platform</p>
 </header>
 
 <section class="card">
-    <h2>Create / Select Business</h2>
-    <input type="text" id="businessName" placeholder="Business Name">
-    <button onclick="createBusiness()">Create</button>
-    <select id="businessSelector" onchange="loadBusiness()"></select>
+<h2>Create / Select Business</h2>
+<input type="text" id="businessName" placeholder="Business Name">
+<button onclick="createBusiness()">Create</button>
+<select id="businessSelector" onchange="loadBusiness()"></select>
 </section>
 
 <section class="card">
-    <h2>Add Monthly Data</h2>
-    <div class="grid">
-        <input type="month" id="month">
-        <input type="number" id="revenue" placeholder="Revenue">
-        <input type="number" id="expenses" placeholder="Operational Expenses">
-        <input type="number" id="fixedCosts" placeholder="Fixed Costs">
-        <input type="number" id="customers" placeholder="Customers">
-        <input type="number" id="marketing" placeholder="Marketing Spend">
-        <button onclick="addData()">Add Month</button>
-    </div>
+<h2>Add Monthly Data</h2>
+<div class="grid">
+<input type="month" id="month">
+<input type="number" id="revenue" placeholder="Revenue">
+<input type="number" id="expenses" placeholder="Operational Expenses">
+<input type="number" id="fixedCosts" placeholder="Fixed Costs">
+<input type="number" id="customers" placeholder="Customers">
+<input type="number" id="marketing" placeholder="Marketing Spend">
+<button onclick="addData()">Add Month</button>
+</div>
 </section>
 
 <section class="card">
-    <h2>Strategic Intelligence Panel</h2>
-    <div id="strategyPanel" class="kpi-grid"></div>
-    <div id="recommendations"></div>
+<h2>AI Strategic Panel</h2>
+<div id="strategicPanel" class="kpi-grid"></div>
+<div id="aiInsights"></div>
+<button onclick="exportPDF()">Download Investor Report</button>
 </section>
 
 <section class="card">
-    <h2>Performance & Forecast Analytics</h2>
-    <canvas id="chartRevenueProfit"></canvas>
-    <canvas id="chartForecast"></canvas>
+<h2>Analytics & Forecast</h2>
+<canvas id="chartMain"></canvas>
+</section>
+
+<section class="card">
+<h2>UK Innovator Innovation Statement</h2>
+<div id="innovationStatement"></div>
 </section>
 
 <script src="script.js"></script>
