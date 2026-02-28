@@ -1,37 +1,27 @@
-let businesses = JSON.parse(localStorage.getItem("impactgrid")) || {};
+let businesses = {};
 let currentBusiness = null;
 
-let revenueProfitChart;
-let expenseChart;
-let marginChart;
-let customerChart;
-
-const createBtn = document.getElementById("createBtn");
-const addBtn = document.getElementById("addBtn");
-const selector = document.getElementById("businessSelector");
-
-init();
-
-function init() {
-populateSelector();
-
-createBtn.addEventListener("click", createBusiness);
-addBtn.addEventListener("click", addData);
-selector.addEventListener("change", loadBusiness);
-}
+let revenueChart = null;
+let profitChart = null;
+let customerChart = null;
 
 function createBusiness() {
 const name = document.getElementById("businessName").value.trim();
-if (!name) return alert("Enter business name");
+if (!name) {
+alert("Enter business name");
+return;
+}
 
-if (!businesses[name]) businesses[name] = [];
+if (!businesses[name]) {
+businesses[name] = [];
+}
 
-save();
-populateSelector();
+updateSelector();
 document.getElementById("businessName").value = "";
 }
 
-function populateSelector() {
+function updateSelector() {
+const selector = document.getElementById("businessSelector");
 selector.innerHTML = "<option value=''>Select Business</option>";
 
 Object.keys(businesses).forEach(name => {
@@ -43,40 +33,41 @@ selector.appendChild(option);
 }
 
 function loadBusiness() {
-currentBusiness = selector.value;
+currentBusiness = document.getElementById("businessSelector").value;
 renderDashboard();
 }
 
 function addData() {
-if (!currentBusiness) return alert("Select business first");
+if (!currentBusiness) {
+alert("Select business first");
+return;
+}
 
 const month = document.getElementById("month").value;
 const revenue = Number(document.getElementById("revenue").value);
 const expenses = Number(document.getElementById("expenses").value);
-const fixedCosts = Number(document.getElementById("fixedCosts").value);
 const customers = Number(document.getElementById("customers").value);
 
-if (!month || revenue <= 0) return alert("Enter valid month and revenue");
+if (!month || revenue <= 0) {
+alert("Enter valid month and revenue");
+return;
+}
 
 const profit = revenue - expenses;
-const margin = (profit / revenue) * 100;
 
 businesses[currentBusiness].push({
 month,
 revenue,
-expenses,
-fixedCosts,
-customers,
 profit,
-margin
+customers
 });
 
-save();
 renderDashboard();
 }
 
 function renderDashboard() {
 if (!currentBusiness) return;
+
 const data = businesses[currentBusiness];
 if (!data || data.length === 0) return;
 
@@ -85,95 +76,50 @@ renderCharts(data);
 }
 
 function renderKPIs(data) {
-const container = document.getElementById("kpis");
-container.innerHTML = "";
+const kpiDiv = document.getElementById("kpis");
 
-const totalRevenue = sum(data, "revenue");
-const totalProfit = sum(data, "profit");
-const avgMargin = average(data, "margin");
+const totalRevenue = data.reduce((sum, d) => sum + d.revenue, 0);
+const totalProfit = data.reduce((sum, d) => sum + d.profit, 0);
 
-[
-["Total Revenue", "£" + totalRevenue.toFixed(2)],
-["Total Profit", "£" + totalProfit.toFixed(2)],
-["Average Margin", avgMargin.toFixed(1) + "%"]
-].forEach(item => {
-const div = document.createElement("div");
-div.className = "kpi";
-div.innerHTML = `<div>${item[0]}</div><div>${item[1]}</div>`;
-container.appendChild(div);
-});
+kpiDiv.innerHTML =
+"<p><strong>Total Revenue:</strong> £" + totalRevenue.toFixed(2) + "</p>" +
+"<p><strong>Total Profit:</strong> £" + totalProfit.toFixed(2) + "</p>";
 }
 
 function renderCharts(data) {
-destroyCharts();
+
+if (revenueChart) revenueChart.destroy();
+if (profitChart) profitChart.destroy();
+if (customerChart) customerChart.destroy();
 
 const months = data.map(d => d.month);
 
-revenueProfitChart = new Chart(
-document.getElementById("revenueProfitChart"),
+revenueChart = new Chart(
+document.getElementById("revenueChart"),
 {
 type: "line",
 data: {
 labels: months,
-datasets: [
-{
+datasets: [{
 label: "Revenue",
 data: data.map(d => d.revenue),
-borderWidth: 3,
-tension: 0.3
-},
-{
-label: "Profit",
-data: data.map(d => d.profit),
-borderWidth: 3,
-tension: 0.3
-}
-]
-},
-options: { responsive: true }
-}
-);
-
-expenseChart = new Chart(
-document.getElementById("expenseChart"),
-{
-type: "bar",
-data: {
-labels: months,
-datasets: [
-{
-label: "Operational Expenses",
-data: data.map(d => d.expenses)
-},
-{
-label: "Fixed Costs",
-data: data.map(d => d.fixedCosts)
-}
-]
-},
-options: {
-responsive: true,
-scales: {
-x: { stacked: true },
-y: { stacked: true }
-}
+borderWidth: 2
+}]
 }
 }
 );
 
-marginChart = new Chart(
-document.getElementById("marginChart"),
+profitChart = new Chart(
+document.getElementById("profitChart"),
 {
 type: "line",
 data: {
 labels: months,
-datasets: [
-{
-label: "Profit Margin (%)",
-data: data.map(d => d.margin),
-tension: 0.3
-}
-]
+datasets: [{
+label: "Profit",
+data: data.map(d => d.profit),
+borderWidth: 2
+}]
 }
 }
 );
@@ -184,33 +130,12 @@ document.getElementById("customerChart"),
 type: "line",
 data: {
 labels: months,
-datasets: [
-{
+datasets: [{
 label: "Customers",
 data: data.map(d => d.customers),
-tension: 0.3
-}
-]
+borderWidth: 2
+}]
 }
 }
 );
-}
-
-function destroyCharts() {
-if (revenueProfitChart) revenueProfitChart.destroy();
-if (expenseChart) expenseChart.destroy();
-if (marginChart) marginChart.destroy();
-if (customerChart) customerChart.destroy();
-}
-
-function sum(data, key) {
-return data.reduce((acc, item) => acc + item[key], 0);
-}
-
-function average(data, key) {
-return sum(data, key) / data.length;
-}
-
-function save() {
-localStorage.setItem("impactgrid", JSON.stringify(businesses));
 }
