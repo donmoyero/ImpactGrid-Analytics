@@ -1,12 +1,18 @@
 body {
     font-family: 'Segoe UI', sans-serif;
     background: #f4f6fb;
+    margin: 0;
     padding: 20px;
 }
 
 .header {
     text-align: center;
     margin-bottom: 30px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 32px;
 }
 
 .card {
@@ -37,6 +43,7 @@ button {
     background: #2563eb;
     color: white;
     cursor: pointer;
+    font-weight: bold;
 }
 
 button:hover {
@@ -57,6 +64,6 @@ button:hover {
 }
 
 canvas {
-    margin-top: 30px;
+    margin-top: 25px;
     max-height: 400px;
 }
