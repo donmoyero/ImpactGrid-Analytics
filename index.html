@@ -2,54 +2,46 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>ImpactGrid Professional Dashboard</title>
+<title>ImpactGrid Dashboard</title>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Chart.js (stable CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-<h1>ImpactGrid</h1>
-<p>Professional Business Analytics Dashboard</p>
-</header>
+<h1>ImpactGrid Professional Dashboard</h1>
 
 <section class="card">
-<h2>Create / Select Business</h2>
+<h2>Create Business</h2>
 <input type="text" id="businessName" placeholder="Business Name">
-<button id="createBtn">Create</button>
-<select id="businessSelector"></select>
+<button onclick="createBusiness()">Create</button>
+<select id="businessSelector" onchange="loadBusiness()"></select>
 </section>
 
 <section class="card">
 <h2>Add Monthly Data</h2>
-<div class="grid">
 <input type="month" id="month">
 <input type="number" id="revenue" placeholder="Revenue">
-<input type="number" id="expenses" placeholder="Operational Expenses">
-<input type="number" id="fixedCosts" placeholder="Fixed Costs">
+<input type="number" id="expenses" placeholder="Expenses">
 <input type="number" id="customers" placeholder="Customers">
-<button id="addBtn">Add Month</button>
-</div>
+<button onclick="addData()">Add</button>
 </section>
 
 <section class="card">
-<h2>Executive KPIs</h2>
-<div id="kpis" class="kpi-grid"></div>
+<h2>KPIs</h2>
+<div id="kpis"></div>
 </section>
 
 <section class="card">
-<h2>Performance Visualizations</h2>
-
-<canvas id="revenueProfitChart"></canvas>
-<canvas id="expenseChart"></canvas>
-<canvas id="marginChart"></canvas>
+<h2>Charts</h2>
+<canvas id="revenueChart"></canvas>
+<canvas id="profitChart"></canvas>
 <canvas id="customerChart"></canvas>
-
 </section>
 
 <script src="script.js"></script>
+
 </body>
 </html>
