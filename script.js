@@ -1,16 +1,14 @@
 let businesses = JSON.parse(localStorage.getItem("impactgrid")) || {};
 let currentBusiness = null;
 
-let chartRevenueProfit, chartMargin, chartCustomers;
+let chartRevenueProfit, chartForecast;
 
 initSelector();
 
 function createBusiness() {
     const name = document.getElementById("businessName").value.trim();
     if (!name) return alert("Enter business name");
-
     if (!businesses[name]) businesses[name] = [];
-
     save();
     initSelector();
     document.getElementById("businessName").value = "";
@@ -19,7 +17,6 @@ function createBusiness() {
 function initSelector() {
     const selector = document.getElementById("businessSelector");
     selector.innerHTML = "<option value=''>Select Business</option>";
-
     Object.keys(businesses).forEach(name => {
         const opt = document.createElement("option");
         opt.value = name;
@@ -47,11 +44,11 @@ function addData() {
 
     const profit = revenue - expenses;
     const margin = revenue ? (profit / revenue) * 100 : 0;
-    const cac = customers ? marketing / customers : 0;
+    const burn = profit - fixedCosts;
 
     businesses[currentBusiness].push({
         month, revenue, expenses, fixedCosts,
-        customers, marketing, profit, margin, cac
+        customers, marketing, profit, margin, burn
     });
 
     save();
@@ -63,28 +60,8 @@ function updateDashboard() {
     const data = businesses[currentBusiness];
     if (!data.length) return;
 
-    renderKPIs(data);
     renderStrategicPanel(data);
     renderCharts(data);
-}
-
-function renderKPIs(data) {
-    const container = document.getElementById("kpis");
-    container.innerHTML = "";
-
-    const totalRevenue = sum(data, "revenue");
-    const totalProfit = sum(data, "profit");
-    const avgMargin = avg(data, "margin");
-
-    [["Total Revenue","£"+totalRevenue.toFixed(2)],
-     ["Total Profit","£"+totalProfit.toFixed(2)],
-     ["Avg Margin",avgMargin.toFixed(1)+"%"]]
-     .forEach(m=>{
-        const div=document.createElement("div");
-        div.className="kpi";
-        div.innerHTML=`<h3>${m[0]}</h3><p>${m[1]}</p>`;
-        container.appendChild(div);
-     });
 }
 
 function renderStrategicPanel(data) {
@@ -93,22 +70,16 @@ function renderStrategicPanel(data) {
     panel.innerHTML="";
     rec.innerHTML="";
 
-    const margin = avg(data,"margin");
     const growth = growthRate(data,"revenue");
-    const cac = avg(data,"cac");
-    const profit = sum(data,"profit");
+    const burnRate = avg(data,"burn");
+    const runway = burnRate<0 ? (10000/Math.abs(burnRate)).toFixed(1) : "Stable";
 
-    let health = (margin*0.4)+(growth*0.3)+(profit>0?30:0);
-    health = Math.max(0,Math.min(100,health));
+    const scalingIndex = growth>15?85:50;
 
-    let failureRisk = 100 - health;
-    let fundingReadiness = (margin>20?40:20)+(growth>10?40:20);
-    let growthScore = growth>10?80:40;
-
-    [["Business Health Score",health.toFixed(0)+"/100"],
-     ["Failure Risk",failureRisk.toFixed(0)+"%"],
-     ["Funding Readiness",fundingReadiness+"/100"],
-     ["Growth Score",growthScore+"/100"]]
+    [["Revenue Growth",growth.toFixed(1)+"%"],
+     ["Burn Rate",burnRate.toFixed(2)],
+     ["Runway (months est.)",runway],
+     ["Scaling Index",scalingIndex+"/100"]]
      .forEach(m=>{
         const div=document.createElement("div");
         div.className="kpi";
@@ -116,53 +87,73 @@ function renderStrategicPanel(data) {
         panel.appendChild(div);
      });
 
-    if (health < 50)
-        rec.innerHTML="⚠ Strategic Warning: Improve profitability and growth immediately.";
+    if(growth>10)
+        rec.innerHTML="🚀 High growth trajectory detected.";
     else
-        rec.innerHTML="✅ Business strategically positioned for scale.";
+        rec.innerHTML="⚠ Growth acceleration required.";
 }
 
 function renderCharts(data) {
     destroyCharts();
 
     const months=data.map(d=>d.month);
+    const revenues=data.map(d=>d.revenue);
 
     chartRevenueProfit=new Chart(document.getElementById("chartRevenueProfit"),{
         type:"line",
         data:{
             labels:months,
             datasets:[
-                {label:"Revenue",data:data.map(d=>d.revenue),tension:0.3},
+                {label:"Revenue",data:revenues,tension:0.3},
                 {label:"Profit",data:data.map(d=>d.profit),tension:0.3}
             ]
         }
     });
 
-    chartMargin=new Chart(document.getElementById("chartMargin"),{
-        type:"line",
-        data:{
-            labels:months,
-            datasets:[{label:"Profit Margin %",data:data.map(d=>d.margin),tension:0.3}]
-        }
-    });
+    const forecast = forecastRevenue(data);
+    const futureLabels = forecast.labels;
+    const forecastData = forecast.values;
 
-    chartCustomers=new Chart(document.getElementById("chartCustomers"),{
+    chartForecast=new Chart(document.getElementById("chartForecast"),{
         type:"line",
         data:{
-            labels:months,
-            datasets:[{label:"Customers",data:data.map(d=>d.customers),tension:0.3}]
+            labels:[...months,...futureLabels],
+            datasets:[
+                {
+                    label:"Revenue (Historical)",
+                    data:[...revenues,...Array(futureLabels.length).fill(null)],
+                    tension:0.3
+                },
+                {
+                    label:"Revenue Forecast (6 Months)",
+                    data:[...Array(months.length).fill(null),...forecastData],
+                    borderDash:[5,5],
+                    tension:0.3
+                }
+            ]
         }
     });
+}
+
+function forecastRevenue(data){
+    const growth=growthRate(data,"revenue")/100;
+    let last=data[data.length-1].revenue;
+    let values=[];
+    let labels=[];
+    for(let i=1;i<=6;i++){
+        last=last*(1+growth);
+        values.push(last);
+        labels.push("Forecast "+i);
+    }
+    return {values,labels};
 }
 
 function destroyCharts(){
     if(chartRevenueProfit) chartRevenueProfit.destroy();
-    if(chartMargin) chartMargin.destroy();
-    if(chartCustomers) chartCustomers.destroy();
+    if(chartForecast) chartForecast.destroy();
 }
 
-function sum(data,key){return data.reduce((a,b)=>a+b[key],0);}
-function avg(data,key){return sum(data,key)/data.length;}
+function avg(data,key){return data.reduce((a,b)=>a+b[key],0)/data.length;}
 function growthRate(data,key){
     if(data.length<2)return 0;
     const last=data[data.length-1][key];
