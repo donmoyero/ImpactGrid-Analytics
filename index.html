@@ -2,28 +2,26 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ImpactGrid Analytical Tool</title>
+    <title>ImpactGrid - UK Business Intelligence</title>
     <link rel="stylesheet" href="style.css">
-
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<header class="header">
+<header>
     <h1>ImpactGrid</h1>
-    <p>Professional Business Intelligence Dashboard</p>
+    <p>AI-Driven Business Intelligence Platform</p>
 </header>
 
 <section class="card">
     <h2>Create / Select Business</h2>
-    <input type="text" id="businessName" placeholder="Enter Business Name">
-    <button onclick="createBusiness()">Create Business</button>
+    <input type="text" id="businessName" placeholder="Business Name">
+    <button onclick="createBusiness()">Create</button>
     <select id="businessSelector" onchange="loadBusiness()"></select>
 </section>
 
 <section class="card">
-    <h2>Add Monthly Business Data</h2>
+    <h2>Add Monthly Data</h2>
     <div class="grid">
         <input type="month" id="month">
         <input type="number" id="revenue" placeholder="Revenue">
@@ -41,25 +39,16 @@
 </section>
 
 <section class="card">
-    <h2>Performance Charts</h2>
+    <h2>Performance Analytics</h2>
 
-    <h3>Revenue vs Profit</h3>
-    <canvas id="revenueProfitChart"></canvas>
+    <canvas id="chartRevenueProfit"></canvas>
+    <canvas id="chartExpenses"></canvas>
+    <canvas id="chartMargin"></canvas>
+    <canvas id="chartCustomers"></canvas>
+    <canvas id="chartCAC"></canvas>
 
-    <h3>Expense Structure</h3>
-    <canvas id="expenseChart"></canvas>
-
-    <h3>Profit Margin Trend (%)</h3>
-    <canvas id="marginChart"></canvas>
-
-    <h3>Customer Growth</h3>
-    <canvas id="customerChart"></canvas>
-
-    <h3>Customer Acquisition Cost (CAC)</h3>
-    <canvas id="cacChart"></canvas>
 </section>
 
 <script src="script.js"></script>
-
 </body>
 </html>
