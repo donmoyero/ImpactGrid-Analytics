@@ -1,51 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Analytical Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Impactgrid Analytical Tool</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
-        <h1>Analytical Tool</h1>
-    </header>
+<header>
+  <h1>Impactgrid Analytical Tool</h1>
+  <p>Professional Business Intelligence Dashboard</p>
+</header>
 
-    <section class="controls">
-        <input type="file" id="fileInput" accept=".csv">
-        
-        <select id="columnSelect">
-            <option value="">Select Column</option>
-        </select>
-        
-        <button id="analyzeBtn">Analyze</button>
-    </section>
+<div class="dashboard">
 
-    <section class="metrics">
-        <div class="card">
-            <h3>Count</h3>
-            <p id="count"></p>
-        </div>
-        <div class="card">
-            <h3>Mean</h3>
-            <p id="mean"></p>
-        </div>
-        <div class="card">
-            <h3>Median</h3>
-            <p id="median"></p>
-        </div>
-    </section>
+  <aside class="sidebar">
+    <h2>Business Input</h2>
 
-    <section class="chart-section">
-        <canvas id="chartCanvas"></canvas>
-    </section>
+    <label>Month</label>
+    <input type="text" id="month">
 
-    <section class="table-section">
-        <table id="dataTable"></table>
-    </section>
+    <label>Revenue ($)</label>
+    <input type="number" id="revenue">
+
+    <label>Costs ($)</label>
+    <input type="number" id="costs">
+
+    <label>Marketing Spend ($)</label>
+    <input type="number" id="marketing">
+
+    <label>Customers Acquired</label>
+    <input type="number" id="customers">
+
+    <button id="addData">Add Data</button>
+    <button id="analyze">Run Analysis</button>
+  </aside>
+
+  <main class="main">
+
+    <div class="kpi-section">
+      <div class="kpi-card">
+        <h3>Total Revenue</h3>
+        <p id="totalRevenue"></p>
+      </div>
+      <div class="kpi-card">
+        <h3>Total Profit</h3>
+        <p id="totalProfit"></p>
+      </div>
+      <div class="kpi-card">
+        <h3>Growth Rate</h3>
+        <p id="growthRate"></p>
+      </div>
+      <div class="kpi-card">
+        <h3>Customer Acquisition Cost</h3>
+        <p id="cac"></p>
+      </div>
+    </div>
+
+    <div class="charts">
+      <canvas id="revenueChart"></canvas>
+      <canvas id="profitChart"></canvas>
+    </div>
+
+  </main>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="script.js"></script>
-
 </body>
 </html>
