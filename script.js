@@ -1,7 +1,7 @@
 let businesses = JSON.parse(localStorage.getItem("impactgrid")) || {};
 let currentBusiness = null;
-let revenueChart = null;
-let profitChart = null;
+
+let revenueProfitChart, expenseChart, marginChart, customerChart, cacChart;
 
 initializeSelector();
 
@@ -12,10 +12,10 @@ function createBusiness() {
     if (!businesses[name]) {
         businesses[name] = [];
         saveData();
-        initializeSelector();
     }
 
     document.getElementById("businessName").value = "";
+    initializeSelector();
 }
 
 function initializeSelector() {
@@ -31,8 +31,7 @@ function initializeSelector() {
 }
 
 function loadBusiness() {
-    const name = document.getElementById("businessSelector").value;
-    currentBusiness = name;
+    currentBusiness = document.getElementById("businessSelector").value;
     updateDashboard();
 }
 
@@ -46,12 +45,23 @@ function addData() {
     const customers = +document.getElementById("customers").value || 1;
     const marketing = +document.getElementById("marketing").value || 0;
 
+    if (!month || revenue <= 0) {
+        alert("Enter valid month and revenue");
+        return;
+    }
+
     const profit = revenue - expenses;
     const margin = revenue ? (profit / revenue) * 100 : 0;
 
     businesses[currentBusiness].push({
-        month, revenue, expenses, fixedCosts,
-        customers, marketing, profit, margin
+        month,
+        revenue,
+        expenses,
+        fixedCosts,
+        customers,
+        marketing,
+        profit,
+        margin
     });
 
     saveData();
@@ -60,13 +70,11 @@ function addData() {
 
 function updateDashboard() {
     if (!currentBusiness) return;
-
     const data = businesses[currentBusiness];
     if (!data.length) return;
 
     generateKPIs(data);
     renderCharts(data);
-    generateInsights(data);
 }
 
 function generateKPIs(data) {
@@ -80,7 +88,7 @@ function generateKPIs(data) {
     const metrics = [
         ["Total Revenue", `$${totalRevenue.toFixed(2)}`],
         ["Total Profit", `$${totalProfit.toFixed(2)}`],
-        ["Avg Margin", `${avgMargin.toFixed(1)}%`]
+        ["Average Margin", `${avgMargin.toFixed(1)}%`]
     ];
 
     metrics.forEach(m => {
@@ -91,55 +99,70 @@ function generateKPIs(data) {
     });
 }
 
-function generateInsights(data) {
-    const insights = document.getElementById("insights");
-
-    const margin = avg(data, "margin");
-    let message = margin > 20 ?
-        "Strong profitability performance." :
-        "Profitability needs improvement.";
-
-    insights.innerHTML = `<p>${message}</p>`;
-}
-
 function renderCharts(data) {
     const months = data.map(d => d.month);
     const revenues = data.map(d => d.revenue);
     const profits = data.map(d => d.profit);
+    const expenses = data.map(d => d.expenses);
+    const fixedCosts = data.map(d => d.fixedCosts);
+    const margins = data.map(d => d.margin);
+    const customers = data.map(d => d.customers);
+    const cacs = data.map(d => d.customers ? d.marketing / d.customers : 0);
 
-    if (revenueChart) revenueChart.destroy();
-    if (profitChart) profitChart.destroy();
+    [revenueProfitChart, expenseChart, marginChart, customerChart, cacChart]
+        .forEach(chart => chart && chart.destroy());
 
-    revenueChart = new Chart(
-        document.getElementById("revenueChart"),
-        {
-            type: "line",
-            data: { labels: months, datasets: [{ label: "Revenue", data: revenues }] }
+    revenueProfitChart = new Chart(document.getElementById("revenueProfitChart"), {
+        type: "line",
+        data: {
+            labels: months,
+            datasets: [
+                { label: "Revenue", data: revenues, borderWidth: 3, tension: 0.3 },
+                { label: "Profit", data: profits, borderWidth: 3, tension: 0.3 }
+            ]
         }
-    );
+    });
 
-    profitChart = new Chart(
-        document.getElementById("profitChart"),
-        {
-            type: "line",
-            data: { labels: months, datasets: [{ label: "Profit", data: profits }] }
+    expenseChart = new Chart(document.getElementById("expenseChart"), {
+        type: "bar",
+        data: {
+            labels: months,
+            datasets: [
+                { label: "Operational Expenses", data: expenses },
+                { label: "Fixed Costs", data: fixedCosts }
+            ]
+        },
+        options: {
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+            }
         }
-    );
-}
+    });
 
-function exportPDF() {
-    if (!currentBusiness) return alert("Select business first");
+    marginChart = new Chart(document.getElementById("marginChart"), {
+        type: "line",
+        data: {
+            labels: months,
+            datasets: [{ label: "Profit Margin (%)", data: margins, tension: 0.3 }]
+        }
+    });
 
-    const doc = new jsPDF();
-    const data = businesses[currentBusiness];
+    customerChart = new Chart(document.getElementById("customerChart"), {
+        type: "line",
+        data: {
+            labels: months,
+            datasets: [{ label: "Customers", data: customers, tension: 0.3 }]
+        }
+    });
 
-    doc.text("ImpactGrid Executive Report", 20, 20);
-    doc.text(`Business: ${currentBusiness}`, 20, 30);
-    doc.text(`Total Revenue: $${sum(data, "revenue").toFixed(2)}`, 20, 40);
-    doc.text(`Total Profit: $${sum(data, "profit").toFixed(2)}`, 20, 50);
-    doc.text(`Avg Margin: ${avg(data, "margin").toFixed(1)}%`, 20, 60);
-
-    doc.save(`${currentBusiness}_ImpactGrid_Report.pdf`);
+    cacChart = new Chart(document.getElementById("cacChart"), {
+        type: "line",
+        data: {
+            labels: months,
+            datasets: [{ label: "Customer Acquisition Cost", data: cacs, tension: 0.3 }]
+        }
+    });
 }
 
 function sum(data, key) {
