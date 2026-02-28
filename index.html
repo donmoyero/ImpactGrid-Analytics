@@ -4,8 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Impactgrid Analytical Tool</title>
+
 <link rel="stylesheet" href="style.css">
+
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 <body>
 
@@ -17,55 +21,40 @@
 <div class="container">
 
   <div class="sidebar">
-    <h2>Enter Monthly Business Data</h2>
+    <h2>Add Monthly Data</h2>
 
-    <label>Month</label>
-    <input type="text" id="month" placeholder="January">
+    <input id="month" placeholder="Month (e.g. Jan)">
+    <input id="revenue" type="number" placeholder="Revenue">
+    <input id="costs" type="number" placeholder="Costs">
+    <input id="marketing" type="number" placeholder="Marketing Spend">
+    <input id="customers" type="number" placeholder="Customers">
 
-    <label>Revenue ($)</label>
-    <input type="number" id="revenue">
-
-    <label>Costs ($)</label>
-    <input type="number" id="costs">
-
-    <label>Marketing Spend ($)</label>
-    <input type="number" id="marketing">
-
-    <label>Customers Acquired</label>
-    <input type="number" id="customers">
-
-    <button id="addData">Add Data</button>
-    <button id="runAnalysis">Run Analysis</button>
+    <button id="addBtn">Add Data</button>
+    <button id="analyzeBtn">Run Analysis</button>
   </div>
 
   <div class="main">
-
     <div class="kpis">
       <div class="card">
         <h3>Total Revenue</h3>
         <p id="totalRevenue">$0</p>
       </div>
-
       <div class="card">
         <h3>Total Profit</h3>
         <p id="totalProfit">$0</p>
       </div>
-
       <div class="card">
-        <h3>Revenue Growth</h3>
-        <p id="growthRate">0%</p>
+        <h3>Growth</h3>
+        <p id="growth">$0%</p>
       </div>
-
       <div class="card">
-        <h3>Customer Acquisition Cost</h3>
+        <h3>CAC</h3>
         <p id="cac">$0</p>
       </div>
     </div>
 
-    <div class="charts">
-      <canvas id="revenueChart"></canvas>
-      <canvas id="profitChart"></canvas>
-    </div>
+    <canvas id="revenueChart"></canvas>
+    <canvas id="profitChart"></canvas>
 
   </div>
 
