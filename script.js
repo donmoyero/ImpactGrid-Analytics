@@ -1,31 +1,47 @@
-let data = [];
-let revenueChart, profitChart, forecastChart;
+let businessData = [];
+let revenueChart = null;
+let profitChart = null;
+let forecastChart = null;
+
+document.getElementById("addBtn").addEventListener("click", addData);
 
 function addData() {
     const month = document.getElementById("month").value;
-    const revenue = +document.getElementById("revenue").value;
-    const expenses = +document.getElementById("expenses").value;
-    const fixedCosts = +document.getElementById("fixedCosts").value;
-    const customers = +document.getElementById("customers").value;
-    const marketing = +document.getElementById("marketing").value;
+    const revenue = parseFloat(document.getElementById("revenue").value) || 0;
+    const expenses = parseFloat(document.getElementById("expenses").value) || 0;
+    const fixedCosts = parseFloat(document.getElementById("fixedCosts").value) || 0;
+    const customers = parseFloat(document.getElementById("customers").value) || 1;
+    const marketing = parseFloat(document.getElementById("marketing").value) || 0;
 
-    if (!month || revenue <= 0) return alert("Enter valid data");
+    if (!month || revenue <= 0) {
+        alert("Please enter at least Month and Revenue.");
+        return;
+    }
 
     const profit = revenue - expenses;
-    const margin = (profit / revenue) * 100;
-    const cac = marketing / customers;
+    const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+    const cac = customers > 0 ? marketing / customers : 0;
     const cashFlow = profit - fixedCosts;
 
-    data.push({
-        month, revenue, expenses, fixedCosts,
-        customers, marketing, profit,
-        margin, cac, cashFlow
+    businessData.push({
+        month,
+        revenue,
+        expenses,
+        fixedCosts,
+        customers,
+        marketing,
+        profit,
+        margin,
+        cac,
+        cashFlow
     });
 
     updateDashboard();
 }
 
 function updateDashboard() {
+    if (businessData.length === 0) return;
+
     generateKPIs();
     generateInsights();
     renderCharts();
@@ -38,13 +54,13 @@ function generateKPIs() {
     const totalRevenue = sum("revenue");
     const totalProfit = sum("profit");
     const avgMargin = avg("margin");
-    const breakEven = calculateBreakEven();
+    const avgCashFlow = avg("cashFlow");
 
     const metrics = [
         ["Total Revenue", `$${totalRevenue.toFixed(2)}`],
         ["Total Profit", `$${totalProfit.toFixed(2)}`],
         ["Avg Profit Margin", `${avgMargin.toFixed(1)}%`],
-        ["Break-even Revenue", `$${breakEven.toFixed(2)}`]
+        ["Avg Cash Flow", `$${avgCashFlow.toFixed(2)}`]
     ];
 
     metrics.forEach(m => {
@@ -57,91 +73,112 @@ function generateKPIs() {
 
 function generateInsights() {
     const insights = document.getElementById("insights");
+
     const growth = growthRate("revenue");
     const margin = avg("margin");
-    const cashHealth = avg("cashFlow");
 
-    let recommendations = [];
+    let text = "";
 
     if (margin < 15)
-        recommendations.push("Improve pricing strategy or reduce operational costs.");
+        text += "<p>⚠ Profit margin is low. Consider reducing costs or adjusting pricing.</p>";
 
     if (growth < 5)
-        recommendations.push("Increase marketing efficiency or explore new customer channels.");
+        text += "<p>⚠ Revenue growth is slow. Improve marketing or expand market reach.</p>";
 
-    if (cashHealth < 0)
-        recommendations.push("Business is cash-flow negative. Reduce fixed costs immediately.");
-
-    if (recommendations.length === 0)
-        recommendations.push("Business performance is strong. Consider scaling operations.");
+    if (text === "")
+        text = "<p>✅ Business performance looks strong. Consider scaling operations.</p>";
 
     insights.innerHTML = `
         <p><strong>Revenue Growth:</strong> ${growth.toFixed(2)}%</p>
-        <p><strong>Cash Flow Health:</strong> $${cashHealth.toFixed(2)}</p>
-        <ul>${recommendations.map(r => `<li>${r}</li>`).join("")}</ul>
+        ${text}
     `;
 }
 
-function calculateBreakEven() {
-    const avgFixed = avg("fixedCosts");
-    const avgMargin = avg("margin") / 100;
-    return avgFixed / avgMargin;
-}
-
-function forecastRevenue() {
-    const growth = growthRate("revenue") / 100;
-    let last = data[data.length - 1].revenue;
-    let forecast = [];
-
-    for (let i = 1; i <= 6; i++) {
-        last = last * (1 + growth);
-        forecast.push(last);
-    }
-    return forecast;
-}
-
 function renderCharts() {
-    const months = data.map(d => d.month);
-    const revenues = data.map(d => d.revenue);
-    const profits = data.map(d => d.profit);
+    const months = businessData.map(d => d.month);
+    const revenues = businessData.map(d => d.revenue);
+    const profits = businessData.map(d => d.profit);
 
     if (revenueChart) revenueChart.destroy();
     if (profitChart) profitChart.destroy();
     if (forecastChart) forecastChart.destroy();
 
-    revenueChart = new Chart(document.getElementById("revenueChart"), {
-        type: "line",
-        data: { labels: months, datasets: [{ label: "Revenue", data: revenues }] }
-    });
-
-    profitChart = new Chart(document.getElementById("profitChart"), {
-        type: "line",
-        data: { labels: months, datasets: [{ label: "Profit", data: profits }] }
-    });
-
-    const forecast = forecastRevenue();
-    const futureMonths = Array.from({length:6}, (_,i)=>"Forecast "+(i+1));
-
-    forecastChart = new Chart(document.getElementById("forecastChart"), {
-        type: "line",
-        data: {
-            labels: futureMonths,
-            datasets: [{ label: "6-Month Revenue Forecast", data: forecast }]
+    revenueChart = new Chart(
+        document.getElementById("revenueChart"),
+        {
+            type: "line",
+            data: {
+                labels: months,
+                datasets: [{
+                    label: "Revenue",
+                    data: revenues
+                }]
+            }
         }
-    });
+    );
+
+    profitChart = new Chart(
+        document.getElementById("profitChart"),
+        {
+            type: "line",
+            data: {
+                labels: months,
+                datasets: [{
+                    label: "Profit",
+                    data: profits
+                }]
+            }
+        }
+    );
+
+    if (businessData.length >= 2) {
+        const forecast = forecastRevenue();
+        const futureLabels = forecast.map((_, i) => `Forecast ${i+1}`);
+
+        forecastChart = new Chart(
+            document.getElementById("forecastChart"),
+            {
+                type: "line",
+                data: {
+                    labels: futureLabels,
+                    datasets: [{
+                        label: "6-Month Revenue Forecast",
+                        data: forecast
+                    }]
+                }
+            }
+        );
+    }
+}
+
+function forecastRevenue() {
+    const growth = growthRate("revenue") / 100;
+    let last = businessData[businessData.length - 1].revenue;
+    let forecast = [];
+
+    for (let i = 0; i < 6; i++) {
+        last = last * (1 + growth);
+        forecast.push(last);
+    }
+
+    return forecast;
 }
 
 function sum(key) {
-    return data.reduce((a,b)=>a+b[key],0);
+    return businessData.reduce((acc, curr) => acc + curr[key], 0);
 }
 
 function avg(key) {
-    return sum(key)/data.length;
+    return businessData.length > 0 ? sum(key) / businessData.length : 0;
 }
 
 function growthRate(key) {
-    if (data.length < 2) return 0;
-    const last = data[data.length-1][key];
-    const prev = data[data.length-2][key];
-    return ((last-prev)/prev)*100;
+    if (businessData.length < 2) return 0;
+
+    const last = businessData[businessData.length - 1][key];
+    const prev = businessData[businessData.length - 2][key];
+
+    if (prev === 0) return 0;
+
+    return ((last - prev) / prev) * 100;
 }
