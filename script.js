@@ -1,87 +1,90 @@
-let rawData = [];
-let chart;
+let businessData = [];
 
-document.getElementById("fileInput").addEventListener("change", handleFile);
-document.getElementById("analyzeBtn").addEventListener("click", analyzeData);
+let revenueChart;
+let profitChart;
 
-function handleFile(event) {
-    const file = event.target.files[0];
-    const reader = new FileReader();
+document.getElementById("addData").addEventListener("click", addData);
+document.getElementById("analyze").addEventListener("click", analyze);
 
-    reader.onload = function(e) {
-        const text = e.target.result;
-        parseCSV(text);
-    };
+function addData() {
+  const month = document.getElementById("month").value;
+  const revenue = parseFloat(document.getElementById("revenue").value);
+  const costs = parseFloat(document.getElementById("costs").value);
+  const marketing = parseFloat(document.getElementById("marketing").value);
+  const customers = parseFloat(document.getElementById("customers").value);
 
-    reader.readAsText(file);
+  if (!month || isNaN(revenue) || isNaN(costs)) return;
+
+  businessData.push({
+    month,
+    revenue,
+    costs,
+    marketing,
+    customers
+  });
+
+  alert("Data Added Successfully");
 }
 
-function parseCSV(text) {
-    const rows = text.split("\n").map(row => row.split(","));
-    const headers = rows[0];
-    rawData = rows.slice(1);
+function analyze() {
+  if (businessData.length === 0) return;
 
-    const select = document.getElementById("columnSelect");
-    select.innerHTML = '<option value="">Select Column</option>';
+  const totalRevenue = businessData.reduce((a,b)=>a+b.revenue,0);
+  const totalCosts = businessData.reduce((a,b)=>a+b.costs,0);
+  const totalMarketing = businessData.reduce((a,b)=>a+b.marketing,0);
+  const totalCustomers = businessData.reduce((a,b)=>a+b.customers,0);
 
-    headers.forEach((header, index) => {
-        select.innerHTML += `<option value="${index}">${header}</option>`;
-    });
+  const totalProfit = totalRevenue - totalCosts;
+  const growthRate = calculateGrowth();
+  const cac = totalMarketing / totalCustomers;
 
-    renderTable(headers, rawData);
+  document.getElementById("totalRevenue").textContent = "$" + totalRevenue.toFixed(2);
+  document.getElementById("totalProfit").textContent = "$" + totalProfit.toFixed(2);
+  document.getElementById("growthRate").textContent = growthRate.toFixed(2) + "%";
+  document.getElementById("cac").textContent = "$" + cac.toFixed(2);
+
+  renderCharts();
 }
 
-function analyzeData() {
-    const columnIndex = document.getElementById("columnSelect").value;
-    if (!columnIndex) return;
+function calculateGrowth() {
+  if (businessData.length < 2) return 0;
 
-    const values = rawData
-        .map(row => parseFloat(row[columnIndex]))
-        .filter(num => !isNaN(num));
+  const first = businessData[0].revenue;
+  const last = businessData[businessData.length - 1].revenue;
 
-    const count = values.length;
-    const mean = values.reduce((a,b) => a+b, 0) / count;
-    const sorted = [...values].sort((a,b) => a-b);
-    const median = sorted[Math.floor(count/2)];
-
-    document.getElementById("count").textContent = count;
-    document.getElementById("mean").textContent = mean.toFixed(2);
-    document.getElementById("median").textContent = median.toFixed(2);
-
-    renderChart(values);
+  return ((last - first) / first) * 100;
 }
 
-function renderChart(values) {
-    const ctx = document.getElementById("chartCanvas");
+function renderCharts() {
+  const months = businessData.map(d=>d.month);
+  const revenues = businessData.map(d=>d.revenue);
+  const profits = businessData.map(d=>d.revenue - d.costs);
 
-    if (chart) chart.destroy();
+  const ctx1 = document.getElementById("revenueChart");
+  const ctx2 = document.getElementById("profitChart");
 
-    chart = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: values.map((_, i) => i + 1),
-            datasets: [{
-                label: "Values",
-                data: values
-            }]
-        }
-    });
-}
+  if (revenueChart) revenueChart.destroy();
+  if (profitChart) profitChart.destroy();
 
-function renderTable(headers, rows) {
-    const table = document.getElementById("dataTable");
-    table.innerHTML = "";
+  revenueChart = new Chart(ctx1, {
+    type: "line",
+    data: {
+      labels: months,
+      datasets: [{
+        label: "Revenue Trend",
+        data: revenues
+      }]
+    }
+  });
 
-    let headerRow = "<tr>";
-    headers.forEach(h => headerRow += `<th>${h}</th>`);
-    headerRow += "</tr>";
-
-    table.innerHTML += headerRow;
-
-    rows.forEach(row => {
-        let rowHTML = "<tr>";
-        row.forEach(cell => rowHTML += `<td>${cell}</td>`);
-        rowHTML += "</tr>";
-        table.innerHTML += rowHTML;
-    });
+  profitChart = new Chart(ctx2, {
+    type: "bar",
+    data: {
+      labels: months,
+      datasets: [{
+        label: "Profit by Month",
+        data: profits
+      }]
+    }
+  });
 }
