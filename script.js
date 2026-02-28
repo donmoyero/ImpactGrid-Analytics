@@ -1,18 +1,22 @@
+document.addEventListener("DOMContentLoaded", function () {
+
 let businesses = JSON.parse(localStorage.getItem("impactgrid")) || {};
 let currentBusiness = null;
 
-// Chart instances
-let chartRevenueProfit = null;
-let chartExpenses = null;
-let chartMargin = null;
-let chartCustomers = null;
-let chartCAC = null;
+let charts = {};
 
-initSelector();
+init();
 
-/* =========================
-   BUSINESS MANAGEMENT
-========================= */
+/* ========= INIT ========= */
+
+function init() {
+    initSelector();
+    document.getElementById("createBtn").addEventListener("click", createBusiness);
+    document.getElementById("businessSelector").addEventListener("change", selectBusiness);
+    document.getElementById("addBtn").addEventListener("click", addData);
+}
+
+/* ========= BUSINESS ========= */
 
 function createBusiness() {
     const name = document.getElementById("businessName").value.trim();
@@ -23,8 +27,12 @@ function createBusiness() {
         save();
     }
 
-    document.getElementById("businessName").value = "";
     initSelector();
+    document.getElementById("businessSelector").value = name;
+    currentBusiness = name;
+
+    document.getElementById("businessName").value = "";
+    updateDashboard();
 }
 
 function initSelector() {
@@ -39,55 +47,35 @@ function initSelector() {
     });
 }
 
-function loadBusiness() {
+function selectBusiness() {
     currentBusiness = document.getElementById("businessSelector").value;
     updateDashboard();
 }
 
-/* =========================
-   DATA ENTRY
-========================= */
+/* ========= ADD DATA ========= */
 
 function addData() {
     if (!currentBusiness) return alert("Select business first");
 
     const month = document.getElementById("month").value;
-    const revenue = +document.getElementById("revenue").value || 0;
+    const revenue = +document.getElementById("revenue").value;
     const expenses = +document.getElementById("expenses").value || 0;
     const fixedCosts = +document.getElementById("fixedCosts").value || 0;
     const customers = +document.getElementById("customers").value || 0;
     const marketing = +document.getElementById("marketing").value || 0;
 
-    if (!month || revenue <= 0) {
-        alert("Enter valid month and revenue");
-        return;
-    }
-
-    // Prevent duplicate month
-    const exists = businesses[currentBusiness].some(d => d.month === month);
-    if (exists) {
-        alert("Data for this month already exists");
-        return;
-    }
+    if (!month || !revenue) return alert("Enter valid month and revenue");
 
     const profit = revenue - expenses - fixedCosts;
     const margin = revenue ? (profit / revenue) * 100 : 0;
     const cac = customers ? marketing / customers : 0;
 
     businesses[currentBusiness].push({
-        month,
-        revenue,
-        expenses,
-        fixedCosts,
-        customers,
-        marketing,
-        profit,
-        margin,
-        cac
+        month, revenue, expenses, fixedCosts,
+        customers, marketing, profit, margin, cac
     });
 
-    // Sort months chronologically
-    businesses[currentBusiness].sort((a, b) => a.month.localeCompare(b.month));
+    businesses[currentBusiness].sort((a,b)=>a.month.localeCompare(b.month));
 
     save();
     clearInputs();
@@ -95,20 +83,18 @@ function addData() {
 }
 
 function clearInputs() {
-    document.querySelectorAll(".grid input").forEach(input => input.value = "");
+    document.querySelectorAll(".grid input").forEach(i => i.value = "");
 }
 
-/* =========================
-   DASHBOARD UPDATE
-========================= */
+/* ========= DASHBOARD ========= */
 
 function updateDashboard() {
     if (!currentBusiness) return;
 
     const data = businesses[currentBusiness];
     if (!data || data.length === 0) {
-        destroyCharts();
         document.getElementById("kpis").innerHTML = "<p>No data yet.</p>";
+        destroyCharts();
         return;
     }
 
@@ -116,9 +102,7 @@ function updateDashboard() {
     renderCharts(data);
 }
 
-/* =========================
-   KPI RENDERING
-========================= */
+/* ========= KPIs ========= */
 
 function renderKPIs(data) {
     const container = document.getElementById("kpis");
@@ -130,31 +114,29 @@ function renderKPIs(data) {
     const avgCAC = data.reduce((a,b)=>a+b.cac,0)/data.length;
 
     const metrics = [
-        ["Total Revenue", "£"+totalRevenue.toFixed(2)],
-        ["Total Profit", "£"+totalProfit.toFixed(2)],
-        ["Average Margin", avgMargin.toFixed(1)+"%"],
-        ["Average CAC", "£"+avgCAC.toFixed(2)]
+        ["Total Revenue","£"+totalRevenue.toFixed(2)],
+        ["Total Profit","£"+totalProfit.toFixed(2)],
+        ["Avg Margin",avgMargin.toFixed(1)+"%"],
+        ["Avg CAC","£"+avgCAC.toFixed(2)]
     ];
 
     metrics.forEach(m=>{
         const div = document.createElement("div");
         div.className="kpi";
-        div.innerHTML = `<h3>${m[0]}</h3><p>${m[1]}</p>`;
+        div.innerHTML=`<h3>${m[0]}</h3><p>${m[1]}</p>`;
         container.appendChild(div);
     });
 }
 
-/* =========================
-   CHARTS
-========================= */
+/* ========= CHARTS ========= */
 
 function renderCharts(data) {
 
-    const months = data.map(d=>d.month);
-
     destroyCharts();
 
-    chartRevenueProfit = new Chart(document.getElementById("chartRevenueProfit"),{
+    const months = data.map(d=>d.month);
+
+    charts.rev = new Chart(document.getElementById("chartRevenueProfit"),{
         type:"line",
         data:{
             labels:months,
@@ -162,66 +144,52 @@ function renderCharts(data) {
                 {label:"Revenue", data:data.map(d=>d.revenue), tension:0.3},
                 {label:"Profit", data:data.map(d=>d.profit), tension:0.3}
             ]
-        },
-        options:{responsive:true, maintainAspectRatio:false}
+        }
     });
 
-    chartExpenses = new Chart(document.getElementById("chartExpenses"),{
+    charts.exp = new Chart(document.getElementById("chartExpenses"),{
         type:"bar",
         data:{
             labels:months,
             datasets:[
-                {label:"Operational Expenses", data:data.map(d=>d.expenses)},
+                {label:"Expenses", data:data.map(d=>d.expenses)},
                 {label:"Fixed Costs", data:data.map(d=>d.fixedCosts)}
             ]
-        },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            scales:{x:{stacked:true}, y:{stacked:true}}
         }
     });
 
-    chartMargin = new Chart(document.getElementById("chartMargin"),{
+    charts.margin = new Chart(document.getElementById("chartMargin"),{
         type:"line",
         data:{
             labels:months,
             datasets:[{label:"Profit Margin %", data:data.map(d=>d.margin), tension:0.3}]
-        },
-        options:{responsive:true, maintainAspectRatio:false}
+        }
     });
 
-    chartCustomers = new Chart(document.getElementById("chartCustomers"),{
+    charts.customers = new Chart(document.getElementById("chartCustomers"),{
         type:"line",
         data:{
             labels:months,
             datasets:[{label:"Customers", data:data.map(d=>d.customers), tension:0.3}]
-        },
-        options:{responsive:true, maintainAspectRatio:false}
+        }
     });
 
-    chartCAC = new Chart(document.getElementById("chartCAC"),{
+    charts.cac = new Chart(document.getElementById("chartCAC"),{
         type:"line",
         data:{
             labels:months,
-            datasets:[{label:"Customer Acquisition Cost", data:data.map(d=>d.cac), tension:0.3}]
-        },
-        options:{responsive:true, maintainAspectRatio:false}
+            datasets:[{label:"CAC", data:data.map(d=>d.cac), tension:0.3}]
+        }
     });
 }
 
 function destroyCharts(){
-    if(chartRevenueProfit){ chartRevenueProfit.destroy(); chartRevenueProfit=null; }
-    if(chartExpenses){ chartExpenses.destroy(); chartExpenses=null; }
-    if(chartMargin){ chartMargin.destroy(); chartMargin=null; }
-    if(chartCustomers){ chartCustomers.destroy(); chartCustomers=null; }
-    if(chartCAC){ chartCAC.destroy(); chartCAC=null; }
+    Object.values(charts).forEach(c=>c.destroy());
+    charts = {};
 }
-
-/* =========================
-   STORAGE
-========================= */
 
 function save(){
     localStorage.setItem("impactgrid", JSON.stringify(businesses));
 }
+
+});
