@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ImpactGrid - Business Intelligence</title>
+    <title>ImpactGrid - UK Business Intelligence</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -10,14 +10,14 @@
 
 <header>
     <h1>ImpactGrid</h1>
-    <p>Professional Business Analytics Engine</p>
+    <p>AI-Driven Business Intelligence Platform</p>
 </header>
 
 <section class="card">
-    <h2>Create Business</h2>
+    <h2>Create / Select Business</h2>
     <input type="text" id="businessName" placeholder="Business Name">
-    <button id="createBtn">Create & Select</button>
-    <select id="businessSelector"></select>
+    <button onclick="createBusiness()">Create</button>
+    <select id="businessSelector" onchange="loadBusiness()"></select>
 </section>
 
 <section class="card">
@@ -25,11 +25,11 @@
     <div class="grid">
         <input type="month" id="month">
         <input type="number" id="revenue" placeholder="Revenue">
-        <input type="number" id="expenses" placeholder="Expenses">
+        <input type="number" id="expenses" placeholder="Operational Expenses">
         <input type="number" id="fixedCosts" placeholder="Fixed Costs">
         <input type="number" id="customers" placeholder="Customers">
         <input type="number" id="marketing" placeholder="Marketing Spend">
-        <button id="addBtn">Add Month</button>
+        <button onclick="addData()">Add Month</button>
     </div>
 </section>
 
@@ -40,11 +40,13 @@
 
 <section class="card">
     <h2>Performance Analytics</h2>
+
     <canvas id="chartRevenueProfit"></canvas>
     <canvas id="chartExpenses"></canvas>
     <canvas id="chartMargin"></canvas>
     <canvas id="chartCustomers"></canvas>
     <canvas id="chartCAC"></canvas>
+
 </section>
 
 <script src="script.js"></script>
