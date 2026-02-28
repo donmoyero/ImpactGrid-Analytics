@@ -2,16 +2,17 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ImpactGrid SaaS</title>
+    <title>ImpactGrid Analytical Tool</title>
     <link rel="stylesheet" href="style.css">
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
 </head>
 <body>
 
 <header class="header">
     <h1>ImpactGrid</h1>
-    <p>Enterprise Business Intelligence</p>
+    <p>Professional Business Intelligence Dashboard</p>
 </header>
 
 <section class="card">
@@ -22,11 +23,11 @@
 </section>
 
 <section class="card">
-    <h2>Add Monthly Data</h2>
+    <h2>Add Monthly Business Data</h2>
     <div class="grid">
         <input type="month" id="month">
         <input type="number" id="revenue" placeholder="Revenue">
-        <input type="number" id="expenses" placeholder="Expenses">
+        <input type="number" id="expenses" placeholder="Operational Expenses">
         <input type="number" id="fixedCosts" placeholder="Fixed Costs">
         <input type="number" id="customers" placeholder="Customers">
         <input type="number" id="marketing" placeholder="Marketing Spend">
@@ -40,17 +41,25 @@
 </section>
 
 <section class="card">
-    <h2>Insights</h2>
-    <div id="insights"></div>
-    <button onclick="exportPDF()">Download Executive Report</button>
-</section>
-
-<section class="card">
     <h2>Performance Charts</h2>
-    <canvas id="revenueChart"></canvas>
-    <canvas id="profitChart"></canvas>
+
+    <h3>Revenue vs Profit</h3>
+    <canvas id="revenueProfitChart"></canvas>
+
+    <h3>Expense Structure</h3>
+    <canvas id="expenseChart"></canvas>
+
+    <h3>Profit Margin Trend (%)</h3>
+    <canvas id="marginChart"></canvas>
+
+    <h3>Customer Growth</h3>
+    <canvas id="customerChart"></canvas>
+
+    <h3>Customer Acquisition Cost (CAC)</h3>
+    <canvas id="cacChart"></canvas>
 </section>
 
 <script src="script.js"></script>
+
 </body>
 </html>
