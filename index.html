@@ -1,53 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Donmoyero Analytics</title>
+    <title>ImpactGrid Analytical Tool</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <h1>Donmoyero Analytical Tool</h1>
+<header>
+    <h1>ImpactGrid Analytical Tool</h1>
+    <p>Business Intelligence & Performance Dashboard</p>
+</header>
 
-    <!-- Data Upload Section -->
-    <section class="card">
-        <h2>Upload CSV Data</h2>
-        <input type="file" id="fileInput" accept=".csv">
-    </section>
+<section class="card">
+    <h2>Enter Monthly Business Data</h2>
 
-    <!-- Data Summary -->
-    <section class="card">
-        <h2>Data Summary</h2>
-        <div id="summary"></div>
-    </section>
+    <div class="grid">
+        <input type="month" id="month">
+        <input type="number" id="revenue" placeholder="Total Revenue">
+        <input type="number" id="expenses" placeholder="Total Expenses">
+        <input type="number" id="customers" placeholder="Total Customers">
+        <input type="number" id="marketing" placeholder="Marketing Spend">
+        <button onclick="addData()">Add Data</button>
+    </div>
+</section>
 
-    <!-- Filter Section -->
-    <section class="card">
-        <h2>Filter Data</h2>
-        <select id="filterColumn"></select>
-        <input type="text" id="filterValue" placeholder="Enter value">
-        <button onclick="applyFilter()">Apply Filter</button>
-    </section>
+<section class="card">
+    <h2>Key Performance Indicators</h2>
+    <div id="kpiContainer" class="kpi-grid"></div>
+</section>
 
-    <!-- Aggregation Section -->
-    <section class="card">
-        <h2>Aggregation</h2>
-        <select id="groupColumn"></select>
-        <select id="aggColumn"></select>
-        <select id="aggFunction">
-            <option value="sum">Sum</option>
-            <option value="avg">Average</option>
-            <option value="count">Count</option>
-        </select>
-        <button onclick="aggregateData()">Run</button>
-    </section>
+<section class="card">
+    <h2>Business Insights</h2>
+    <div id="insights"></div>
+</section>
 
-    <!-- Chart Section -->
-    <section class="card">
-        <h2>Visualization</h2>
-        <canvas id="chartCanvas"></canvas>
-    </section>
+<section class="card">
+    <h2>Performance Visualizations</h2>
+    <canvas id="revenueChart"></canvas>
+    <canvas id="profitChart"></canvas>
+    <canvas id="expenseChart"></canvas>
+</section>
 
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
