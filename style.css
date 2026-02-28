@@ -1,19 +1,19 @@
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #f4f7fb;
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
 }
 
 header {
-  background: #111827;
+  background: #0f172a;
   color: white;
-  padding: 20px;
   text-align: center;
+  padding: 20px;
 }
 
-.dashboard {
+.container {
   display: flex;
-  height: calc(100vh - 100px);
+  height: calc(100vh - 120px);
 }
 
 .sidebar {
@@ -26,16 +26,16 @@ header {
 }
 
 .sidebar input {
-  margin-bottom: 10px;
   padding: 8px;
+  margin-bottom: 10px;
 }
 
 .sidebar button {
-  margin-top: 10px;
   padding: 10px;
+  margin-top: 10px;
+  border: none;
   background: #2563eb;
   color: white;
-  border: none;
   cursor: pointer;
 }
 
@@ -45,17 +45,17 @@ header {
   overflow-y: auto;
 }
 
-.kpi-section {
+.kpis {
   display: flex;
   gap: 20px;
   margin-bottom: 30px;
 }
 
-.kpi-card {
+.card {
   flex: 1;
   background: white;
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 8px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.05);
 }
 
@@ -67,6 +67,7 @@ header {
 canvas {
   background: white;
   padding: 20px;
-  border-radius: 10px;
-  width: 100%;
+  border-radius: 8px;
+  width: 100% !important;
+  height: 400px !important;
 }
