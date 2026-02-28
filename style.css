@@ -24,7 +24,6 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: linear-gradient(135deg, #0f172a, #1e293b);
 }
 
 .auth-card {
@@ -50,7 +49,6 @@ body {
 .app-layout {
     display: flex;
     min-height: 100vh;
-    transition: all 0.3s ease;
 }
 
 /* ================= SIDEBAR ================= */
@@ -110,12 +108,6 @@ body {
     color: white;
 }
 
-.api-status {
-    margin-top: 30px;
-    font-size: 12px;
-    color: #64748b;
-}
-
 /* ================= MAIN CONTENT ================= */
 .main-content {
     flex: 1;
@@ -149,7 +141,7 @@ body {
 /* ================= PAGE SECTIONS ================= */
 .page-section {
     display: none;
-    padding: 0 5% 40px 5%;
+    padding: 0 5% 50px 5%;
     animation: fadeIn 0.3s ease;
 }
 
@@ -241,7 +233,7 @@ input:focus {
 /* ================= KPI GRID ================= */
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
 }
 
@@ -258,16 +250,22 @@ input:focus {
     box-shadow: 0 10px 25px rgba(0,0,0,0.4);
 }
 
-/* ================= DRAG VISUAL ================= */
-.draggable-container .chart-card,
-.draggable-container .kpi {
-    cursor: grab;
+.kpi h3 {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.kpi p {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3b82f6;
 }
 
 /* ================= CHART GRID ================= */
 .charts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 25px;
 }
 
@@ -275,6 +273,12 @@ input:focus {
     padding: 20px;
     background: rgba(255,255,255,0.04);
     border-radius: 14px;
+}
+
+/* Force canvas height */
+canvas {
+    width: 100% !important;
+    height: 300px !important;
 }
 
 /* ================= FOOTER ================= */
