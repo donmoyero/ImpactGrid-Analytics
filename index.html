@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Impactgrid Analytical Tool</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impactgrid Analytical Tool</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -12,13 +14,13 @@
   <p>Professional Business Intelligence Dashboard</p>
 </header>
 
-<div class="dashboard">
+<div class="container">
 
-  <aside class="sidebar">
-    <h2>Business Input</h2>
+  <div class="sidebar">
+    <h2>Enter Monthly Business Data</h2>
 
     <label>Month</label>
-    <input type="text" id="month">
+    <input type="text" id="month" placeholder="January">
 
     <label>Revenue ($)</label>
     <input type="number" id="revenue">
@@ -33,27 +35,30 @@
     <input type="number" id="customers">
 
     <button id="addData">Add Data</button>
-    <button id="analyze">Run Analysis</button>
-  </aside>
+    <button id="runAnalysis">Run Analysis</button>
+  </div>
 
-  <main class="main">
+  <div class="main">
 
-    <div class="kpi-section">
-      <div class="kpi-card">
+    <div class="kpis">
+      <div class="card">
         <h3>Total Revenue</h3>
-        <p id="totalRevenue"></p>
+        <p id="totalRevenue">$0</p>
       </div>
-      <div class="kpi-card">
+
+      <div class="card">
         <h3>Total Profit</h3>
-        <p id="totalProfit"></p>
+        <p id="totalProfit">$0</p>
       </div>
-      <div class="kpi-card">
-        <h3>Growth Rate</h3>
-        <p id="growthRate"></p>
+
+      <div class="card">
+        <h3>Revenue Growth</h3>
+        <p id="growthRate">0%</p>
       </div>
-      <div class="kpi-card">
+
+      <div class="card">
         <h3>Customer Acquisition Cost</h3>
-        <p id="cac"></p>
+        <p id="cac">$0</p>
       </div>
     </div>
 
@@ -62,11 +67,10 @@
       <canvas id="profitChart"></canvas>
     </div>
 
-  </main>
+  </div>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
