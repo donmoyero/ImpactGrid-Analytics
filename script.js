@@ -1,134 +1,135 @@
-let dataset = [];
-let filteredData = [];
-let chart;
+let businessData = [];
 
-// Parse CSV
-document.getElementById("fileInput").addEventListener("change", function(e) {
-    const file = e.target.files[0];
-    const reader = new FileReader();
+let revenueChart, profitChart, expenseChart;
 
-    reader.onload = function(event) {
-        const text = event.target.result;
-        dataset = parseCSV(text);
-        filteredData = [...dataset];
-        populateSelectors();
-        generateSummary(filteredData);
-    };
+function addData() {
+    const month = document.getElementById("month").value;
+    const revenue = parseFloat(document.getElementById("revenue").value);
+    const expenses = parseFloat(document.getElementById("expenses").value);
+    const customers = parseFloat(document.getElementById("customers").value);
+    const marketing = parseFloat(document.getElementById("marketing").value);
 
-    reader.readAsText(file);
-});
-
-// Convert CSV to JSON
-function parseCSV(text) {
-    const rows = text.split("\n");
-    const headers = rows[0].split(",");
-
-    return rows.slice(1).map(row => {
-        const values = row.split(",");
-        let obj = {};
-        headers.forEach((header, i) => {
-            obj[header.trim()] = values[i]?.trim();
-        });
-        return obj;
-    });
-}
-
-// Populate dropdowns
-function populateSelectors() {
-    const columns = Object.keys(dataset[0]);
-
-    const selects = ["filterColumn", "groupColumn", "aggColumn"];
-    selects.forEach(id => {
-        const select = document.getElementById(id);
-        select.innerHTML = "";
-        columns.forEach(col => {
-            const option = document.createElement("option");
-            option.value = col;
-            option.textContent = col;
-            select.appendChild(option);
-        });
-    });
-}
-
-// Generate Summary
-function generateSummary(data) {
-    const summaryDiv = document.getElementById("summary");
-    summaryDiv.innerHTML = `Total Records: ${data.length}<br>`;
-
-    const numericColumns = Object.keys(data[0]).filter(col =>
-        data.every(row => !isNaN(parseFloat(row[col])))
-    );
-
-    numericColumns.forEach(col => {
-        const values = data.map(row => parseFloat(row[col]));
-        const sum = values.reduce((a,b)=>a+b,0);
-        const avg = sum / values.length;
-        summaryDiv.innerHTML += `
-            ${col} → Min: ${Math.min(...values)} |
-            Max: ${Math.max(...values)} |
-            Avg: ${avg.toFixed(2)}<br>
-        `;
-    });
-}
-
-// Filtering
-function applyFilter() {
-    const col = document.getElementById("filterColumn").value;
-    const val = document.getElementById("filterValue").value;
-
-    filteredData = dataset.filter(row =>
-        row[col].toLowerCase().includes(val.toLowerCase())
-    );
-
-    generateSummary(filteredData);
-}
-
-// Aggregation
-function aggregateData() {
-    const groupCol = document.getElementById("groupColumn").value;
-    const aggCol = document.getElementById("aggColumn").value;
-    const func = document.getElementById("aggFunction").value;
-
-    const grouped = {};
-
-    filteredData.forEach(row => {
-        const key = row[groupCol];
-        const value = parseFloat(row[aggCol]);
-
-        if (!grouped[key]) grouped[key] = [];
-        if (!isNaN(value)) grouped[key].push(value);
-    });
-
-    let labels = [];
-    let values = [];
-
-    for (let key in grouped) {
-        labels.push(key);
-        if (func === "sum")
-            values.push(grouped[key].reduce((a,b)=>a+b,0));
-        else if (func === "avg")
-            values.push(grouped[key].reduce((a,b)=>a+b,0)/grouped[key].length);
-        else if (func === "count")
-            values.push(grouped[key].length);
+    if (!month || !revenue || !expenses) {
+        alert("Please fill required fields.");
+        return;
     }
 
-    renderChart(labels, values);
+    const profit = revenue - expenses;
+    const profitMargin = (profit / revenue) * 100;
+    const customerAcquisitionCost = marketing / customers;
+
+    businessData.push({
+        month,
+        revenue,
+        expenses,
+        customers,
+        marketing,
+        profit,
+        profitMargin,
+        customerAcquisitionCost
+    });
+
+    updateDashboard();
 }
 
-// Chart
-function renderChart(labels, values) {
-    const ctx = document.getElementById("chartCanvas").getContext("2d");
+function updateDashboard() {
+    generateKPIs();
+    generateInsights();
+    renderCharts();
+}
 
-    if (chart) chart.destroy();
+function generateKPIs() {
+    const container = document.getElementById("kpiContainer");
+    container.innerHTML = "";
 
-    chart = new Chart(ctx, {
-        type: "bar",
+    const totalRevenue = sum("revenue");
+    const totalProfit = sum("profit");
+    const avgMargin = average("profitMargin");
+    const avgCAC = average("customerAcquisitionCost");
+
+    const kpis = [
+        { label: "Total Revenue", value: `$${totalRevenue.toFixed(2)}` },
+        { label: "Total Profit", value: `$${totalProfit.toFixed(2)}` },
+        { label: "Avg Profit Margin", value: `${avgMargin.toFixed(1)}%` },
+        { label: "Avg Customer Acquisition Cost", value: `$${avgCAC.toFixed(2)}` }
+    ];
+
+    kpis.forEach(kpi => {
+        const div = document.createElement("div");
+        div.className = "kpi";
+        div.innerHTML = `<h3>${kpi.label}</h3><p>${kpi.value}</p>`;
+        container.appendChild(div);
+    });
+}
+
+function generateInsights() {
+    const insightsDiv = document.getElementById("insights");
+    insightsDiv.innerHTML = "";
+
+    const latest = businessData[businessData.length - 1];
+
+    let healthScore = 0;
+
+    if (latest.profitMargin > 20) healthScore += 40;
+    if (latest.customerAcquisitionCost < latest.revenue / latest.customers * 0.5) healthScore += 30;
+    if (growthRate("revenue") > 5) healthScore += 30;
+
+    insightsDiv.innerHTML = `
+        <p><strong>Latest Month:</strong> ${latest.month}</p>
+        <p>Revenue Growth Rate: ${growthRate("revenue").toFixed(1)}%</p>
+        <p>Business Health Score: ${healthScore}/100</p>
+        <p>${healthScore > 70 ? "Business performance is strong." :
+            healthScore > 40 ? "Business is stable but needs optimization." :
+            "Business requires strategic improvement."}</p>
+    `;
+}
+
+function renderCharts() {
+    const months = businessData.map(d => d.month);
+    const revenues = businessData.map(d => d.revenue);
+    const profits = businessData.map(d => d.profit);
+    const expenses = businessData.map(d => d.expenses);
+
+    if (revenueChart) revenueChart.destroy();
+    if (profitChart) profitChart.destroy();
+    if (expenseChart) expenseChart.destroy();
+
+    revenueChart = new Chart(document.getElementById("revenueChart"), {
+        type: "line",
         data: {
-            labels: labels,
-            datasets: [{
-                label: "Analysis Result",
-                data: values
-            }]
+            labels: months,
+            datasets: [{ label: "Revenue", data: revenues }]
         }
     });
+
+    profitChart = new Chart(document.getElementById("profitChart"), {
+        type: "line",
+        data: {
+            labels: months,
+            datasets: [{ label: "Profit", data: profits }]
+        }
+    });
+
+    expenseChart = new Chart(document.getElementById("expenseChart"), {
+        type: "bar",
+        data: {
+            labels: months,
+            datasets: [{ label: "Expenses", data: expenses }]
+        }
+    });
+}
+
+function sum(key) {
+    return businessData.reduce((acc, curr) => acc + curr[key], 0);
+}
+
+function average(key) {
+    return sum(key) / businessData.length;
+}
+
+function growthRate(key) {
+    if (businessData.length < 2) return 0;
+    const last = businessData[businessData.length - 1][key];
+    const prev = businessData[businessData.length - 2][key];
+    return ((last - prev) / prev) * 100;
 }
