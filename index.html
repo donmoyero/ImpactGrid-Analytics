@@ -2,23 +2,25 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>ImpactGrid AI Intelligence Platform</title>
+<title>ImpactGrid Professional Dashboard</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body>
 
 <header>
 <h1>ImpactGrid</h1>
-<p>AI Strategic Business Intelligence Platform</p>
+<p>Professional Business Analytics Dashboard</p>
 </header>
 
 <section class="card">
 <h2>Create / Select Business</h2>
 <input type="text" id="businessName" placeholder="Business Name">
-<button onclick="createBusiness()">Create</button>
-<select id="businessSelector" onchange="loadBusiness()"></select>
+<button id="createBtn">Create</button>
+<select id="businessSelector"></select>
 </section>
 
 <section class="card">
@@ -29,26 +31,23 @@
 <input type="number" id="expenses" placeholder="Operational Expenses">
 <input type="number" id="fixedCosts" placeholder="Fixed Costs">
 <input type="number" id="customers" placeholder="Customers">
-<input type="number" id="marketing" placeholder="Marketing Spend">
-<button onclick="addData()">Add Month</button>
+<button id="addBtn">Add Month</button>
 </div>
 </section>
 
 <section class="card">
-<h2>AI Strategic Panel</h2>
-<div id="strategicPanel" class="kpi-grid"></div>
-<div id="aiInsights"></div>
-<button onclick="exportPDF()">Download Investor Report</button>
+<h2>Executive KPIs</h2>
+<div id="kpis" class="kpi-grid"></div>
 </section>
 
 <section class="card">
-<h2>Analytics & Forecast</h2>
-<canvas id="chartMain"></canvas>
-</section>
+<h2>Performance Visualizations</h2>
 
-<section class="card">
-<h2>UK Innovator Innovation Statement</h2>
-<div id="innovationStatement"></div>
+<canvas id="revenueProfitChart"></canvas>
+<canvas id="expenseChart"></canvas>
+<canvas id="marginChart"></canvas>
+<canvas id="customerChart"></canvas>
+
 </section>
 
 <script src="script.js"></script>
