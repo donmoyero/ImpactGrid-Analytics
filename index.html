@@ -1,46 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>ImpactGrid Dashboard</title>
-
-<!-- Chart.js (stable CDN) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Analytical Dashboard</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>ImpactGrid Professional Dashboard</h1>
+    <header>
+        <h1>Analytical Tool</h1>
+    </header>
 
-<section class="card">
-<h2>Create Business</h2>
-<input type="text" id="businessName" placeholder="Business Name">
-<button onclick="createBusiness()">Create</button>
-<select id="businessSelector" onchange="loadBusiness()"></select>
-</section>
+    <section class="controls">
+        <input type="file" id="fileInput" accept=".csv">
+        
+        <select id="columnSelect">
+            <option value="">Select Column</option>
+        </select>
+        
+        <button id="analyzeBtn">Analyze</button>
+    </section>
 
-<section class="card">
-<h2>Add Monthly Data</h2>
-<input type="month" id="month">
-<input type="number" id="revenue" placeholder="Revenue">
-<input type="number" id="expenses" placeholder="Expenses">
-<input type="number" id="customers" placeholder="Customers">
-<button onclick="addData()">Add</button>
-</section>
+    <section class="metrics">
+        <div class="card">
+            <h3>Count</h3>
+            <p id="count"></p>
+        </div>
+        <div class="card">
+            <h3>Mean</h3>
+            <p id="mean"></p>
+        </div>
+        <div class="card">
+            <h3>Median</h3>
+            <p id="median"></p>
+        </div>
+    </section>
 
-<section class="card">
-<h2>KPIs</h2>
-<div id="kpis"></div>
-</section>
+    <section class="chart-section">
+        <canvas id="chartCanvas"></canvas>
+    </section>
 
-<section class="card">
-<h2>Charts</h2>
-<canvas id="revenueChart"></canvas>
-<canvas id="profitChart"></canvas>
-<canvas id="customerChart"></canvas>
-</section>
+    <section class="table-section">
+        <table id="dataTable"></table>
+    </section>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="script.js"></script>
 
 </body>
