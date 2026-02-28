@@ -1,1 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ImpactGrid Analytics Tool</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
 
+<h1>ImpactGrid Business Analytics Engine</h1>
+
+<div class="container">
+
+    <div class="form-section">
+        <h2>Enter Business Data</h2>
+
+        <input type="number" id="revenue" placeholder="Monthly Revenue">
+        <input type="number" id="expenses" placeholder="Monthly Expenses">
+        <input type="number" id="marketing" placeholder="Marketing Budget">
+        <input type="number" id="employees" placeholder="Number of Employees">
+        <input type="number" id="growth" placeholder="Monthly Growth %">
+
+        <button onclick="analyze()">Generate Analytics</button>
+    </div>
+
+    <div class="results">
+        <h2>Key Metrics</h2>
+        <p id="profit"></p>
+        <p id="margin"></p>
+        <p id="burn"></p>
+    </div>
+
+    <canvas id="financeChart"></canvas>
+    <canvas id="projectionChart"></canvas>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
