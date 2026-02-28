@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>ImpactGrid Analytical Tool</title>
     <link rel="stylesheet" href="style.css">
+
+    <!-- Chart.js MUST load before script.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -21,7 +24,7 @@
         <input type="number" id="fixedCosts" placeholder="Fixed Costs">
         <input type="number" id="customers" placeholder="Customers">
         <input type="number" id="marketing" placeholder="Marketing Spend">
-        <button onclick="addData()">Add Month</button>
+        <button id="addBtn">Add Month</button>
     </div>
 </section>
 
@@ -36,16 +39,17 @@
 </section>
 
 <section class="card">
-    <h2>Forecast & Analysis</h2>
-    <canvas id="forecastChart"></canvas>
-</section>
-
-<section class="card">
-    <h2>Performance Charts</h2>
+    <h2>Revenue & Profit Trends</h2>
     <canvas id="revenueChart"></canvas>
     <canvas id="profitChart"></canvas>
 </section>
 
+<section class="card">
+    <h2>6-Month Forecast</h2>
+    <canvas id="forecastChart"></canvas>
+</section>
+
 <script src="script.js"></script>
+
 </body>
 </html>
