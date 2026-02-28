@@ -1,164 +1,172 @@
 let businesses = JSON.parse(localStorage.getItem("impactgrid")) || {};
 let currentBusiness = null;
-
-let chartRevenueProfit, chartForecast;
+let chartMain;
 
 initSelector();
 
-function createBusiness() {
-    const name = document.getElementById("businessName").value.trim();
-    if (!name) return alert("Enter business name");
-    if (!businesses[name]) businesses[name] = [];
-    save();
-    initSelector();
-    document.getElementById("businessName").value = "";
+function createBusiness(){
+const name=document.getElementById("businessName").value.trim();
+if(!name) return alert("Enter business name");
+if(!businesses[name]) businesses[name]=[];
+save();
+initSelector();
 }
 
-function initSelector() {
-    const selector = document.getElementById("businessSelector");
-    selector.innerHTML = "<option value=''>Select Business</option>";
-    Object.keys(businesses).forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        selector.appendChild(opt);
-    });
+function initSelector(){
+const sel=document.getElementById("businessSelector");
+sel.innerHTML="<option value=''>Select Business</option>";
+Object.keys(businesses).forEach(name=>{
+let o=document.createElement("option");
+o.value=name;o.textContent=name;sel.appendChild(o);
+});
 }
 
-function loadBusiness() {
-    currentBusiness = document.getElementById("businessSelector").value;
-    updateDashboard();
+function loadBusiness(){
+currentBusiness=document.getElementById("businessSelector").value;
+updateDashboard();
 }
 
-function addData() {
-    if (!currentBusiness) return alert("Select business first");
+function addData(){
+if(!currentBusiness) return alert("Select business first");
 
-    const month = document.getElementById("month").value;
-    const revenue = +document.getElementById("revenue").value || 0;
-    const expenses = +document.getElementById("expenses").value || 0;
-    const fixedCosts = +document.getElementById("fixedCosts").value || 0;
-    const customers = +document.getElementById("customers").value || 1;
-    const marketing = +document.getElementById("marketing").value || 0;
+const month=document.getElementById("month").value;
+const revenue=+document.getElementById("revenue").value||0;
+const expenses=+document.getElementById("expenses").value||0;
+const fixedCosts=+document.getElementById("fixedCosts").value||0;
+const customers=+document.getElementById("customers").value||1;
+const marketing=+document.getElementById("marketing").value||0;
 
-    if (!month || revenue <= 0) return alert("Enter valid data");
+if(!month||revenue<=0) return alert("Enter valid data");
 
-    const profit = revenue - expenses;
-    const margin = revenue ? (profit / revenue) * 100 : 0;
-    const burn = profit - fixedCosts;
+const profit=revenue-expenses;
+const margin=(profit/revenue)*100;
+const burn=profit-fixedCosts;
 
-    businesses[currentBusiness].push({
-        month, revenue, expenses, fixedCosts,
-        customers, marketing, profit, margin, burn
-    });
+businesses[currentBusiness].push({
+month,revenue,expenses,fixedCosts,
+customers,marketing,profit,margin,burn
+});
 
-    save();
-    updateDashboard();
+save();
+updateDashboard();
 }
 
-function updateDashboard() {
-    if (!currentBusiness) return;
-    const data = businesses[currentBusiness];
-    if (!data.length) return;
+function updateDashboard(){
+if(!currentBusiness) return;
+const data=businesses[currentBusiness];
+if(!data||data.length===0) return;
 
-    renderStrategicPanel(data);
-    renderCharts(data);
+renderStrategicPanel(data);
+renderChart(data);
+generateInnovationStatement();
 }
 
-function renderStrategicPanel(data) {
-    const panel = document.getElementById("strategyPanel");
-    const rec = document.getElementById("recommendations");
-    panel.innerHTML="";
-    rec.innerHTML="";
+function renderStrategicPanel(data){
+const panel=document.getElementById("strategicPanel");
+const insights=document.getElementById("aiInsights");
+panel.innerHTML="";insights.innerHTML="";
 
-    const growth = growthRate(data,"revenue");
-    const burnRate = avg(data,"burn");
-    const runway = burnRate<0 ? (10000/Math.abs(burnRate)).toFixed(1) : "Stable";
+const growth=growthRate(data);
+const avgMargin=avg(data,"margin");
+const burnRate=avg(data,"burn");
+const riskProbability=calculateRisk(data);
+const anomaly=detectAnomaly(data);
 
-    const scalingIndex = growth>15?85:50;
+[
+["Growth Rate",growth.toFixed(1)+"%"],
+["Average Margin",avgMargin.toFixed(1)+"%"],
+["Risk Probability",riskProbability+"%"],
+["Anomaly Detected",anomaly?"YES":"NO"]
+].forEach(m=>{
+let div=document.createElement("div");
+div.className="kpi";
+div.innerHTML=`<h3>${m[0]}</h3><p>${m[1]}</p>`;
+panel.appendChild(div);
+});
 
-    [["Revenue Growth",growth.toFixed(1)+"%"],
-     ["Burn Rate",burnRate.toFixed(2)],
-     ["Runway (months est.)",runway],
-     ["Scaling Index",scalingIndex+"/100"]]
-     .forEach(m=>{
-        const div=document.createElement("div");
-        div.className="kpi";
-        div.innerHTML=`<h3>${m[0]}</h3><p>${m[1]}</p>`;
-        panel.appendChild(div);
-     });
+let benchmarkText = avgMargin>20 ?
+"Above SME benchmark performance." :
+"Below industry benchmark. Optimisation required.";
 
-    if(growth>10)
-        rec.innerHTML="🚀 High growth trajectory detected.";
-    else
-        rec.innerHTML="⚠ Growth acceleration required.";
+insights.innerHTML=`<p>${benchmarkText}</p>`;
 }
 
-function renderCharts(data) {
-    destroyCharts();
+function renderChart(data){
+if(chartMain) chartMain.destroy();
 
-    const months=data.map(d=>d.month);
-    const revenues=data.map(d=>d.revenue);
+const months=data.map(d=>d.month);
+const revenues=data.map(d=>d.revenue);
 
-    chartRevenueProfit=new Chart(document.getElementById("chartRevenueProfit"),{
-        type:"line",
-        data:{
-            labels:months,
-            datasets:[
-                {label:"Revenue",data:revenues,tension:0.3},
-                {label:"Profit",data:data.map(d=>d.profit),tension:0.3}
-            ]
-        }
-    });
-
-    const forecast = forecastRevenue(data);
-    const futureLabels = forecast.labels;
-    const forecastData = forecast.values;
-
-    chartForecast=new Chart(document.getElementById("chartForecast"),{
-        type:"line",
-        data:{
-            labels:[...months,...futureLabels],
-            datasets:[
-                {
-                    label:"Revenue (Historical)",
-                    data:[...revenues,...Array(futureLabels.length).fill(null)],
-                    tension:0.3
-                },
-                {
-                    label:"Revenue Forecast (6 Months)",
-                    data:[...Array(months.length).fill(null),...forecastData],
-                    borderDash:[5,5],
-                    tension:0.3
-                }
-            ]
-        }
-    });
+let forecastData=[];
+if(data.length>=2){
+let growth=growthRate(data)/100;
+let last=revenues[revenues.length-1];
+for(let i=0;i<6;i++){
+last=last*(1+growth);
+forecastData.push(last);
+}
 }
 
-function forecastRevenue(data){
-    const growth=growthRate(data,"revenue")/100;
-    let last=data[data.length-1].revenue;
-    let values=[];
-    let labels=[];
-    for(let i=1;i<=6;i++){
-        last=last*(1+growth);
-        values.push(last);
-        labels.push("Forecast "+i);
-    }
-    return {values,labels};
+chartMain=new Chart(document.getElementById("chartMain"),{
+type:"line",
+data:{
+labels:[...months,...Array(6).fill("Forecast")],
+datasets:[
+{
+label:"Revenue",
+data:[...revenues,...Array(6).fill(null)]
+},
+{
+label:"Forecast",
+data:[...Array(months.length).fill(null),...forecastData],
+borderDash:[5,5]
+}
+]
+}
+});
 }
 
-function destroyCharts(){
-    if(chartRevenueProfit) chartRevenueProfit.destroy();
-    if(chartForecast) chartForecast.destroy();
+function detectAnomaly(data){
+if(data.length<2) return false;
+const last=data[data.length-1].revenue;
+const prev=data[data.length-2].revenue;
+return Math.abs(last-prev)/prev>0.5;
 }
 
-function avg(data,key){return data.reduce((a,b)=>a+b[key],0)/data.length;}
-function growthRate(data,key){
-    if(data.length<2)return 0;
-    const last=data[data.length-1][key];
-    const prev=data[data.length-2][key];
-    if(prev===0)return 0;
-    return ((last-prev)/prev)*100;
+function calculateRisk(data){
+const growth=growthRate(data);
+const margin=avg(data,"margin");
+let risk=50;
+if(growth<0) risk+=20;
+if(margin<10) risk+=20;
+return Math.min(100,risk);
 }
-function save(){localStorage.setItem("impactgrid",JSON.stringify(businesses));}
+
+function exportPDF(){
+const { jsPDF } = window.jspdf;
+const doc=new jsPDF();
+doc.text("ImpactGrid Investor Intelligence Report",20,20);
+doc.text("Business: "+currentBusiness,20,30);
+doc.save("ImpactGrid_Report.pdf");
+}
+
+function generateInnovationStatement(){
+document.getElementById("innovationStatement").innerHTML=
+"ImpactGrid leverages AI-driven predictive financial modelling, anomaly detection, and SME benchmarking to provide automated strategic intelligence for small and medium enterprises in the UK market.";
+}
+
+function growthRate(data){
+if(data.length<2) return 0;
+const last=data[data.length-1].revenue;
+const prev=data[data.length-2].revenue;
+if(prev===0) return 0;
+return ((last-prev)/prev)*100;
+}
+
+function avg(data,key){
+return data.reduce((a,b)=>a+b[key],0)/data.length;
+}
+
+function save(){
+localStorage.setItem("impactgrid",JSON.stringify(businesses));
+}
