@@ -1,172 +1,216 @@
 let businesses = JSON.parse(localStorage.getItem("impactgrid")) || {};
 let currentBusiness = null;
-let chartMain;
 
-initSelector();
+let revenueProfitChart;
+let expenseChart;
+let marginChart;
+let customerChart;
 
-function createBusiness(){
-const name=document.getElementById("businessName").value.trim();
-if(!name) return alert("Enter business name");
-if(!businesses[name]) businesses[name]=[];
-save();
-initSelector();
+const createBtn = document.getElementById("createBtn");
+const addBtn = document.getElementById("addBtn");
+const selector = document.getElementById("businessSelector");
+
+init();
+
+function init() {
+populateSelector();
+
+createBtn.addEventListener("click", createBusiness);
+addBtn.addEventListener("click", addData);
+selector.addEventListener("change", loadBusiness);
 }
 
-function initSelector(){
-const sel=document.getElementById("businessSelector");
-sel.innerHTML="<option value=''>Select Business</option>";
-Object.keys(businesses).forEach(name=>{
-let o=document.createElement("option");
-o.value=name;o.textContent=name;sel.appendChild(o);
+function createBusiness() {
+const name = document.getElementById("businessName").value.trim();
+if (!name) return alert("Enter business name");
+
+if (!businesses[name]) businesses[name] = [];
+
+save();
+populateSelector();
+document.getElementById("businessName").value = "";
+}
+
+function populateSelector() {
+selector.innerHTML = "<option value=''>Select Business</option>";
+
+Object.keys(businesses).forEach(name => {
+const option = document.createElement("option");
+option.value = name;
+option.textContent = name;
+selector.appendChild(option);
 });
 }
 
-function loadBusiness(){
-currentBusiness=document.getElementById("businessSelector").value;
-updateDashboard();
+function loadBusiness() {
+currentBusiness = selector.value;
+renderDashboard();
 }
 
-function addData(){
-if(!currentBusiness) return alert("Select business first");
+function addData() {
+if (!currentBusiness) return alert("Select business first");
 
-const month=document.getElementById("month").value;
-const revenue=+document.getElementById("revenue").value||0;
-const expenses=+document.getElementById("expenses").value||0;
-const fixedCosts=+document.getElementById("fixedCosts").value||0;
-const customers=+document.getElementById("customers").value||1;
-const marketing=+document.getElementById("marketing").value||0;
+const month = document.getElementById("month").value;
+const revenue = Number(document.getElementById("revenue").value);
+const expenses = Number(document.getElementById("expenses").value);
+const fixedCosts = Number(document.getElementById("fixedCosts").value);
+const customers = Number(document.getElementById("customers").value);
 
-if(!month||revenue<=0) return alert("Enter valid data");
+if (!month || revenue <= 0) return alert("Enter valid month and revenue");
 
-const profit=revenue-expenses;
-const margin=(profit/revenue)*100;
-const burn=profit-fixedCosts;
+const profit = revenue - expenses;
+const margin = (profit / revenue) * 100;
 
 businesses[currentBusiness].push({
-month,revenue,expenses,fixedCosts,
-customers,marketing,profit,margin,burn
+month,
+revenue,
+expenses,
+fixedCosts,
+customers,
+profit,
+margin
 });
 
 save();
-updateDashboard();
+renderDashboard();
 }
 
-function updateDashboard(){
-if(!currentBusiness) return;
-const data=businesses[currentBusiness];
-if(!data||data.length===0) return;
+function renderDashboard() {
+if (!currentBusiness) return;
+const data = businesses[currentBusiness];
+if (!data || data.length === 0) return;
 
-renderStrategicPanel(data);
-renderChart(data);
-generateInnovationStatement();
+renderKPIs(data);
+renderCharts(data);
 }
 
-function renderStrategicPanel(data){
-const panel=document.getElementById("strategicPanel");
-const insights=document.getElementById("aiInsights");
-panel.innerHTML="";insights.innerHTML="";
+function renderKPIs(data) {
+const container = document.getElementById("kpis");
+container.innerHTML = "";
 
-const growth=growthRate(data);
-const avgMargin=avg(data,"margin");
-const burnRate=avg(data,"burn");
-const riskProbability=calculateRisk(data);
-const anomaly=detectAnomaly(data);
+const totalRevenue = sum(data, "revenue");
+const totalProfit = sum(data, "profit");
+const avgMargin = average(data, "margin");
 
 [
-["Growth Rate",growth.toFixed(1)+"%"],
-["Average Margin",avgMargin.toFixed(1)+"%"],
-["Risk Probability",riskProbability+"%"],
-["Anomaly Detected",anomaly?"YES":"NO"]
-].forEach(m=>{
-let div=document.createElement("div");
-div.className="kpi";
-div.innerHTML=`<h3>${m[0]}</h3><p>${m[1]}</p>`;
-panel.appendChild(div);
+["Total Revenue", "£" + totalRevenue.toFixed(2)],
+["Total Profit", "£" + totalProfit.toFixed(2)],
+["Average Margin", avgMargin.toFixed(1) + "%"]
+].forEach(item => {
+const div = document.createElement("div");
+div.className = "kpi";
+div.innerHTML = `<div>${item[0]}</div><div>${item[1]}</div>`;
+container.appendChild(div);
 });
-
-let benchmarkText = avgMargin>20 ?
-"Above SME benchmark performance." :
-"Below industry benchmark. Optimisation required.";
-
-insights.innerHTML=`<p>${benchmarkText}</p>`;
 }
 
-function renderChart(data){
-if(chartMain) chartMain.destroy();
+function renderCharts(data) {
+destroyCharts();
 
-const months=data.map(d=>d.month);
-const revenues=data.map(d=>d.revenue);
+const months = data.map(d => d.month);
 
-let forecastData=[];
-if(data.length>=2){
-let growth=growthRate(data)/100;
-let last=revenues[revenues.length-1];
-for(let i=0;i<6;i++){
-last=last*(1+growth);
-forecastData.push(last);
-}
-}
-
-chartMain=new Chart(document.getElementById("chartMain"),{
-type:"line",
-data:{
-labels:[...months,...Array(6).fill("Forecast")],
-datasets:[
+revenueProfitChart = new Chart(
+document.getElementById("revenueProfitChart"),
 {
-label:"Revenue",
-data:[...revenues,...Array(6).fill(null)]
+type: "line",
+data: {
+labels: months,
+datasets: [
+{
+label: "Revenue",
+data: data.map(d => d.revenue),
+borderWidth: 3,
+tension: 0.3
 },
 {
-label:"Forecast",
-data:[...Array(months.length).fill(null),...forecastData],
-borderDash:[5,5]
+label: "Profit",
+data: data.map(d => d.profit),
+borderWidth: 3,
+tension: 0.3
+}
+]
+},
+options: { responsive: true }
+}
+);
+
+expenseChart = new Chart(
+document.getElementById("expenseChart"),
+{
+type: "bar",
+data: {
+labels: months,
+datasets: [
+{
+label: "Operational Expenses",
+data: data.map(d => d.expenses)
+},
+{
+label: "Fixed Costs",
+data: data.map(d => d.fixedCosts)
+}
+]
+},
+options: {
+responsive: true,
+scales: {
+x: { stacked: true },
+y: { stacked: true }
+}
+}
+}
+);
+
+marginChart = new Chart(
+document.getElementById("marginChart"),
+{
+type: "line",
+data: {
+labels: months,
+datasets: [
+{
+label: "Profit Margin (%)",
+data: data.map(d => d.margin),
+tension: 0.3
 }
 ]
 }
-});
+}
+);
+
+customerChart = new Chart(
+document.getElementById("customerChart"),
+{
+type: "line",
+data: {
+labels: months,
+datasets: [
+{
+label: "Customers",
+data: data.map(d => d.customers),
+tension: 0.3
+}
+]
+}
+}
+);
 }
 
-function detectAnomaly(data){
-if(data.length<2) return false;
-const last=data[data.length-1].revenue;
-const prev=data[data.length-2].revenue;
-return Math.abs(last-prev)/prev>0.5;
+function destroyCharts() {
+if (revenueProfitChart) revenueProfitChart.destroy();
+if (expenseChart) expenseChart.destroy();
+if (marginChart) marginChart.destroy();
+if (customerChart) customerChart.destroy();
 }
 
-function calculateRisk(data){
-const growth=growthRate(data);
-const margin=avg(data,"margin");
-let risk=50;
-if(growth<0) risk+=20;
-if(margin<10) risk+=20;
-return Math.min(100,risk);
+function sum(data, key) {
+return data.reduce((acc, item) => acc + item[key], 0);
 }
 
-function exportPDF(){
-const { jsPDF } = window.jspdf;
-const doc=new jsPDF();
-doc.text("ImpactGrid Investor Intelligence Report",20,20);
-doc.text("Business: "+currentBusiness,20,30);
-doc.save("ImpactGrid_Report.pdf");
+function average(data, key) {
+return sum(data, key) / data.length;
 }
 
-function generateInnovationStatement(){
-document.getElementById("innovationStatement").innerHTML=
-"ImpactGrid leverages AI-driven predictive financial modelling, anomaly detection, and SME benchmarking to provide automated strategic intelligence for small and medium enterprises in the UK market.";
-}
-
-function growthRate(data){
-if(data.length<2) return 0;
-const last=data[data.length-1].revenue;
-const prev=data[data.length-2].revenue;
-if(prev===0) return 0;
-return ((last-prev)/prev)*100;
-}
-
-function avg(data,key){
-return data.reduce((a,b)=>a+b[key],0)/data.length;
-}
-
-function save(){
-localStorage.setItem("impactgrid",JSON.stringify(businesses));
+function save() {
+localStorage.setItem("impactgrid", JSON.stringify(businesses));
 }
