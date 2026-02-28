@@ -45,7 +45,7 @@ button:hover {
 
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 15px;
 }
 
@@ -54,6 +54,11 @@ button:hover {
     padding: 15px;
     border-radius: 8px;
     text-align: center;
+}
+
+#recommendations {
+    margin-top: 20px;
+    font-weight: bold;
 }
 
 canvas {
