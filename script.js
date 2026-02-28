@@ -1,42 +1,57 @@
 let businessData = [];
-
-let revenueChart;
-let profitChart;
+let revenueChart = null;
+let profitChart = null;
 
 document.getElementById("addData").addEventListener("click", addData);
-document.getElementById("analyze").addEventListener("click", analyze);
+document.getElementById("runAnalysis").addEventListener("click", runAnalysis);
 
 function addData() {
-  const month = document.getElementById("month").value;
+  const month = document.getElementById("month").value.trim();
   const revenue = parseFloat(document.getElementById("revenue").value);
   const costs = parseFloat(document.getElementById("costs").value);
   const marketing = parseFloat(document.getElementById("marketing").value);
   const customers = parseFloat(document.getElementById("customers").value);
 
-  if (!month || isNaN(revenue) || isNaN(costs)) return;
+  if (!month || isNaN(revenue) || isNaN(costs)) {
+    alert("Please enter valid Month, Revenue and Costs.");
+    return;
+  }
 
   businessData.push({
     month,
     revenue,
     costs,
-    marketing,
-    customers
+    marketing: marketing || 0,
+    customers: customers || 0
   });
 
-  alert("Data Added Successfully");
+  alert("Data added successfully.");
+  clearInputs();
 }
 
-function analyze() {
-  if (businessData.length === 0) return;
+function clearInputs() {
+  document.getElementById("month").value = "";
+  document.getElementById("revenue").value = "";
+  document.getElementById("costs").value = "";
+  document.getElementById("marketing").value = "";
+  document.getElementById("customers").value = "";
+}
 
-  const totalRevenue = businessData.reduce((a,b)=>a+b.revenue,0);
-  const totalCosts = businessData.reduce((a,b)=>a+b.costs,0);
-  const totalMarketing = businessData.reduce((a,b)=>a+b.marketing,0);
-  const totalCustomers = businessData.reduce((a,b)=>a+b.customers,0);
+function runAnalysis() {
+  if (businessData.length === 0) {
+    alert("Please add data first.");
+    return;
+  }
+
+  const totalRevenue = businessData.reduce((sum, d) => sum + d.revenue, 0);
+  const totalCosts = businessData.reduce((sum, d) => sum + d.costs, 0);
+  const totalMarketing = businessData.reduce((sum, d) => sum + d.marketing, 0);
+  const totalCustomers = businessData.reduce((sum, d) => sum + d.customers, 0);
 
   const totalProfit = totalRevenue - totalCosts;
-  const growthRate = calculateGrowth();
-  const cac = totalMarketing / totalCustomers;
+
+  const growthRate = calculateGrowthRate();
+  const cac = totalCustomers > 0 ? totalMarketing / totalCustomers : 0;
 
   document.getElementById("totalRevenue").textContent = "$" + totalRevenue.toFixed(2);
   document.getElementById("totalProfit").textContent = "$" + totalProfit.toFixed(2);
@@ -46,43 +61,47 @@ function analyze() {
   renderCharts();
 }
 
-function calculateGrowth() {
+function calculateGrowthRate() {
   if (businessData.length < 2) return 0;
 
   const first = businessData[0].revenue;
   const last = businessData[businessData.length - 1].revenue;
 
+  if (first === 0) return 0;
+
   return ((last - first) / first) * 100;
 }
 
 function renderCharts() {
-  const months = businessData.map(d=>d.month);
-  const revenues = businessData.map(d=>d.revenue);
-  const profits = businessData.map(d=>d.revenue - d.costs);
-
-  const ctx1 = document.getElementById("revenueChart");
-  const ctx2 = document.getElementById("profitChart");
+  const months = businessData.map(d => d.month);
+  const revenues = businessData.map(d => d.revenue);
+  const profits = businessData.map(d => d.revenue - d.costs);
 
   if (revenueChart) revenueChart.destroy();
   if (profitChart) profitChart.destroy();
 
-  revenueChart = new Chart(ctx1, {
+  const revenueCtx = document.getElementById("revenueChart").getContext("2d");
+  const profitCtx = document.getElementById("profitChart").getContext("2d");
+
+  revenueChart = new Chart(revenueCtx, {
     type: "line",
     data: {
       labels: months,
       datasets: [{
         label: "Revenue Trend",
-        data: revenues
+        data: revenues,
+        borderWidth: 2,
+        tension: 0.3
       }]
     }
   });
 
-  profitChart = new Chart(ctx2, {
+  profitChart = new Chart(profitCtx, {
     type: "bar",
     data: {
       labels: months,
       datasets: [{
-        label: "Profit by Month",
+        label: "Monthly Profit",
         data: profits
       }]
     }
