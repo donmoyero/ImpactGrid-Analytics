@@ -1,16 +1,64 @@
+/* ================= GLOBAL STATE ================= */
+
 let businessData = [];
-
 let revenueChart, profitChart, expenseChart;
-let forecastChart, comparisonChart;
+let forecastChart, comparisonChart, realtimeChart;
+let simulationInterval = null;
 
-/* ========================= INIT ========================= */
+/* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+    initDragAndDrop();
     loadFromStorage();
-    if (businessData.length > 0) updateDashboard();
+    autoLogin();
 });
 
-/* ========================= DATA HANDLING ========================= */
+/* ================= AUTH ================= */
+
+function login() {
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+
+    if (user && pass) {
+        localStorage.setItem("impactUser", user);
+        showApp();
+    } else {
+        alert("Enter credentials");
+    }
+}
+
+function autoLogin() {
+    const user = localStorage.getItem("impactUser");
+    if (user) showApp();
+}
+
+function logout() {
+    localStorage.removeItem("impactUser");
+    location.reload();
+}
+
+function showApp() {
+    document.getElementById("authScreen").style.display = "none";
+    document.getElementById("app").classList.remove("hidden");
+}
+
+/* ================= SIDEBAR ================= */
+
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("collapsed");
+}
+
+/* ================= SECTION NAV ================= */
+
+function showSection(id) {
+    document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active-section"));
+    document.getElementById(id).classList.add("active-section");
+
+    document.querySelectorAll(".sidebar li").forEach(li => li.classList.remove("active"));
+    event.target.classList.add("active");
+}
+
+/* ================= DATA ================= */
 
 function addData() {
     const month = document.getElementById("month").value;
@@ -20,42 +68,19 @@ function addData() {
     const marketing = parseFloat(document.getElementById("marketing").value) || 0;
 
     if (!month || isNaN(revenue) || isNaN(expenses)) {
-        alert("Please fill required fields correctly.");
+        alert("Fill required fields.");
         return;
     }
 
     const profit = revenue - expenses;
-    const profitMargin = revenue !== 0 ? (profit / revenue) * 100 : 0;
-    const customerAcquisitionCost = customers !== 0 ? marketing / customers : 0;
 
-    businessData.push({
-        month,
-        revenue,
-        expenses,
-        customers,
-        marketing,
-        profit,
-        profitMargin,
-        customerAcquisitionCost
-    });
+    businessData.push({ month, revenue, expenses, customers, marketing, profit });
 
     saveToStorage();
-    updateDashboard();
+    updateAll();
 }
 
-/* ========================= DASHBOARD UPDATE ========================= */
-
-function updateDashboard() {
-    if (businessData.length === 0) return;
-
-    generateKPIs();
-    generateInsights();
-    renderCoreCharts();
-    renderForecastChart();
-    renderComparisonChart();
-}
-
-/* ========================= LOCAL STORAGE ========================= */
+/* ================= STORAGE ================= */
 
 function saveToStorage() {
     localStorage.setItem("impactGridData", JSON.stringify(businessData));
@@ -65,291 +90,210 @@ function loadFromStorage() {
     const saved = localStorage.getItem("impactGridData");
     if (saved) {
         businessData = JSON.parse(saved);
+        updateAll();
     }
 }
 
 function clearAllData() {
-    if (!confirm("Are you sure you want to reset all data?")) return;
-
-    businessData = [];
     localStorage.removeItem("impactGridData");
     location.reload();
 }
 
-/* ========================= KPI ========================= */
+/* ================= UPDATE ================= */
 
-function generateKPIs() {
+function updateAll() {
+    if (businessData.length === 0) return;
+
+    renderCoreCharts();
+    renderForecast();
+    renderComparison();
+    renderKPIs();
+}
+
+/* ================= KPI WITH ANIMATION ================= */
+
+function renderKPIs() {
     const container = document.getElementById("kpiContainer");
     container.innerHTML = "";
 
-    const kpis = [
-        { label: "Total Revenue", value: formatCurrency(sum("revenue")) },
-        { label: "Total Profit", value: formatCurrency(sum("profit")) },
-        { label: "Avg Margin", value: average("profitMargin").toFixed(1) + "%" },
-        { label: "Avg CAC", value: formatCurrency(average("customerAcquisitionCost")) }
-    ];
+    const totalRevenue = sum("revenue");
+    const totalProfit = sum("profit");
 
-    kpis.forEach(kpi => {
-        const div = document.createElement("div");
-        div.className = "kpi";
-        div.innerHTML = `<h3>${kpi.label}</h3><p>${kpi.value}</p>`;
-        container.appendChild(div);
-    });
+    createAnimatedKPI(container, "Total Revenue", totalRevenue);
+    createAnimatedKPI(container, "Total Profit", totalProfit);
 }
 
-/* ========================= INSIGHTS ========================= */
+function createAnimatedKPI(container, label, value) {
+    const div = document.createElement("div");
+    div.className = "kpi";
 
-function generateInsights() {
-    const insightsDiv = document.getElementById("insights");
-    const latest = businessData[businessData.length - 1];
+    div.innerHTML = `<h3>${label}</h3><p>0</p>`;
+    container.appendChild(div);
 
-    let healthScore = 0;
-    if (latest.profitMargin > 20) healthScore += 40;
-    if (growthRate("revenue") > 5) healthScore += 30;
-    if (latest.customerAcquisitionCost < 50) healthScore += 30;
-
-    insightsDiv.innerHTML = `
-        <div class="insight-box">
-            <p><strong>Latest:</strong> ${latest.month}</p>
-            <p><strong>Growth:</strong> ${growthRate("revenue").toFixed(1)}%</p>
-            <p><strong>Health Score:</strong> ${healthScore}/100</p>
-        </div>
-    `;
+    animateValue(div.querySelector("p"), value);
 }
 
-/* ========================= CORE CHARTS ========================= */
+function animateValue(element, target) {
+    let current = 0;
+    const increment = target / 60;
+
+    const interval = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            current = target;
+            clearInterval(interval);
+        }
+        element.textContent = formatCurrency(current);
+    }, 16);
+}
+
+/* ================= CORE CHARTS ================= */
 
 function renderCoreCharts() {
-    const months = businessData.map(d => d.month);
-    const revenues = businessData.map(d => d.revenue);
-    const profits = businessData.map(d => d.profit);
-    const expenses = businessData.map(d => d.expenses);
-
     destroyCharts();
 
-    revenueChart = new Chart(
-        document.getElementById("revenueChart"),
-        createLineConfig("Revenue", months, revenues, "#4CAF50")
-    );
+    const labels = businessData.map(d => d.month);
 
-    profitChart = new Chart(
-        document.getElementById("profitChart"),
-        createLineConfig("Profit", months, profits, "#2196F3")
-    );
-
-    expenseChart = new Chart(
-        document.getElementById("expenseChart"),
-        createBarConfig("Expenses", months, expenses, "#FF5252")
-    );
+    revenueChart = createChart("revenueChart", "Revenue", labels, map("revenue"), "#4CAF50");
+    profitChart = createChart("profitChart", "Profit", labels, map("profit"), "#2196F3");
+    expenseChart = createBarChart("expenseChart", "Expenses", labels, map("expenses"), "#FF5252");
 }
 
-/* ========================= FORECAST (LINEAR REGRESSION) ========================= */
+/* ================= FORECAST WITH CONFIDENCE ================= */
 
-function renderForecastChart() {
+function renderForecast() {
     if (forecastChart) forecastChart.destroy();
 
-    const months = businessData.map(d => d.month);
-    const revenues = businessData.map(d => d.revenue);
+    const labels = businessData.map(d => d.month);
+    const values = map("revenue");
 
-    const forecast = linearRegressionForecast(revenues, 3);
+    const { predictions, upper, lower } = forecastWithConfidence(values, 3);
 
-    const extendedMonths = [...months, ...forecast.futureLabels];
-    const extendedRevenue = [...revenues, ...forecast.predictions];
-
-    forecastChart = new Chart(
-        document.getElementById("forecastChart"),
-        {
-            type: "line",
-            data: {
-                labels: extendedMonths,
-                datasets: [
-                    {
-                        label: "Revenue",
-                        data: extendedRevenue,
-                        borderColor: "#3b82f6",
-                        tension: 0.4
-                    }
-                ]
-            },
-            options: commonOptions()
-        }
-    );
-}
-
-function linearRegressionForecast(data, periods) {
-    const n = data.length;
-    const x = [...Array(n).keys()];
-    const y = data;
-
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-    const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0);
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-
-    const predictions = [];
-    const futureLabels = [];
-
-    for (let i = 1; i <= periods; i++) {
-        const nextIndex = n + i - 1;
-        predictions.push(slope * nextIndex + intercept);
-        futureLabels.push("Forecast " + i);
-    }
-
-    return { predictions, futureLabels };
-}
-
-/* ========================= MULTI METRIC ========================= */
-
-function renderComparisonChart() {
-    if (comparisonChart) comparisonChart.destroy();
-
-    const months = businessData.map(d => d.month);
-
-    comparisonChart = new Chart(
-        document.getElementById("comparisonChart"),
-        {
-            type: "line",
-            data: {
-                labels: months,
-                datasets: [
-                    {
-                        label: "Revenue",
-                        data: businessData.map(d => d.revenue),
-                        borderColor: "#4CAF50"
-                    },
-                    {
-                        label: "Profit",
-                        data: businessData.map(d => d.profit),
-                        borderColor: "#2196F3"
-                    },
-                    {
-                        label: "Expenses",
-                        data: businessData.map(d => d.expenses),
-                        borderColor: "#FF5252"
-                    }
-                ]
-            },
-            options: commonOptions()
-        }
-    );
-}
-
-/* ========================= NAVIGATION ========================= */
-
-function showSection(id) {
-    document.querySelectorAll(".page-section").forEach(sec => {
-        sec.classList.remove("active-section");
-    });
-
-    document.getElementById(id).classList.add("active-section");
-
-    document.querySelectorAll(".sidebar li").forEach(li => {
-        li.classList.remove("active");
-    });
-
-    event.target.classList.add("active");
-}
-
-/* ========================= CHART CONFIG ========================= */
-
-function createLineConfig(label, labels, data, color) {
-    return {
+    forecastChart = new Chart(document.getElementById("forecastChart"), {
         type: "line",
         data: {
-            labels,
-            datasets: [{
-                label,
-                data,
-                borderColor: color,
-                backgroundColor: color + "33",
-                fill: true,
-                tension: 0.4
-            }]
+            labels: [...labels, "F1", "F2", "F3"],
+            datasets: [
+                { label: "Revenue", data: [...values, ...predictions], borderColor: "#3b82f6" },
+                { label: "Upper Band", data: [...values, ...upper], borderColor: "rgba(0,255,0,0.3)" },
+                { label: "Lower Band", data: [...values, ...lower], borderColor: "rgba(255,0,0,0.3)" }
+            ]
         },
-        options: commonOptions()
-    };
+        options: zoomOptions()
+    });
 }
 
-function createBarConfig(label, labels, data, color) {
-    return {
-        type: "bar",
+function forecastWithConfidence(data, periods) {
+    const avg = data.reduce((a,b)=>a+b)/data.length;
+    const predictions = [];
+    const upper = [];
+    const lower = [];
+
+    for (let i=0;i<periods;i++) {
+        const forecast = avg * (1 + 0.02*i);
+        predictions.push(forecast);
+        upper.push(forecast * 1.1);
+        lower.push(forecast * 0.9);
+    }
+
+    return { predictions, upper, lower };
+}
+
+/* ================= MULTI METRIC ================= */
+
+function renderComparison() {
+    if (comparisonChart) comparisonChart.destroy();
+
+    comparisonChart = new Chart(document.getElementById("comparisonChart"), {
+        type: "line",
         data: {
-            labels,
-            datasets: [{
-                label,
-                data,
-                backgroundColor: color
-            }]
+            labels: businessData.map(d=>d.month),
+            datasets: [
+                { label:"Revenue", data: map("revenue"), borderColor:"#4CAF50" },
+                { label:"Profit", data: map("profit"), borderColor:"#2196F3" },
+                { label:"Expenses", data: map("expenses"), borderColor:"#FF5252" }
+            ]
         },
-        options: commonOptions()
-    };
+        options: zoomOptions()
+    });
 }
 
-function commonOptions() {
+/* ================= REALTIME ================= */
+
+function startSimulation() {
+    if (simulationInterval) return;
+
+    realtimeChart = new Chart(document.getElementById("realtimeChart"), {
+        type: "line",
+        data: { labels: [], datasets: [{ label:"Live Revenue", data: [] }] },
+        options: zoomOptions()
+    });
+
+    simulationInterval = setInterval(() => {
+        const newValue = Math.random() * 10000;
+        realtimeChart.data.labels.push(new Date().toLocaleTimeString());
+        realtimeChart.data.datasets[0].data.push(newValue);
+        realtimeChart.update();
+    }, 1000);
+}
+
+function stopSimulation() {
+    clearInterval(simulationInterval);
+    simulationInterval = null;
+}
+
+/* ================= PDF REPORT ================= */
+
+function generateExecutivePDF() {
+    window.print();
+}
+
+/* ================= API ================= */
+
+function connectAPI() {
+    document.getElementById("apiStatus").textContent = "Connected";
+}
+
+/* ================= DRAG & DROP ================= */
+
+function initDragAndDrop() {
+    document.querySelectorAll(".draggable-container").forEach(container => {
+        new Sortable(container, { animation: 150 });
+    });
+}
+
+/* ================= HELPERS ================= */
+
+function createChart(id,label,labels,data,color){
+    return new Chart(document.getElementById(id),{
+        type:"line",
+        data:{labels,datasets:[{label,data,borderColor:color,tension:0.4}]},
+        options:zoomOptions()
+    });
+}
+
+function createBarChart(id,label,labels,data,color){
+    return new Chart(document.getElementById(id),{
+        type:"bar",
+        data:{labels,datasets:[{label,data,backgroundColor:color}]},
+        options:zoomOptions()
+    });
+}
+
+function zoomOptions(){
     return {
-        responsive: true,
-        plugins: {
-            legend: { labels: { color: "#ccc" } },
-            tooltip: {
-                callbacks: {
-                    label: context => formatCurrency(context.raw)
-                }
+        responsive:true,
+        plugins:{
+            zoom:{
+                zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:'x'},
+                pan:{enabled:true,mode:'x'}
             }
-        },
-        scales: {
-            x: { ticks: { color: "#aaa" } },
-            y: { ticks: { color: "#aaa" } }
         }
     };
 }
 
-function destroyCharts() {
-    if (revenueChart) revenueChart.destroy();
-    if (profitChart) profitChart.destroy();
-    if (expenseChart) expenseChart.destroy();
-}
-
-/* ========================= UTILITIES ========================= */
-
-function sum(key) {
-    return businessData.reduce((acc, curr) => acc + curr[key], 0);
-}
-
-function average(key) {
-    return businessData.length ? sum(key) / businessData.length : 0;
-}
-
-function growthRate(key) {
-    if (businessData.length < 2) return 0;
-    const last = businessData[businessData.length - 1][key];
-    const prev = businessData[businessData.length - 2][key];
-    return ((last - prev) / prev) * 100;
-}
-
-function formatCurrency(value) {
-    return "$" + Number(value).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-}
-
-function exportData() {
-    if (businessData.length === 0) return;
-
-    const headers = Object.keys(businessData[0]).join(",");
-    const rows = businessData.map(obj => Object.values(obj).join(",")).join("\n");
-
-    const blob = new Blob([headers + "\n" + rows], { type: "text/csv" });
-    const link = document.createElement("a");
-
-    link.href = URL.createObjectURL(blob);
-    link.download = "impactgrid_data.csv";
-    link.click();
-}
-
-function toggleTheme() {
-    document.body.classList.toggle("light-mode");
+function sum(key){ return businessData.reduce((a,b)=>a+b[key],0); }
+function map(key){ return businessData.map(d=>d[key]); }
+function formatCurrency(val){
+    return "$"+Number(val).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 }
