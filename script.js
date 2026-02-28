@@ -1,66 +1,86 @@
-let businessData = [];
+let businesses = JSON.parse(localStorage.getItem("impactgrid")) || {};
+let currentBusiness = null;
 let revenueChart = null;
 let profitChart = null;
-let forecastChart = null;
 
-document.getElementById("addBtn").addEventListener("click", addData);
+initializeSelector();
 
-function addData() {
-    const month = document.getElementById("month").value;
-    const revenue = parseFloat(document.getElementById("revenue").value) || 0;
-    const expenses = parseFloat(document.getElementById("expenses").value) || 0;
-    const fixedCosts = parseFloat(document.getElementById("fixedCosts").value) || 0;
-    const customers = parseFloat(document.getElementById("customers").value) || 1;
-    const marketing = parseFloat(document.getElementById("marketing").value) || 0;
+function createBusiness() {
+    const name = document.getElementById("businessName").value.trim();
+    if (!name) return alert("Enter business name");
 
-    if (!month || revenue <= 0) {
-        alert("Please enter at least Month and Revenue.");
-        return;
+    if (!businesses[name]) {
+        businesses[name] = [];
+        saveData();
+        initializeSelector();
     }
 
-    const profit = revenue - expenses;
-    const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
-    const cac = customers > 0 ? marketing / customers : 0;
-    const cashFlow = profit - fixedCosts;
+    document.getElementById("businessName").value = "";
+}
 
-    businessData.push({
-        month,
-        revenue,
-        expenses,
-        fixedCosts,
-        customers,
-        marketing,
-        profit,
-        margin,
-        cac,
-        cashFlow
+function initializeSelector() {
+    const selector = document.getElementById("businessSelector");
+    selector.innerHTML = "<option>Select Business</option>";
+
+    Object.keys(businesses).forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        selector.appendChild(option);
+    });
+}
+
+function loadBusiness() {
+    const name = document.getElementById("businessSelector").value;
+    currentBusiness = name;
+    updateDashboard();
+}
+
+function addData() {
+    if (!currentBusiness) return alert("Select a business first");
+
+    const month = document.getElementById("month").value;
+    const revenue = +document.getElementById("revenue").value || 0;
+    const expenses = +document.getElementById("expenses").value || 0;
+    const fixedCosts = +document.getElementById("fixedCosts").value || 0;
+    const customers = +document.getElementById("customers").value || 1;
+    const marketing = +document.getElementById("marketing").value || 0;
+
+    const profit = revenue - expenses;
+    const margin = revenue ? (profit / revenue) * 100 : 0;
+
+    businesses[currentBusiness].push({
+        month, revenue, expenses, fixedCosts,
+        customers, marketing, profit, margin
     });
 
+    saveData();
     updateDashboard();
 }
 
 function updateDashboard() {
-    if (businessData.length === 0) return;
+    if (!currentBusiness) return;
 
-    generateKPIs();
-    generateInsights();
-    renderCharts();
+    const data = businesses[currentBusiness];
+    if (!data.length) return;
+
+    generateKPIs(data);
+    renderCharts(data);
+    generateInsights(data);
 }
 
-function generateKPIs() {
+function generateKPIs(data) {
     const container = document.getElementById("kpis");
     container.innerHTML = "";
 
-    const totalRevenue = sum("revenue");
-    const totalProfit = sum("profit");
-    const avgMargin = avg("margin");
-    const avgCashFlow = avg("cashFlow");
+    const totalRevenue = sum(data, "revenue");
+    const totalProfit = sum(data, "profit");
+    const avgMargin = avg(data, "margin");
 
     const metrics = [
         ["Total Revenue", `$${totalRevenue.toFixed(2)}`],
         ["Total Profit", `$${totalProfit.toFixed(2)}`],
-        ["Avg Profit Margin", `${avgMargin.toFixed(1)}%`],
-        ["Avg Cash Flow", `$${avgCashFlow.toFixed(2)}`]
+        ["Avg Margin", `${avgMargin.toFixed(1)}%`]
     ];
 
     metrics.forEach(m => {
@@ -71,49 +91,30 @@ function generateKPIs() {
     });
 }
 
-function generateInsights() {
+function generateInsights(data) {
     const insights = document.getElementById("insights");
 
-    const growth = growthRate("revenue");
-    const margin = avg("margin");
+    const margin = avg(data, "margin");
+    let message = margin > 20 ?
+        "Strong profitability performance." :
+        "Profitability needs improvement.";
 
-    let text = "";
-
-    if (margin < 15)
-        text += "<p>⚠ Profit margin is low. Consider reducing costs or adjusting pricing.</p>";
-
-    if (growth < 5)
-        text += "<p>⚠ Revenue growth is slow. Improve marketing or expand market reach.</p>";
-
-    if (text === "")
-        text = "<p>✅ Business performance looks strong. Consider scaling operations.</p>";
-
-    insights.innerHTML = `
-        <p><strong>Revenue Growth:</strong> ${growth.toFixed(2)}%</p>
-        ${text}
-    `;
+    insights.innerHTML = `<p>${message}</p>`;
 }
 
-function renderCharts() {
-    const months = businessData.map(d => d.month);
-    const revenues = businessData.map(d => d.revenue);
-    const profits = businessData.map(d => d.profit);
+function renderCharts(data) {
+    const months = data.map(d => d.month);
+    const revenues = data.map(d => d.revenue);
+    const profits = data.map(d => d.profit);
 
     if (revenueChart) revenueChart.destroy();
     if (profitChart) profitChart.destroy();
-    if (forecastChart) forecastChart.destroy();
 
     revenueChart = new Chart(
         document.getElementById("revenueChart"),
         {
             type: "line",
-            data: {
-                labels: months,
-                datasets: [{
-                    label: "Revenue",
-                    data: revenues
-                }]
-            }
+            data: { labels: months, datasets: [{ label: "Revenue", data: revenues }] }
         }
     );
 
@@ -121,64 +122,34 @@ function renderCharts() {
         document.getElementById("profitChart"),
         {
             type: "line",
-            data: {
-                labels: months,
-                datasets: [{
-                    label: "Profit",
-                    data: profits
-                }]
-            }
+            data: { labels: months, datasets: [{ label: "Profit", data: profits }] }
         }
     );
-
-    if (businessData.length >= 2) {
-        const forecast = forecastRevenue();
-        const futureLabels = forecast.map((_, i) => `Forecast ${i+1}`);
-
-        forecastChart = new Chart(
-            document.getElementById("forecastChart"),
-            {
-                type: "line",
-                data: {
-                    labels: futureLabels,
-                    datasets: [{
-                        label: "6-Month Revenue Forecast",
-                        data: forecast
-                    }]
-                }
-            }
-        );
-    }
 }
 
-function forecastRevenue() {
-    const growth = growthRate("revenue") / 100;
-    let last = businessData[businessData.length - 1].revenue;
-    let forecast = [];
+function exportPDF() {
+    if (!currentBusiness) return alert("Select business first");
 
-    for (let i = 0; i < 6; i++) {
-        last = last * (1 + growth);
-        forecast.push(last);
-    }
+    const doc = new jsPDF();
+    const data = businesses[currentBusiness];
 
-    return forecast;
+    doc.text("ImpactGrid Executive Report", 20, 20);
+    doc.text(`Business: ${currentBusiness}`, 20, 30);
+    doc.text(`Total Revenue: $${sum(data, "revenue").toFixed(2)}`, 20, 40);
+    doc.text(`Total Profit: $${sum(data, "profit").toFixed(2)}`, 20, 50);
+    doc.text(`Avg Margin: ${avg(data, "margin").toFixed(1)}%`, 20, 60);
+
+    doc.save(`${currentBusiness}_ImpactGrid_Report.pdf`);
 }
 
-function sum(key) {
-    return businessData.reduce((acc, curr) => acc + curr[key], 0);
+function sum(data, key) {
+    return data.reduce((a, b) => a + b[key], 0);
 }
 
-function avg(key) {
-    return businessData.length > 0 ? sum(key) / businessData.length : 0;
+function avg(data, key) {
+    return sum(data, key) / data.length;
 }
 
-function growthRate(key) {
-    if (businessData.length < 2) return 0;
-
-    const last = businessData[businessData.length - 1][key];
-    const prev = businessData[businessData.length - 2][key];
-
-    if (prev === 0) return 0;
-
-    return ((last - prev) / prev) * 100;
+function saveData() {
+    localStorage.setItem("impactgrid", JSON.stringify(businesses));
 }
