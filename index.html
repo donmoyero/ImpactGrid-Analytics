@@ -2,21 +2,22 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ImpactGrid - UK Business Intelligence</title>
+    <title>ImpactGrid SaaS</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
 </head>
 <body>
 
-<header>
+<header class="header">
     <h1>ImpactGrid</h1>
-    <p>AI-Driven Business Intelligence Platform</p>
+    <p>Enterprise Business Intelligence</p>
 </header>
 
 <section class="card">
     <h2>Create / Select Business</h2>
-    <input type="text" id="businessName" placeholder="Business Name">
-    <button onclick="createBusiness()">Create</button>
+    <input type="text" id="businessName" placeholder="Enter Business Name">
+    <button onclick="createBusiness()">Create Business</button>
     <select id="businessSelector" onchange="loadBusiness()"></select>
 </section>
 
@@ -25,7 +26,7 @@
     <div class="grid">
         <input type="month" id="month">
         <input type="number" id="revenue" placeholder="Revenue">
-        <input type="number" id="expenses" placeholder="Operational Expenses">
+        <input type="number" id="expenses" placeholder="Expenses">
         <input type="number" id="fixedCosts" placeholder="Fixed Costs">
         <input type="number" id="customers" placeholder="Customers">
         <input type="number" id="marketing" placeholder="Marketing Spend">
@@ -39,14 +40,15 @@
 </section>
 
 <section class="card">
-    <h2>Performance Analytics</h2>
+    <h2>Insights</h2>
+    <div id="insights"></div>
+    <button onclick="exportPDF()">Download Executive Report</button>
+</section>
 
-    <canvas id="chartRevenueProfit"></canvas>
-    <canvas id="chartExpenses"></canvas>
-    <canvas id="chartMargin"></canvas>
-    <canvas id="chartCustomers"></canvas>
-    <canvas id="chartCAC"></canvas>
-
+<section class="card">
+    <h2>Performance Charts</h2>
+    <canvas id="revenueChart"></canvas>
+    <canvas id="profitChart"></canvas>
 </section>
 
 <script src="script.js"></script>
