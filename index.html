@@ -1,28 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>ImpactGrid SaaS</title>
+    <title>ImpactGrid Analytical Tool</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
 </head>
 <body>
 
 <header class="header">
     <h1>ImpactGrid</h1>
-    <p>Enterprise Business Intelligence</p>
+    <p>Advanced Business Intelligence Platform</p>
 </header>
 
 <section class="card">
-    <h2>Create / Select Business</h2>
-    <input type="text" id="businessName" placeholder="Enter Business Name">
-    <button onclick="createBusiness()">Create Business</button>
-    <select id="businessSelector" onchange="loadBusiness()"></select>
-</section>
-
-<section class="card">
-    <h2>Add Monthly Data</h2>
+    <h2>Business Data Entry</h2>
     <div class="grid">
         <input type="month" id="month">
         <input type="number" id="revenue" placeholder="Revenue">
@@ -40,9 +31,13 @@
 </section>
 
 <section class="card">
-    <h2>Insights</h2>
+    <h2>Strategic Insights</h2>
     <div id="insights"></div>
-    <button onclick="exportPDF()">Download Executive Report</button>
+</section>
+
+<section class="card">
+    <h2>Forecast & Analysis</h2>
+    <canvas id="forecastChart"></canvas>
 </section>
 
 <section class="card">
