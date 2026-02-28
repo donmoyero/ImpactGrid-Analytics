@@ -1,141 +1,87 @@
-let businesses = {};
-let currentBusiness = null;
+let rawData = [];
+let chart;
 
-let revenueChart = null;
-let profitChart = null;
-let customerChart = null;
+document.getElementById("fileInput").addEventListener("change", handleFile);
+document.getElementById("analyzeBtn").addEventListener("click", analyzeData);
 
-function createBusiness() {
-const name = document.getElementById("businessName").value.trim();
-if (!name) {
-alert("Enter business name");
-return;
+function handleFile(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const text = e.target.result;
+        parseCSV(text);
+    };
+
+    reader.readAsText(file);
 }
 
-if (!businesses[name]) {
-businesses[name] = [];
+function parseCSV(text) {
+    const rows = text.split("\n").map(row => row.split(","));
+    const headers = rows[0];
+    rawData = rows.slice(1);
+
+    const select = document.getElementById("columnSelect");
+    select.innerHTML = '<option value="">Select Column</option>';
+
+    headers.forEach((header, index) => {
+        select.innerHTML += `<option value="${index}">${header}</option>`;
+    });
+
+    renderTable(headers, rawData);
 }
 
-updateSelector();
-document.getElementById("businessName").value = "";
+function analyzeData() {
+    const columnIndex = document.getElementById("columnSelect").value;
+    if (!columnIndex) return;
+
+    const values = rawData
+        .map(row => parseFloat(row[columnIndex]))
+        .filter(num => !isNaN(num));
+
+    const count = values.length;
+    const mean = values.reduce((a,b) => a+b, 0) / count;
+    const sorted = [...values].sort((a,b) => a-b);
+    const median = sorted[Math.floor(count/2)];
+
+    document.getElementById("count").textContent = count;
+    document.getElementById("mean").textContent = mean.toFixed(2);
+    document.getElementById("median").textContent = median.toFixed(2);
+
+    renderChart(values);
 }
 
-function updateSelector() {
-const selector = document.getElementById("businessSelector");
-selector.innerHTML = "<option value=''>Select Business</option>";
+function renderChart(values) {
+    const ctx = document.getElementById("chartCanvas");
 
-Object.keys(businesses).forEach(name => {
-const option = document.createElement("option");
-option.value = name;
-option.textContent = name;
-selector.appendChild(option);
-});
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: values.map((_, i) => i + 1),
+            datasets: [{
+                label: "Values",
+                data: values
+            }]
+        }
+    });
 }
 
-function loadBusiness() {
-currentBusiness = document.getElementById("businessSelector").value;
-renderDashboard();
-}
+function renderTable(headers, rows) {
+    const table = document.getElementById("dataTable");
+    table.innerHTML = "";
 
-function addData() {
-if (!currentBusiness) {
-alert("Select business first");
-return;
-}
+    let headerRow = "<tr>";
+    headers.forEach(h => headerRow += `<th>${h}</th>`);
+    headerRow += "</tr>";
 
-const month = document.getElementById("month").value;
-const revenue = Number(document.getElementById("revenue").value);
-const expenses = Number(document.getElementById("expenses").value);
-const customers = Number(document.getElementById("customers").value);
+    table.innerHTML += headerRow;
 
-if (!month || revenue <= 0) {
-alert("Enter valid month and revenue");
-return;
-}
-
-const profit = revenue - expenses;
-
-businesses[currentBusiness].push({
-month,
-revenue,
-profit,
-customers
-});
-
-renderDashboard();
-}
-
-function renderDashboard() {
-if (!currentBusiness) return;
-
-const data = businesses[currentBusiness];
-if (!data || data.length === 0) return;
-
-renderKPIs(data);
-renderCharts(data);
-}
-
-function renderKPIs(data) {
-const kpiDiv = document.getElementById("kpis");
-
-const totalRevenue = data.reduce((sum, d) => sum + d.revenue, 0);
-const totalProfit = data.reduce((sum, d) => sum + d.profit, 0);
-
-kpiDiv.innerHTML =
-"<p><strong>Total Revenue:</strong> £" + totalRevenue.toFixed(2) + "</p>" +
-"<p><strong>Total Profit:</strong> £" + totalProfit.toFixed(2) + "</p>";
-}
-
-function renderCharts(data) {
-
-if (revenueChart) revenueChart.destroy();
-if (profitChart) profitChart.destroy();
-if (customerChart) customerChart.destroy();
-
-const months = data.map(d => d.month);
-
-revenueChart = new Chart(
-document.getElementById("revenueChart"),
-{
-type: "line",
-data: {
-labels: months,
-datasets: [{
-label: "Revenue",
-data: data.map(d => d.revenue),
-borderWidth: 2
-}]
-}
-}
-);
-
-profitChart = new Chart(
-document.getElementById("profitChart"),
-{
-type: "line",
-data: {
-labels: months,
-datasets: [{
-label: "Profit",
-data: data.map(d => d.profit),
-borderWidth: 2
-}]
-}
-}
-);
-
-customerChart = new Chart(
-document.getElementById("customerChart"),
-{
-type: "line",
-data: {
-labels: months,
-datasets: [{
-label: "Customers",
-data: data.map(d => d.customers),
-borderWidth: 2
-}]
-}
-}
-);
+    rows.forEach(row => {
+        let rowHTML = "<tr>";
+        row.forEach(cell => rowHTML += `<td>${cell}</td>`);
+        rowHTML += "</tr>";
+        table.innerHTML += rowHTML;
+    });
 }
