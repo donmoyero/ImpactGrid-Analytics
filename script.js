@@ -14,8 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ================= AUTH ================= */
 
 function login() {
-    const user = document.getElementById("username").value;
-    const pass = document.getElementById("password").value;
+    const user = username.value;
+    const pass = password.value;
 
     if (user && pass) {
         localStorage.setItem("impactUser", user);
@@ -26,8 +26,7 @@ function login() {
 }
 
 function autoLogin() {
-    const user = localStorage.getItem("impactUser");
-    if (user) showApp();
+    if (localStorage.getItem("impactUser")) showApp();
 }
 
 function logout() {
@@ -36,28 +35,24 @@ function logout() {
 }
 
 function showApp() {
-    document.getElementById("authScreen").style.display = "none";
-    document.getElementById("app").classList.remove("hidden");
+    authScreen.style.display = "none";
+    app.classList.remove("hidden");
 }
 
 /* ================= SIDEBAR ================= */
 
 function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle("collapsed");
+    sidebar.classList.toggle("collapsed");
 }
 
-/* ================= SECTION NAV (FIXED) ================= */
-
 function showSection(id, evt) {
-    document.querySelectorAll(".page-section").forEach(s =>
-        s.classList.remove("active-section")
-    );
+    document.querySelectorAll(".page-section")
+        .forEach(s => s.classList.remove("active-section"));
 
     document.getElementById(id).classList.add("active-section");
 
-    document.querySelectorAll(".sidebar li").forEach(li =>
-        li.classList.remove("active")
-    );
+    document.querySelectorAll(".sidebar li")
+        .forEach(li => li.classList.remove("active"));
 
     if (evt) evt.target.classList.add("active");
 }
@@ -65,9 +60,9 @@ function showSection(id, evt) {
 /* ================= DATA ================= */
 
 function addData() {
-    const month = document.getElementById("month").value;
-    const revenue = parseFloat(document.getElementById("revenue").value);
-    const expenses = parseFloat(document.getElementById("expenses").value);
+    const month = monthInput.value;
+    const revenue = parseFloat(revenueInput.value);
+    const expenses = parseFloat(expensesInput.value);
 
     if (!month || isNaN(revenue) || isNaN(expenses)) {
         alert("Fill required fields.");
@@ -77,6 +72,7 @@ function addData() {
     const profit = revenue - expenses;
 
     businessData.push({ month, revenue, expenses, profit });
+    businessData.sort((a,b)=> new Date(a.month)-new Date(b.month));
 
     saveToStorage();
     updateAll();
@@ -112,48 +108,77 @@ function updateAll() {
     renderComparison();
 }
 
-/* ================= KPI ================= */
+/* ================= KPI (UPGRADED) ================= */
 
 function renderKPIs() {
     const container = document.getElementById("kpiContainer");
     container.innerHTML = "";
 
-    const totalRevenue = sum("revenue");
-    const totalProfit = sum("profit");
+    const latest = businessData.at(-1);
+    const previous = businessData.at(-2);
+
+    const profitMargin = (latest.profit / latest.revenue) * 100;
+
+    let growth = 0;
+    let arrow = "→";
+
+    if (previous) {
+        growth = ((latest.revenue - previous.revenue) / previous.revenue) * 100;
+        arrow = growth > 0 ? "↑" : growth < 0 ? "↓" : "→";
+    }
 
     container.innerHTML = `
         <div class="kpi">
-            <h3>Total Revenue</h3>
-            <p>${formatCurrency(totalRevenue)}</p>
+            <h3>Revenue</h3>
+            <p>${formatCurrency(latest.revenue)} ${arrow}</p>
+            <span>${growth.toFixed(2)}% MoM</span>
+        </div>
+        <div class="kpi">
+            <h3>Profit Margin</h3>
+            <p>${profitMargin.toFixed(2)}%</p>
         </div>
         <div class="kpi">
             <h3>Total Profit</h3>
-            <p>${formatCurrency(totalProfit)}</p>
+            <p>${formatCurrency(sum("profit"))}</p>
         </div>
     `;
 }
 
-/* ================= CORE CHARTS ================= */
+/* ================= CORE CHARTS (MA + ANOMALY) ================= */
 
 function renderCoreCharts() {
     destroyCharts();
 
-    const labels = businessData.map(d => d.month);
+    const labels = map("month");
+    const revenues = map("revenue");
+    const movingAvg = movingAverage(revenues, 3);
+    const anomalies = detectAnomalies(revenues);
 
-    revenueChart = new Chart(document.getElementById("revenueChart"), {
+    revenueChart = new Chart(revenueChartCanvas(), {
         type: "line",
         data: {
             labels,
-            datasets: [{
-                label: "Revenue",
-                data: map("revenue"),
-                borderColor: "#4CAF50",
-                tension: 0.4
-            }]
+            datasets: [
+                {
+                    label: "Revenue",
+                    data: revenues,
+                    borderColor: "#4CAF50",
+                    tension: 0.4,
+                    pointBackgroundColor: revenues.map((_,i)=>
+                        anomalies[i] ? "red" : "#4CAF50")
+                },
+                {
+                    label: "3M Moving Avg",
+                    data: movingAvg,
+                    borderColor: "#3b82f6",
+                    borderDash: [5,5],
+                    tension: 0.4
+                }
+            ]
         }
     });
 
-    profitChart = new Chart(document.getElementById("profitChart"), {
+    profitChart = new Chart(profitChartCanvas(), {
         type: "line",
         data: {
             labels,
@@ -166,7 +191,7 @@ function renderCoreCharts() {
         }
     });
 
-    expenseChart = new Chart(document.getElementById("expenseChart"), {
+    expenseChart = new Chart(expenseChartCanvas(), {
         type: "bar",
         data: {
             labels,
@@ -179,48 +204,50 @@ function renderCoreCharts() {
     });
 }
 
-/* ================= FORECAST (Simple Regression) ================= */
+/* ================= FORECAST (REAL REGRESSION + CI + R²) ================= */
 
 function renderForecast() {
     if (forecastChart) forecastChart.destroy();
 
-    const labels = businessData.map(d => d.month);
+    const labels = map("month");
     const values = map("revenue");
 
-    if (values.length < 2) return;
+    if (values.length < 3) return;
 
-    const predictions = simpleRegression(values, 3);
+    const {forecast, upper, lower, r2} = regressionWithCI(values, 6);
 
-    forecastChart = new Chart(document.getElementById("forecastChart"), {
+    forecastChart = new Chart(forecastChartCanvas(), {
         type: "line",
         data: {
-            labels: [...labels, "F1", "F2", "F3"],
-            datasets: [{
-                label: "Revenue Forecast",
-                data: [...values, ...predictions],
-                borderColor: "#3b82f6",
-                tension: 0.4
-            }]
+            labels: [...labels, ...forecast.labels],
+            datasets: [
+                {
+                    label: "Revenue",
+                    data: [...values, ...Array(6).fill(null)],
+                    borderColor: "#4CAF50"
+                },
+                {
+                    label: "Forecast",
+                    data: [...Array(values.length).fill(null), ...forecast.data],
+                    borderColor: "#3b82f6"
+                },
+                {
+                    label: "Upper 95%",
+                    data: [...Array(values.length).fill(null), ...upper],
+                    borderDash:[5,5],
+                    borderColor:"#aaa"
+                },
+                {
+                    label: "Lower 95%",
+                    data: [...Array(values.length).fill(null), ...lower],
+                    borderDash:[5,5],
+                    borderColor:"#aaa"
+                }
+            ]
         }
     });
-}
 
-function simpleRegression(data, periods) {
-    const n = data.length;
-    const x = [...Array(n).keys()];
-    const sumX = x.reduce((a,b)=>a+b);
-    const sumY = data.reduce((a,b)=>a+b);
-    const sumXY = x.reduce((s,xi,i)=>s+xi*data[i],0);
-    const sumXX = x.reduce((s,xi)=>s+xi*xi,0);
-
-    const slope = (n*sumXY - sumX*sumY) / (n*sumXX - sumX*sumX);
-    const intercept = (sumY - slope*sumX)/n;
-
-    const result = [];
-    for(let i=1;i<=periods;i++){
-        result.push(slope*(n+i-1)+intercept);
-    }
-    return result;
+    console.log("R²:", r2.toFixed(3));
 }
 
 /* ================= MULTI METRIC ================= */
@@ -228,29 +255,76 @@ function simpleRegression(data, periods) {
 function renderComparison() {
     if (comparisonChart) comparisonChart.destroy();
 
-    comparisonChart = new Chart(document.getElementById("comparisonChart"), {
+    comparisonChart = new Chart(comparisonChartCanvas(), {
         type: "line",
         data: {
-            labels: businessData.map(d=>d.month),
+            labels: map("month"),
             datasets: [
-                {
-                    label:"Revenue",
-                    data: map("revenue"),
-                    borderColor:"#4CAF50"
-                },
-                {
-                    label:"Profit",
-                    data: map("profit"),
-                    borderColor:"#2196F3"
-                },
-                {
-                    label:"Expenses",
-                    data: map("expenses"),
-                    borderColor:"#FF5252"
-                }
+                { label:"Revenue", data:map("revenue"), borderColor:"#4CAF50" },
+                { label:"Profit", data:map("profit"), borderColor:"#2196F3" },
+                { label:"Expenses", data:map("expenses"), borderColor:"#FF5252" }
             ]
         }
     });
+}
+
+/* ================= INTELLIGENCE HELPERS ================= */
+
+function movingAverage(data, period){
+    return data.map((_,i,arr)=>{
+        if(i<period-1) return null;
+        const slice = arr.slice(i-period+1,i+1);
+        return slice.reduce((a,b)=>a+b)/period;
+    });
+}
+
+function detectAnomalies(data){
+    const mean = data.reduce((a,b)=>a+b)/data.length;
+    const std = Math.sqrt(data.reduce((a,b)=>a+(b-mean)**2,0)/data.length);
+    return data.map(v => Math.abs((v-mean)/std) > 2);
+}
+
+function regressionWithCI(data, periods){
+    const n = data.length;
+    const x = [...Array(n).keys()];
+
+    const sumX = x.reduce((a,b)=>a+b);
+    const sumY = data.reduce((a,b)=>a+b);
+    const sumXY = x.reduce((s,xi,i)=>s+xi*data[i],0);
+    const sumXX = x.reduce((s,xi)=>s+xi*xi,0);
+
+    const slope = (n*sumXY - sumX*sumY)/(n*sumXX - sumX*sumX);
+    const intercept = (sumY - slope*sumX)/n;
+
+    const predictions = x.map(i=>slope*i+intercept);
+
+    const meanY = sumY/n;
+    const ssTot = data.reduce((a,v)=>a+(v-meanY)**2,0);
+    const ssRes = data.reduce((a,v,i)=>a+(v-predictions[i])**2,0);
+    const r2 = 1 - ssRes/ssTot;
+
+    const variance = ssRes/(n-2);
+    const stdError = Math.sqrt(variance);
+
+    const forecastData=[], upper=[], lower=[], labels=[];
+
+    for(let i=1;i<=periods;i++){
+        const xVal=n+i-1;
+        const y=slope*xVal+intercept;
+        const margin=1.96*stdError;
+
+        forecastData.push(y);
+        upper.push(y+margin);
+        lower.push(y-margin);
+        labels.push("F"+i);
+    }
+
+    return {
+        forecast:{data:forecastData,labels},
+        upper,
+        lower,
+        r2
+    };
 }
 
 /* ================= HELPERS ================= */
@@ -260,6 +334,11 @@ function destroyCharts() {
     if (profitChart) profitChart.destroy();
     if (expenseChart) expenseChart.destroy();
 }
+
+function revenueChartCanvas(){ return document.getElementById("revenueChart"); }
+function profitChartCanvas(){ return document.getElementById("profitChart"); }
+function expenseChartCanvas(){ return document.getElementById("expenseChart"); }
+function forecastChartCanvas(){ return document.getElementById("forecastChart"); }
 
 function sum(key){ return businessData.reduce((a,b)=>a+b[key],0); }
 function map(key){ return businessData.map(d=>d[key]); }
