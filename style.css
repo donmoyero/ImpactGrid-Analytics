@@ -1,1 +1,57 @@
+let financeChart;
+let projectionChart;
 
+function analyze() {
+
+    let revenue = parseFloat(document.getElementById("revenue").value);
+    let expenses = parseFloat(document.getElementById("expenses").value);
+    let growth = parseFloat(document.getElementById("growth").value);
+
+    let profit = revenue - expenses;
+    let margin = ((profit / revenue) * 100).toFixed(2);
+
+    document.getElementById("profit").innerText = "Monthly Profit: $" + profit;
+    document.getElementById("margin").innerText = "Profit Margin: " + margin + "%";
+    document.getElementById("burn").innerText = "Monthly Burn Rate: $" + expenses;
+
+    // Finance Chart
+    if (financeChart) financeChart.destroy();
+
+    financeChart = new Chart(document.getElementById("financeChart"), {
+        type: 'bar',
+        data: {
+            labels: ['Revenue', 'Expenses', 'Profit'],
+            datasets: [{
+                label: 'Financial Overview',
+                data: [revenue, expenses, profit],
+                backgroundColor: ['green', 'red', 'gold']
+            }]
+        }
+    });
+
+    // Projection Chart
+    let months = [];
+    let projections = [];
+    let currentRevenue = revenue;
+
+    for (let i = 1; i <= 12; i++) {
+        currentRevenue += currentRevenue * (growth / 100);
+        months.push("Month " + i);
+        projections.push(currentRevenue.toFixed(2));
+    }
+
+    if (projectionChart) projectionChart.destroy();
+
+    projectionChart = new Chart(document.getElementById("projectionChart"), {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [{
+                label: '12 Month Revenue Projection',
+                data: projections,
+                borderColor: 'gold',
+                fill: false
+            }]
+        }
+    });
+}
