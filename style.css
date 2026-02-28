@@ -1,67 +1,225 @@
+/* ================= GLOBAL RESET ================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #f5f7fa;
-    margin: 0;
-    padding: 20px;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #e2e8f0;
+    min-height: 100vh;
+    transition: all 0.3s ease;
 }
 
-header {
-    text-align: center;
-    margin-bottom: 30px;
+/* ================= HEADER ================= */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px 5%;
 }
 
-h1 {
-    margin: 0;
-    color: #2c3e50;
+.dashboard-header h1 {
+    font-size: 28px;
+    font-weight: 700;
 }
 
+.dashboard-header p {
+    color: #94a3b8;
+    margin-top: 5px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ================= BUTTONS ================= */
+.btn-primary {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(59,130,246,0.4);
+}
+
+.btn-secondary {
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* ================= MAIN CONTAINER ================= */
+.dashboard-container {
+    width: 90%;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* ================= CARD STYLE ================= */
 .card {
-    background: white;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
     padding: 25px;
-    margin: 20px auto;
-    border-radius: 12px;
-    width: 85%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: transform 0.2s ease;
 }
 
+.card:hover {
+    transform: translateY(-3px);
+}
+
+.card h2 {
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+/* ================= INPUT GRID ================= */
 .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 15px;
 }
 
 input {
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-}
-
-button {
     padding: 12px;
-    background: #2563eb;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
     color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
+    outline: none;
 }
 
-button:hover {
-    background: #1d4ed8;
+input::placeholder {
+    color: #94a3b8;
 }
 
+input:focus {
+    border-color: #3b82f6;
+}
+
+/* ================= KPI GRID ================= */
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
 }
 
 .kpi {
-    background: #f8fafc;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 14px;
     text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-canvas {
-    margin-top: 30px;
+.kpi:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+.kpi h3 {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 10px;
+}
+
+.kpi p {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+/* ================= INSIGHTS ================= */
+.insights-container {
+    line-height: 1.7;
+}
+
+.insight-box {
+    background: rgba(59,130,246,0.1);
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #3b82f6;
+}
+
+/* ================= CHART GRID ================= */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.chart-card {
+    padding: 20px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 14px;
+}
+
+/* ================= FOOTER ================= */
+.dashboard-footer {
+    text-align: center;
+    padding: 20px;
+    color: #64748b;
+    margin-top: 40px;
+}
+
+/* ================= LIGHT MODE ================= */
+body.light-mode {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+body.light-mode .card {
+    background: white;
+    border: 1px solid #e2e8f0;
+}
+
+body.light-mode input {
+    background: white;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+}
+
+body.light-mode .kpi {
+    background: #f8fafc;
+}
+
+body.light-mode .insight-box {
+    background: #eff6ff;
+}
+
+body.light-mode .btn-secondary {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
 }
