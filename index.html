@@ -8,14 +8,8 @@
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Chart.js -->
+    <!-- Chart.js ONLY -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Chart.js Zoom Plugin -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-
-    <!-- SortableJS for drag reorder -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -44,32 +38,24 @@
 
         <nav>
             <ul>
-                <li onclick="showSection('dashboard')" class="active">Dashboard</li>
-                <li onclick="showSection('forecast')">Forecasting</li>
-                <li onclick="showSection('comparison')">Multi-Metric</li>
-                <li onclick="showSection('realtime')">Real-Time</li>
-                <li onclick="generateExecutivePDF()">Export Executive PDF</li>
+                <li onclick="showSection('dashboard', event)" class="active">Dashboard</li>
+                <li onclick="showSection('forecast', event)">Forecasting</li>
+                <li onclick="showSection('comparison', event)">Multi-Metric</li>
                 <li onclick="clearAllData()">Reset Data</li>
                 <li onclick="logout()">Logout</li>
             </ul>
         </nav>
-
-        <div class="api-status">
-            API Status: <span id="apiStatus">Disconnected</span>
-        </div>
     </aside>
 
     <!-- ================= MAIN CONTENT ================= -->
     <div class="main-content">
 
-        <!-- HEADER -->
         <header class="dashboard-header">
             <div>
                 <h1>Enterprise Intelligence Platform</h1>
-                <p>Forecasting • Simulation • Strategic Modeling • SaaS Architecture</p>
+                <p>Forecasting • Strategic Modeling • Business Analytics</p>
             </div>
             <div class="header-actions">
-                <button class="btn-secondary" onclick="connectAPI()">Connect API</button>
                 <button class="btn-secondary" onclick="exportData()">Export CSV</button>
                 <button class="btn-primary" onclick="toggleTheme()">Toggle Theme</button>
             </div>
@@ -90,16 +76,14 @@
                 </div>
             </section>
 
-            <!-- DRAGGABLE KPI WIDGETS -->
             <section class="card">
                 <h2>Key Performance Indicators</h2>
-                <div id="kpiContainer" class="kpi-grid draggable-container"></div>
+                <div id="kpiContainer" class="kpi-grid"></div>
             </section>
 
-            <!-- DRAGGABLE CORE CHARTS -->
             <section class="card">
                 <h2>Core Performance</h2>
-                <div class="charts-grid draggable-container" id="coreCharts">
+                <div class="charts-grid">
                     <div class="chart-card">
                         <canvas id="revenueChart"></canvas>
                     </div>
@@ -117,7 +101,7 @@
         <!-- ================= FORECAST ================= -->
         <section id="forecast" class="page-section">
             <section class="card">
-                <h2>Revenue Forecast with Confidence Bands</h2>
+                <h2>Revenue Forecast</h2>
                 <div class="chart-card">
                     <canvas id="forecastChart"></canvas>
                 </div>
@@ -134,21 +118,8 @@
             </section>
         </section>
 
-        <!-- ================= REAL-TIME SIMULATION ================= -->
-        <section id="realtime" class="page-section">
-            <section class="card">
-                <h2>Real-Time Streaming Simulation</h2>
-                <button class="btn-primary" onclick="startSimulation()">Start Simulation</button>
-                <button class="btn-secondary" onclick="stopSimulation()">Stop</button>
-
-                <div class="chart-card">
-                    <canvas id="realtimeChart"></canvas>
-                </div>
-            </section>
-        </section>
-
         <footer class="dashboard-footer">
-            <p>© 2026 ImpactGrid SaaS Intelligence • Deployable Enterprise Platform</p>
+            <p>© 2026 ImpactGrid SaaS Intelligence</p>
         </footer>
 
     </div>
