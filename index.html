@@ -5,16 +5,6 @@
     <title>ImpactGrid Analytics | Enterprise Intelligence Platform</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Fallback styling in case CSS fails -->
-    <style>
-        body {
-            margin:0;
-            background: radial-gradient(circle at top left, #0f172a, #020617 70%);
-            color:#e2e8f0;
-            font-family:'Inter',sans-serif;
-        }
-    </style>
-
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -24,7 +14,6 @@
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- Correct relative path -->
     <link rel="stylesheet" href="./style.css">
 </head>
 
@@ -34,26 +23,28 @@
 <div id="authScreen" class="auth-screen">
     <div class="auth-card">
         <h2>ImpactGrid Analytics</h2>
-        <p style="opacity:0.7;margin-bottom:20px;">Enterprise Intelligence Access</p>
+        <p class="auth-sub">Enterprise Intelligence Access</p>
         <input type="text" id="username" placeholder="Username" autocomplete="off">
         <input type="password" id="password" placeholder="Password" autocomplete="off">
-        <button class="btn-primary" type="button" onclick="login()">Login</button>
+        <button class="btn-primary" onclick="login()">Login</button>
     </div>
 </div>
 
 <!-- ================= MAIN APP ================= -->
 <div id="app" class="app-layout hidden">
 
+    <!-- Overlay for mobile -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
 
-        <div class="logo-container" style="margin-bottom:30px;">
-            <!-- Safe logo sizing -->
-            <img src="./logo.png" alt="ImpactGrid Logo" class="logo-img" style="height:38px;width:auto;">
+        <div class="logo-container">
+            <img src="./logo.png" alt="ImpactGrid Logo" class="logo-img">
             <span class="logo-text">ImpactGrid</span>
         </div>
 
-        <nav>
+        <nav class="sidebar-nav">
             <ul>
                 <li onclick="showSection('dashboard', event)" class="active">Dashboard</li>
                 <li onclick="showSection('forecast', event)">Forecasting</li>
@@ -69,28 +60,28 @@
     <!-- MAIN CONTENT -->
     <div class="main-content">
 
+        <!-- HEADER -->
         <header class="dashboard-header">
 
-            <button class="btn-secondary mobile-menu-btn" type="button" onclick="toggleSidebar()">
-                ☰ Menu
-            </button>
-
-            <div>
-                <h1>Enterprise Intelligence Platform</h1>
-                <p>Structured Forecasting • Strategic Modeling • Performance Diagnostics</p>
+            <div class="header-left">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>Enterprise Intelligence Platform</h1>
+                    <p>Structured Forecasting • Strategic Modeling • Performance Diagnostics</p>
+                </div>
             </div>
 
             <div class="header-actions">
-                <button class="btn-secondary" type="button" onclick="exportExecutivePDF()">
+                <button class="btn-secondary" onclick="exportExecutivePDF()">
                     Export Executive PDF
                 </button>
-                <button class="btn-primary" type="button" onclick="toggleTheme()">
+                <button class="btn-primary" onclick="toggleTheme()">
                     Toggle Theme
                 </button>
             </div>
         </header>
 
-        <!-- Dashboard -->
+        <!-- ================= DASHBOARD ================= -->
         <section id="dashboard" class="page-section active-section">
 
             <section class="card">
@@ -101,7 +92,7 @@
                     <input type="number" id="expenses" placeholder="Expenses">
                     <input type="number" id="customers" placeholder="Customers">
                     <input type="number" id="marketing" placeholder="Marketing Spend">
-                    <button class="btn-primary" type="button" onclick="addData()">Add Data</button>
+                    <button class="btn-primary" onclick="addData()">Add Data</button>
                 </div>
             </section>
 
@@ -128,15 +119,41 @@
 
         </section>
 
+        <!-- ================= FORECAST ================= -->
+        <section id="forecast" class="page-section">
+            <section class="card">
+                <h2>Revenue Forecast</h2>
+                <div class="chart-card">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </section>
+        </section>
+
+        <!-- ================= MULTI METRIC ================= -->
+        <section id="comparison" class="page-section">
+            <section class="card">
+                <h2>Multi-Metric Comparison</h2>
+                <div class="chart-card">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </section>
+        </section>
+
+        <!-- ================= PRICING ================= -->
+        <section id="pricing" class="page-section">
+            <section class="card">
+                <h2>Choose Your Plan</h2>
+                <p class="report-box">Upgrade for forecasting, comparison modeling, and executive export capabilities.</p>
+            </section>
+        </section>
+
         <footer class="dashboard-footer">
-            <p>© 2026 ImpactGrid Analytics. Enterprise Intelligence Platform.</p>
+            © 2026 ImpactGrid Analytics. Enterprise Intelligence Platform.
         </footer>
 
     </div>
 </div>
 
-<!-- Correct relative script path -->
 <script src="./script.js"></script>
-
 </body>
 </html>
