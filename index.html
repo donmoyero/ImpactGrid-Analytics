@@ -38,7 +38,6 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
-
         <div class="logo-container">
             <img src="./logo.png" alt="ImpactGrid Logo" class="logo-img">
             <span class="logo-text">ImpactGrid</span>
@@ -54,7 +53,6 @@
                 <li onclick="logout()">Logout</li>
             </ul>
         </nav>
-
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -62,7 +60,6 @@
 
         <!-- HEADER -->
         <header class="dashboard-header">
-
             <div class="header-left">
                 <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
                 <div>
@@ -153,7 +150,12 @@
                     <div class="pricing-card">
                         <h3>Starter</h3>
                         <p class="price">Free</p>
-                        <button class="btn-secondary" onclick="setPlan('free')">
+                        <ul>
+                            <li>Core Dashboard</li>
+                            <li>Basic KPIs</li>
+                            <li>3 Month Data Limit</li>
+                        </ul>
+                        <button class="btn-secondary full-width" onclick="setPlan('free')">
                             Start Free
                         </button>
                     </div>
@@ -162,21 +164,31 @@
                     <div class="pricing-card highlight">
                         <h3>Growth</h3>
                         <p class="price">£8.99 / month</p>
-                        <a href="https://buy.stripe.com/YOUR_GROWTH_LINK" target="_blank">
-                            <button class="btn-primary">
+                        <ul>
+                            <li>Revenue Forecasting</li>
+                            <li>Multi-Metric Comparison</li>
+                            <li>Executive Reports</li>
+                        </ul>
+                        <a href="https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201" target="_blank" class="full-width">
+                            <div class="btn-primary full-width" style="text-align:center;">
                                 Upgrade to Growth
-                            </button>
+                            </div>
                         </a>
                     </div>
 
-                    <!-- Pro -->
+                    <!-- Pro Intelligence -->
                     <div class="pricing-card premium">
                         <h3>Pro Intelligence</h3>
                         <p class="price">£19.99 / month</p>
-                        <a href="https://buy.stripe.com/YOUR_PREMIUM_LINK" target="_blank">
-                            <button class="btn-primary">
-                                Upgrade to Pro
-                            </button>
+                        <ul>
+                            <li>Unlimited Reports</li>
+                            <li>Advanced Intelligence</li>
+                            <li>Priority Analytics Engine</li>
+                        </ul>
+                        <a href="https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200" target="_blank" class="full-width">
+                            <div class="btn-primary full-width" style="text-align:center;">
+                                Upgrade to Pro Intelligence
+                            </div>
                         </a>
                     </div>
 
