@@ -5,6 +5,16 @@
     <title>ImpactGrid Analytics | Enterprise Intelligence Platform</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- Fallback styling in case CSS fails -->
+    <style>
+        body {
+            margin:0;
+            background: radial-gradient(circle at top left, #0f172a, #020617 70%);
+            color:#e2e8f0;
+            font-family:'Inter',sans-serif;
+        }
+    </style>
+
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -14,7 +24,8 @@
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <link rel="stylesheet" href="style.css">
+    <!-- Correct relative path -->
+    <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
@@ -37,7 +48,8 @@
     <aside class="sidebar" id="sidebar">
 
         <div class="logo-container" style="margin-bottom:30px;">
-            <img src="logo.png" alt="ImpactGrid Logo" class="logo-img">
+            <!-- Safe logo sizing -->
+            <img src="./logo.png" alt="ImpactGrid Logo" class="logo-img" style="height:38px;width:auto;">
             <span class="logo-text">ImpactGrid</span>
         </div>
 
@@ -57,10 +69,8 @@
     <!-- MAIN CONTENT -->
     <div class="main-content">
 
-        <!-- HEADER -->
         <header class="dashboard-header">
 
-            <!-- MOBILE MENU BUTTON (NEW) -->
             <button class="btn-secondary mobile-menu-btn" type="button" onclick="toggleSidebar()">
                 ☰ Menu
             </button>
@@ -80,10 +90,9 @@
             </div>
         </header>
 
-        <!-- ================= DASHBOARD ================= -->
+        <!-- Dashboard -->
         <section id="dashboard" class="page-section active-section">
 
-            <!-- INPUT -->
             <section class="card">
                 <h2>Business Data Input</h2>
                 <div class="grid">
@@ -96,35 +105,11 @@
                 </div>
             </section>
 
-            <!-- KPI -->
             <section class="card">
                 <h2>Key Performance Indicators</h2>
                 <div id="kpiContainer" class="kpi-grid"></div>
             </section>
 
-            <!-- HOW IT WORKS (NEW SECTION) -->
-            <section class="card">
-                <h2>How ImpactGrid Works</h2>
-                <div class="report-box">
-                    <p><strong>1. Data Entry:</strong> Input monthly revenue, expenses, customers, and marketing spend.</p>
-
-                    <p><strong>2. KPI Engine:</strong> The system automatically calculates:</p>
-                    <ul>
-                        <li>Net Profit</li>
-                        <li>Profit Margin</li>
-                        <li>Customer Growth Trends</li>
-                        <li>Marketing Efficiency Ratio</li>
-                    </ul>
-
-                    <p><strong>3. Visualization Layer:</strong> Real-time charts model revenue flow, profitability, and cost structure.</p>
-
-                    <p><strong>4. Forecasting Logic:</strong> Historical revenue performance powers predictive modeling.</p>
-
-                    <p><strong>5. Executive Intelligence:</strong> Structured written diagnostics transform raw numbers into strategic business insights suitable for founders, executives, and enterprise teams.</p>
-                </div>
-            </section>
-
-            <!-- CORE PERFORMANCE -->
             <section class="card">
                 <h2>Core Performance</h2>
                 <div class="charts-grid">
@@ -134,7 +119,6 @@
                 </div>
             </section>
 
-            <!-- REPORT -->
             <section class="card">
                 <h2>Performance Intelligence Report</h2>
                 <div id="performanceReport" class="report-box">
@@ -142,102 +126,6 @@
                 </div>
             </section>
 
-            <!-- LOGO UPLOAD -->
-            <section class="card">
-                <h2>Company Branding (Premium Only)</h2>
-                <p>Upload your company logo to include in Executive Reports.</p>
-                <input type="file" id="companyLogoInput" accept="image/*">
-            </section>
-
-        </section>
-
-        <!-- ================= FORECAST ================= -->
-        <section id="forecast" class="page-section">
-            <section class="card">
-                <h2>Revenue Forecast</h2>
-                <div class="chart-card">
-                    <canvas id="forecastChart"></canvas>
-                </div>
-            </section>
-        </section>
-
-        <!-- ================= MULTI METRIC ================= -->
-        <section id="comparison" class="page-section">
-            <section class="card">
-                <h2>Multi-Metric Comparison</h2>
-                <div class="chart-card">
-                    <canvas id="comparisonChart"></canvas>
-                </div>
-            </section>
-        </section>
-
-        <!-- ================= PRICING ================= -->
-        <section id="pricing" class="page-section">
-            <section class="card">
-                <h2>Choose Your Plan</h2>
-
-                <div class="pricing-grid">
-
-                    <!-- STARTER -->
-                    <div class="pricing-card" id="starterPlan">
-                        <h3>Starter</h3>
-                        <p class="price">Free</p>
-                        <ul>
-                            <li>Core Analytics Dashboard</li>
-                            <li>Basic Performance Insights</li>
-                            <li>3 Month Data Limit</li>
-                        </ul>
-                        <button class="btn-secondary" type="button" onclick="setPlan('free')">
-                            Start Free
-                        </button>
-                    </div>
-
-                    <!-- GROWTH -->
-                    <div class="pricing-card" id="growthPlan">
-                        <h3>Growth</h3>
-                        <p class="price">£8.99 / month</p>
-                        <ul>
-                            <li>Revenue Forecasting</li>
-                            <li>Multi-Metric Comparison</li>
-                            <li>Executive PDF (3/month)</li>
-                            <li>Unlimited Data History</li>
-                        </ul>
-
-                        <a href="https://buy.stripe.com/YOUR_GROWTH_LINK?plan=pro">
-                            <button class="btn-primary">
-                                Upgrade to Growth
-                            </button>
-                        </a>
-
-                        <div class="secure-payment">
-                            Secure payments powered by Stripe
-                        </div>
-                    </div>
-
-                    <!-- PREMIUM -->
-                    <div class="pricing-card premium" id="premiumPlan">
-                        <h3>Pro Intelligence</h3>
-                        <p class="price">£19.99 / month</p>
-                        <ul>
-                            <li>Unlimited Executive Reports</li>
-                            <li>Advanced Risk Analysis</li>
-                            <li>Company Logo Branding</li>
-                            <li>Priority Intelligence Engine</li>
-                        </ul>
-
-                        <a href="https://buy.stripe.com/YOUR_PREMIUM_LINK?plan=premium">
-                            <button class="btn-primary">
-                                Upgrade to Pro Intelligence
-                            </button>
-                        </a>
-
-                        <div class="secure-payment">
-                            Secure payments powered by Stripe
-                        </div>
-                    </div>
-
-                </div>
-            </section>
         </section>
 
         <footer class="dashboard-footer">
@@ -247,7 +135,8 @@
     </div>
 </div>
 
-<script src="script.js"></script>
+<!-- Correct relative script path -->
+<script src="./script.js"></script>
 
 </body>
 </html>
