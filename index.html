@@ -33,17 +33,18 @@
 <!-- ================= MAIN APP ================= -->
 <div id="app" class="app-layout hidden">
 
-    <!-- Overlay for mobile -->
+    <!-- Overlay -->
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
+
         <div class="logo-container">
             <img src="./logo.png" alt="ImpactGrid Logo" class="logo-img">
             <span class="logo-text">ImpactGrid</span>
         </div>
 
-        <nav class="sidebar-nav">
+        <nav>
             <ul>
                 <li onclick="showSection('dashboard', event)" class="active">Dashboard</li>
                 <li onclick="showSection('forecast', event)">Forecasting</li>
@@ -53,6 +54,7 @@
                 <li onclick="logout()">Logout</li>
             </ul>
         </nav>
+
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -60,6 +62,7 @@
 
         <!-- HEADER -->
         <header class="dashboard-header">
+
             <div class="header-left">
                 <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
                 <div>
@@ -69,13 +72,14 @@
             </div>
 
             <div class="header-actions">
-                <button class="btn-secondary" onclick="exportExecutivePDF()">
+                <button class="btn-secondary" id="pdfBtn">
                     Export Executive PDF
                 </button>
-                <button class="btn-primary" onclick="toggleTheme()">
+                <button class="btn-primary" id="themeBtn">
                     Toggle Theme
                 </button>
             </div>
+
         </header>
 
         <!-- ================= DASHBOARD ================= -->
@@ -155,7 +159,7 @@
                             <li>Basic KPIs</li>
                             <li>3 Month Data Limit</li>
                         </ul>
-                        <button class="btn-secondary full-width" onclick="setPlan('free')">
+                        <button class="btn-secondary" onclick="setPlan('free')">
                             Start Free
                         </button>
                     </div>
@@ -169,10 +173,10 @@
                             <li>Multi-Metric Comparison</li>
                             <li>Executive Reports</li>
                         </ul>
-                        <a href="https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201" target="_blank" class="full-width">
-                            <div class="btn-primary full-width" style="text-align:center;">
-                                Upgrade to Growth
-                            </div>
+                        <a href="https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201"
+                           target="_blank"
+                           class="btn-primary">
+                            Upgrade to Growth
                         </a>
                     </div>
 
@@ -185,10 +189,10 @@
                             <li>Advanced Intelligence</li>
                             <li>Priority Analytics Engine</li>
                         </ul>
-                        <a href="https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200" target="_blank" class="full-width">
-                            <div class="btn-primary full-width" style="text-align:center;">
-                                Upgrade to Pro Intelligence
-                            </div>
+                        <a href="https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200"
+                           target="_blank"
+                           class="btn-primary">
+                            Upgrade to Pro Intelligence
                         </a>
                     </div>
 
