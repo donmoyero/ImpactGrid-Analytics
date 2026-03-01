@@ -45,7 +45,7 @@ function showApp() {
     updateAll();
 }
 
-/* ================= SECTION NAV (FIXED) ================= */
+/* ================= SECTION NAV ================= */
 
 function showSection(id, evt) {
     document.querySelectorAll(".page-section")
@@ -57,10 +57,10 @@ function showSection(id, evt) {
     document.querySelectorAll(".sidebar li")
         .forEach(li => li.classList.remove("active"));
 
-    if (evt && evt.target) evt.target.classList.add("active");
+    if (evt) evt.target.classList.add("active");
 
-    // Important: re-render after visible
-    setTimeout(updateAll, 100);
+    // Delay ensures canvas has visible dimensions
+    setTimeout(updateAll, 50);
 }
 
 /* ================= DATA ================= */
@@ -91,9 +91,7 @@ function saveToStorage() {
 
 function loadFromStorage() {
     const saved = localStorage.getItem("impactGridData");
-    if (saved) {
-        businessData = JSON.parse(saved);
-    }
+    if (saved) businessData = JSON.parse(saved);
 }
 
 /* ================= UPDATE ================= */
@@ -113,14 +111,17 @@ function renderKPIs() {
     const container = document.getElementById("kpiContainer");
     if (!container) return;
 
+    const totalRevenue = sum("revenue");
+    const totalProfit = sum("profit");
+
     container.innerHTML = `
         <div class="kpi">
             <h3>Total Revenue</h3>
-            <p>${formatCurrency(sum("revenue"))}</p>
+            <p>${formatCurrency(totalRevenue)}</p>
         </div>
         <div class="kpi">
             <h3>Total Profit</h3>
-            <p>${formatCurrency(sum("profit"))}</p>
+            <p>${formatCurrency(totalProfit)}</p>
         </div>
     `;
 }
@@ -128,34 +129,53 @@ function renderKPIs() {
 /* ================= CORE CHARTS ================= */
 
 function renderCoreCharts() {
-    destroyCharts();
+    destroyAllCharts();
+
+    const revenueCanvas = document.getElementById("revenueChart");
+    const profitCanvas = document.getElementById("profitChart");
+    const expenseCanvas = document.getElementById("expenseChart");
+
+    if (!revenueCanvas || !profitCanvas || !expenseCanvas) return;
 
     const labels = businessData.map(d => d.month);
 
-    revenueChart = new Chart(
-        document.getElementById("revenueChart"),
-        createLine("Revenue", labels, map("revenue"), "#4CAF50")
-    );
-
-    profitChart = new Chart(
-        document.getElementById("profitChart"),
-        createLine("Profit", labels, map("profit"), "#2196F3")
-    );
-
-    expenseChart = new Chart(
-        document.getElementById("expenseChart"),
-        {
-            type: "bar",
-            data: {
-                labels,
-                datasets: [{
-                    label: "Expenses",
-                    data: map("expenses"),
-                    backgroundColor: "#FF5252"
-                }]
-            }
+    revenueChart = new Chart(revenueCanvas, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [{
+                label: "Revenue",
+                data: map("revenue"),
+                borderColor: "#4CAF50",
+                tension: 0.4
+            }]
         }
-    );
+    });
+
+    profitChart = new Chart(profitCanvas, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [{
+                label: "Profit",
+                data: map("profit"),
+                borderColor: "#2196F3",
+                tension: 0.4
+            }]
+        }
+    });
+
+    expenseChart = new Chart(expenseCanvas, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [{
+                label: "Expenses",
+                data: map("expenses"),
+                backgroundColor: "#FF5252"
+            }]
+        }
+    });
 }
 
 /* ================= FORECAST ================= */
@@ -163,21 +183,27 @@ function renderCoreCharts() {
 function renderForecast() {
     if (forecastChart) forecastChart.destroy();
 
+    const canvas = document.getElementById("forecastChart");
+    if (!canvas) return;
+
     const values = map("revenue");
     if (values.length < 2) return;
 
     const labels = businessData.map(d => d.month);
     const predictions = simpleRegression(values, 3);
 
-    forecastChart = new Chart(
-        document.getElementById("forecastChart"),
-        createLine(
-            "Revenue Forecast",
-            [...labels, "F1", "F2", "F3"],
-            [...values, ...predictions],
-            "#3b82f6"
-        )
-    );
+    forecastChart = new Chart(canvas, {
+        type: "line",
+        data: {
+            labels: [...labels, "F1", "F2", "F3"],
+            datasets: [{
+                label: "Revenue Forecast",
+                data: [...values, ...predictions],
+                borderColor: "#3b82f6",
+                tension: 0.4
+            }]
+        }
+    });
 }
 
 /* ================= MULTI METRIC ================= */
@@ -185,20 +211,20 @@ function renderForecast() {
 function renderComparison() {
     if (comparisonChart) comparisonChart.destroy();
 
-    comparisonChart = new Chart(
-        document.getElementById("comparisonChart"),
-        {
-            type: "line",
-            data: {
-                labels: businessData.map(d => d.month),
-                datasets: [
-                    { label: "Revenue", data: map("revenue"), borderColor: "#4CAF50" },
-                    { label: "Profit", data: map("profit"), borderColor: "#2196F3" },
-                    { label: "Expenses", data: map("expenses"), borderColor: "#FF5252" }
-                ]
-            }
+    const canvas = document.getElementById("comparisonChart");
+    if (!canvas) return;
+
+    comparisonChart = new Chart(canvas, {
+        type: "line",
+        data: {
+            labels: businessData.map(d => d.month),
+            datasets: [
+                { label: "Revenue", data: map("revenue"), borderColor: "#4CAF50" },
+                { label: "Profit", data: map("profit"), borderColor: "#2196F3" },
+                { label: "Expenses", data: map("expenses"), borderColor: "#FF5252" }
+            ]
         }
-    );
+    });
 }
 
 /* ================= REGRESSION ================= */
@@ -214,34 +240,21 @@ function simpleRegression(data, periods) {
     const slope = (n*sumXY - sumX*sumY) / (n*sumXX - sumX*sumX);
     const intercept = (sumY - slope*sumX)/n;
 
-    return Array.from({length:periods}, (_,i) =>
-        slope*(n+i)+intercept
-    );
+    const result = [];
+    for(let i=1;i<=periods;i++){
+        result.push(slope*(n+i-1)+intercept);
+    }
+    return result;
 }
 
-/* ================= HELPERS ================= */
+/* ================= UTILITIES ================= */
 
-function createLine(label, labels, data, color) {
-    return {
-        type: "line",
-        data: {
-            labels,
-            datasets: [{
-                label,
-                data,
-                borderColor: color,
-                backgroundColor: color + "22",
-                fill: true,
-                tension: 0.4
-            }]
-        }
-    };
-}
-
-function destroyCharts() {
+function destroyAllCharts() {
     if (revenueChart) revenueChart.destroy();
     if (profitChart) profitChart.destroy();
     if (expenseChart) expenseChart.destroy();
+    if (forecastChart) forecastChart.destroy();
+    if (comparisonChart) comparisonChart.destroy();
 }
 
 function sum(key){ return businessData.reduce((a,b)=>a+b[key],0); }
