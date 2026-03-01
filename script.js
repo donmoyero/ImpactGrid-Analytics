@@ -37,38 +37,51 @@ function bindHeaderButtons() {
 
 function login() {
 
-    const user = document.getElementById("username")?.value;
-    const pass = document.getElementById("password")?.value;
+    const user = document.getElementById("username")?.value?.trim();
+    const pass = document.getElementById("password")?.value?.trim();
 
     if (!user || !pass) {
         alert("Enter credentials");
         return;
     }
 
-    // ADMIN ACCESS
+    // ===== ADMIN ACCESS =====
     if (user === "Impactgrid" && pass === "199419981304") {
+
         isAdmin = true;
         userPlan = "premium";
+
         localStorage.setItem("impactPlan", "premium");
         localStorage.setItem("impactUser", "admin");
-        alert("ADMIN MODE ACTIVATED");
+
         showApp();
+        updatePlanUI();   // critical fix
+        alert("ADMIN MODE ACTIVATED");
+
         return;
     }
 
-    // Normal user
+    // ===== NORMAL USER =====
+    isAdmin = false;
+
     localStorage.setItem("impactUser", user);
     showApp();
+    updatePlanUI();
 }
 
 function autoLogin() {
-    if (localStorage.getItem("impactUser")) {
-        if (localStorage.getItem("impactUser") === "admin") {
-            isAdmin = true;
-            userPlan = "premium";
-        }
-        showApp();
+
+    const savedUser = localStorage.getItem("impactUser");
+    if (!savedUser) return;
+
+    if (savedUser === "admin") {
+        isAdmin = true;
+        userPlan = "premium";
+        localStorage.setItem("impactPlan", "premium");
     }
+
+    showApp();
+    updatePlanUI();   // critical sync
 }
 
 function logout() {
@@ -79,13 +92,17 @@ function logout() {
 /* ================= STRIPE SUCCESS HANDLER ================= */
 
 function checkStripeReturn() {
+
     const params = new URLSearchParams(window.location.search);
     const plan = params.get("plan");
 
     if (plan === "growth" || plan === "premium") {
+
         userPlan = plan;
         localStorage.setItem("impactPlan", plan);
+
         alert("Subscription activated: " + plan.toUpperCase());
+
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
@@ -93,13 +110,16 @@ function checkStripeReturn() {
 /* ================= PLAN SYSTEM ================= */
 
 function setPlan(plan) {
+
     userPlan = plan;
     localStorage.setItem("impactPlan", plan);
+
     updatePlanUI();
     alert("Your plan is now: " + plan.toUpperCase());
 }
 
 function updatePlanUI() {
+
     const pricingCards = document.querySelectorAll(".pricing-card");
     pricingCards.forEach(card => card.classList.remove("current-plan"));
 
@@ -155,7 +175,7 @@ function activateSection(id, evt) {
 
 function addData() {
 
-    if (userPlan === "free" && businessData.length >= 3) {
+    if (!isAdmin && userPlan === "free" && businessData.length >= 3) {
         alert("Free plan supports only 3 months of data.");
         return;
     }
@@ -202,7 +222,6 @@ function clearAllData() {
 
 function updateAll() {
     if (!businessData.length) return;
-
     renderKPIs();
     renderCoreCharts();
     generateReport();
@@ -293,20 +312,18 @@ function generateReport() {
     const totalRevenue = sum("revenue");
     const totalProfit = sum("profit");
     const margin = ((totalProfit / totalRevenue) * 100).toFixed(1);
-
     const latest = businessData[businessData.length - 1];
 
-    let insight = "";
+    let insight;
 
-    if (margin >= 30) {
-        insight = "The business is operating with strong profitability. Revenue growth is efficiently converting into retained earnings.";
-    } else if (margin >= 15) {
-        insight = "The company demonstrates stable profitability. Cost optimisation could further enhance margins.";
-    } else if (margin > 0) {
-        insight = "Profit margins are tight. Operational efficiency and cost controls require strategic attention.";
-    } else {
-        insight = "The business is currently operating at a loss. Immediate structural review of revenue streams and cost base is recommended.";
-    }
+    if (margin >= 30)
+        insight = "Strong profit efficiency. Revenue expansion is translating into retained capital growth.";
+    else if (margin >= 15)
+        insight = "Stable margin performance with room for operational optimisation.";
+    else if (margin > 0)
+        insight = "Tight margins. Cost management strategy should be reviewed.";
+    else
+        insight = "Negative profitability detected. Strategic financial restructuring advised.";
 
     reportBox.innerHTML = `
         <strong>Executive Performance Summary</strong><br><br>
