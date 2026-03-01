@@ -12,11 +12,28 @@ let userPlan = localStorage.getItem("impactPlan") || "free";
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+    checkStripeReturn();     // NEW
     loadFromStorage();
     autoLogin();
     loadTheme();
     updatePlanUI();
 });
+
+/* ================= STRIPE SUCCESS HANDLER ================= */
+
+function checkStripeReturn() {
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get("plan");
+
+    if (plan === "growth" || plan === "premium") {
+        userPlan = plan;
+        localStorage.setItem("impactPlan", plan);
+        alert("Subscription activated: " + plan.toUpperCase());
+
+        // Clean URL after upgrade
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
 
 /* ================= MOBILE SIDEBAR ================= */
 
@@ -257,93 +274,6 @@ function createChart(id, type, labels, data, color, label) {
     });
 }
 
-/* ================= FORECAST ================= */
-
-function renderForecast() {
-
-    if (!businessData.length) return;
-    if (forecastChart) forecastChart.destroy();
-
-    const values = map("revenue");
-    if (values.length < 2) return;
-
-    const predictions = simpleRegression(values, 3);
-
-    forecastChart = createChart(
-        "forecastChart",
-        "line",
-        [...businessData.map(d => d.month), "F1", "F2", "F3"],
-        [...values, ...predictions],
-        "#3b82f6",
-        "Revenue Forecast"
-    );
-}
-
-/* ================= COMPARISON ================= */
-
-function renderComparison() {
-
-    if (!businessData.length) return;
-    if (comparisonChart) comparisonChart.destroy();
-
-    const canvas = document.getElementById("comparisonChart");
-    if (!canvas) return;
-
-    comparisonChart = new Chart(canvas.getContext("2d"), {
-        type: "line",
-        data: {
-            labels: businessData.map(d => d.month),
-            datasets: [
-                dataset("Revenue","revenue","#4CAF50"),
-                dataset("Profit","profit","#2196F3"),
-                dataset("Expenses","expenses","#FF5252")
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
-
-function dataset(label,key,color){
-    return {
-        label,
-        data: map(key),
-        borderColor: color,
-        fill:false,
-        tension:0.4
-    };
-}
-
-/* ================= REPORT ================= */
-
-function generateReport() {
-
-    const reportBox = document.getElementById("performanceReport");
-    if (!reportBox) return;
-
-    const totalRevenue = sum("revenue");
-    const totalProfit = sum("profit");
-
-    if (!totalRevenue) return;
-
-    const latest = businessData[businessData.length - 1];
-
-    let health = "Stable";
-    if (totalProfit <= 0) health = "Critical";
-    else if (totalProfit < totalRevenue * 0.15) health = "Warning";
-    else if (totalProfit > totalRevenue * 0.25) health = "Strong";
-
-    reportBox.innerHTML = `
-        <p><strong>Business Health:</strong> ${health}</p>
-        <p>Total Revenue: ${formatCurrency(totalRevenue)}</p>
-        <p>Total Profit: ${formatCurrency(totalProfit)}</p>
-        <p>Profit Margin: ${((totalProfit/totalRevenue)*100).toFixed(1)}%</p>
-        <p>Latest Month Revenue: ${formatCurrency(latest.revenue)}</p>
-    `;
-}
-
 /* ================= HELPERS ================= */
 
 function destroyCharts(){
@@ -365,24 +295,4 @@ function formatCurrency(val){
         minimumFractionDigits:2,
         maximumFractionDigits:2
     });
-}
-
-function simpleRegression(data, periods){
-
-    const n = data.length;
-    const x = [...Array(n).keys()];
-    const sumX = x.reduce((a,b)=>a+b,0);
-    const sumY = data.reduce((a,b)=>a+b,0);
-    const sumXY = x.reduce((s,xi,i)=>s+xi*data[i],0);
-    const sumXX = x.reduce((s,xi)=>s+xi*xi,0);
-
-    const slope = (n*sumXY - sumX*sumY) / (n*sumXX - sumX*sumX);
-    const intercept = (sumY - slope*sumX)/n;
-
-    const result = [];
-    for(let i=1;i<=periods;i++){
-        result.push(slope*(n+i-1)+intercept);
-    }
-
-    return result;
 }
