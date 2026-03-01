@@ -13,7 +13,6 @@ body {
     transition: all 0.3s ease;
 }
 
-/* ================= HIDDEN STATE ================= */
 .hidden {
     display: none;
 }
@@ -61,13 +60,34 @@ body {
 }
 
 .sidebar.collapsed {
-    width: 70px;
+    width: 80px;
 }
 
 .sidebar-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/* ===== LOGO FIX ===== */
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-img {
+    height: 35px;
+    width: auto;
+}
+
+.logo-text {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.sidebar.collapsed .logo-text {
+    display: none;
 }
 
 .collapse-btn {
@@ -78,11 +98,7 @@ body {
     cursor: pointer;
 }
 
-.logo {
-    font-size: 18px;
-    font-weight: 700;
-}
-
+/* ================= SIDEBAR MENU ================= */
 .sidebar ul {
     list-style: none;
     margin-top: 25px;
@@ -206,6 +222,16 @@ body {
     font-weight: 600;
 }
 
+/* ================= REPORT BOX ================= */
+.report-box {
+    line-height: 1.6;
+    color: #cbd5e1;
+}
+
+.report-box strong {
+    color: #3b82f6;
+}
+
 /* ================= INPUT GRID ================= */
 .grid {
     display: grid;
@@ -273,12 +299,14 @@ input:focus {
     padding: 20px;
     background: rgba(255,255,255,0.04);
     border-radius: 14px;
+    height: 350px;   /* 🔥 IMPORTANT FIX */
+    position: relative;
 }
 
-/* Force canvas height */
-canvas {
-    width: 100% !important;
-    height: 300px !important;
+/* 🔥 FIXED CANVAS (REMOVED !IMPORTANT) */
+.chart-card canvas {
+    width: 100%;
+    height: 100%;
 }
 
 /* ================= FOOTER ================= */
