@@ -1,329 +1,70 @@
-/* ================= GLOBAL RESET ================= */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+/* ================= PRICING SECTION ================= */
 
-body {
-    font-family: 'Inter', sans-serif;
-    background: radial-gradient(circle at top left, #0f172a, #020617 70%);
-    color: #e2e8f0;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* ================= APP LAYOUT ================= */
-.app-layout {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* ================= SIDEBAR ================= */
-.sidebar {
-    width: 260px;
-    background: linear-gradient(180deg, #0b1220, #0f172a);
-    padding: 32px 24px;
-    border-right: 1px solid rgba(255,255,255,0.05);
-    backdrop-filter: blur(10px);
-}
-
-.logo-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 40px;
-}
-
-.logo-img {
-    height: 36px;
-}
-
-.logo-text {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-}
-
-.sidebar ul {
-    list-style: none;
-}
-
-.sidebar li {
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    border-radius: 14px;
-    cursor: pointer;
-    color: #94a3b8;
-    transition: all 0.25s ease;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.sidebar li:hover {
-    background: rgba(59,130,246,0.12);
-    color: white;
-}
-
-.sidebar li.active {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
-    box-shadow: 0 8px 25px rgba(37,99,235,0.35);
-}
-
-/* ================= MAIN CONTENT ================= */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-/* ================= HEADER ================= */
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 40px 6%;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.dashboard-header h1 {
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: -0.4px;
-}
-
-.dashboard-header p {
-    color: #94a3b8;
-    margin-top: 6px;
-    font-size: 14px;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-}
-
-.header-actions {
-    display: flex;
-    gap: 14px;
-}
-
-/* ================= BUTTONS ================= */
-.btn-primary {
-    padding: 12px 22px;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
-    border: none;
-    border-radius: 14px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.25s ease;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 25px rgba(59,130,246,0.35);
-}
-
-.btn-secondary {
-    padding: 12px 22px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #e2e8f0;
-    border-radius: 14px;
-    cursor: pointer;
-    transition: 0.25s ease;
-}
-
-.btn-secondary:hover {
-    background: rgba(255,255,255,0.12);
-}
-
-/* ================= SECTIONS ================= */
-.page-section {
-    display: none;
-    padding: 50px 6% 80px 6%;
-}
-
-.active-section {
-    display: block;
-}
-
-/* ================= CARD ================= */
-.card {
-    background: rgba(255,255,255,0.04);
-    backdrop-filter: blur(20px);
-    padding: 34px;
-    border-radius: 22px;
-    margin-bottom: 40px;
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 25px 60px rgba(0,0,0,0.35);
-    transition: 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 35px 70px rgba(0,0,0,0.45);
-}
-
-.card h2 {
-    margin-bottom: 22px;
-    font-size: 20px;
-    font-weight: 600;
-}
-
-/* ================= GRID ================= */
-.grid {
+.pricing-grid {
     display: grid;
-    gap: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 30px;
+    margin-top: 40px;
 }
 
-/* ================= KPI ================= */
-.kpi-grid {
-    display: grid;
-    gap: 26px;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.kpi {
-    background: linear-gradient(145deg, #1e293b, #0f172a);
-    padding: 28px;
-    border-radius: 20px;
+.pricing-card {
+    background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    padding: 40px 30px;
     text-align: center;
-    transition: 0.3s ease;
+    transition: all 0.35s ease;
+    position: relative;
+    overflow: hidden;
 }
 
-.kpi:hover {
-    transform: scale(1.04);
+.pricing-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 35px 80px rgba(0,0,0,0.45);
+    border: 1px solid rgba(59,130,246,0.4);
 }
 
-.kpi h3 {
-    font-size: 13px;
-    color: #94a3b8;
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
+.pricing-card h3 {
+    font-size: 20px;
+    margin-bottom: 12px;
+    font-weight: 600;
 }
 
-.kpi p {
-    font-size: 26px;
+.pricing-card .price {
+    font-size: 32px;
     font-weight: 700;
+    margin-bottom: 20px;
     color: #3b82f6;
 }
 
-/* ================= CHARTS ================= */
-.charts-grid {
-    display: grid;
-    gap: 34px;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+.pricing-card ul {
+    list-style: none;
+    margin: 20px 0 30px 0;
+    padding: 0;
 }
 
-.chart-card {
-    height: 420px;
-    background: rgba(255,255,255,0.05);
-    padding: 26px;
-    border-radius: 22px;
-}
-
-.chart-card canvas {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-/* ================= REPORT ================= */
-.report-box {
-    font-size: 14px;
-    line-height: 1.9;
+.pricing-card ul li {
+    margin-bottom: 12px;
     color: #cbd5e1;
-    background: rgba(0,0,0,0.25);
-    padding: 22px;
-    border-radius: 16px;
+    font-size: 14px;
 }
 
-/* ================= FOOTER ================= */
-.dashboard-footer {
-    text-align: center;
-    padding: 40px;
-    color: #64748b;
-    margin-top: auto;
-    font-size: 13px;
+/* Current plan highlight */
+.pricing-card.current-plan {
+    border: 2px solid #3b82f6;
+    box-shadow: 0 0 60px rgba(59,130,246,0.35);
+    transform: scale(1.05);
 }
 
-/* ================= MOBILE ================= */
-.mobile-menu-btn {
-    display: none;
-    font-size: 22px;
-    background: none;
-    border: none;
-    color: #e2e8f0;
-    cursor: pointer;
-}
-
-/* Overlay */
-.sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    backdrop-filter: blur(3px);
-    opacity: 0;
-    pointer-events: none;
-    transition: 0.3s ease;
-    z-index: 900;
-}
-
-.sidebar-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* ================= MOBILE ================= */
-@media (max-width: 900px) {
-
-    .mobile-menu-btn {
-        display: block;
-    }
-
-    .app-layout {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        position: fixed;
-        top: 0;
-        left: -260px;
-        height: 100%;
-        width: 260px;
-        z-index: 1000;
-        transition: left 0.3s ease;
-        box-shadow: 15px 0 40px rgba(0,0,0,0.6);
-    }
-
-    .sidebar.active {
-        left: 0;
-    }
-
-    .dashboard-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 18px;
-    }
-
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .chart-card {
-        height: 360px;
-    }
-
-    .card {
-        padding: 24px;
-    }
+.pricing-card.current-plan::before {
+    content: "Current Plan";
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-weight: 600;
 }
