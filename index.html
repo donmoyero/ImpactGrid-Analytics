@@ -1,70 +1,226 @@
-<!-- ================= PRICING ================= -->
-<section id="pricing" class="page-section">
-    <section class="card">
-        <h2>Choose Your Plan</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ImpactGrid Analytics | Enterprise Intelligence Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <div class="pricing-grid">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-            <!-- STARTER -->
-            <div class="pricing-card" id="starterPlan">
-                <h3>Starter</h3>
-                <p class="price">Free</p>
-                <ul>
-                    <li>Core Analytics Dashboard</li>
-                    <li>Basic Performance Insights</li>
-                    <li>3 Months Data Limit</li>
-                </ul>
-                <button class="btn-secondary" type="button" onclick="activateFree()">
-                    Start Free
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- ================= AUTH SCREEN ================= -->
+<div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+        <h2>ImpactGrid Analytics</h2>
+        <p style="opacity:0.7;margin-bottom:20px;">Enterprise Intelligence Access</p>
+        <input type="text" id="username" placeholder="Username" autocomplete="off">
+        <input type="password" id="password" placeholder="Password" autocomplete="off">
+        <button class="btn-primary" type="button" onclick="login()">Login</button>
+    </div>
+</div>
+
+<!-- ================= MAIN APP ================= -->
+<div id="app" class="app-layout hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="logo-container" style="margin-bottom:30px;">
+            <img src="logo.png" alt="ImpactGrid Logo" class="logo-img">
+            <span class="logo-text">ImpactGrid</span>
+        </div>
+
+        <nav>
+            <ul>
+                <li onclick="showSection('dashboard', event)" class="active">Dashboard</li>
+                <li onclick="showSection('forecast', event)">Forecasting</li>
+                <li onclick="showSection('comparison', event)">Multi-Metric</li>
+                <li onclick="showSection('pricing', event)">Pricing</li>
+                <li onclick="clearAllData()">Reset Data</li>
+                <li onclick="logout()">Logout</li>
+            </ul>
+        </nav>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- HEADER -->
+        <header class="dashboard-header">
+            <div>
+                <h1>Enterprise Intelligence Platform</h1>
+                <p>Structured Forecasting • Strategic Modeling • Performance Diagnostics</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-secondary" type="button" onclick="exportExecutivePDF()">
+                    Export Executive PDF
+                </button>
+                <button class="btn-primary" type="button" onclick="toggleTheme()">
+                    Toggle Theme
                 </button>
             </div>
+        </header>
 
-            <!-- GROWTH -->
-            <div class="pricing-card" id="growthPlan">
-                <h3>Growth</h3>
-                <p class="price">£8.99 / month</p>
-                <ul>
-                    <li>Revenue Forecasting</li>
-                    <li>Multi-Metric Comparison</li>
-                    <li>Executive PDF (3/month)</li>
-                    <li>Unlimited Data History</li>
-                </ul>
+        <!-- ================= DASHBOARD ================= -->
+        <section id="dashboard" class="page-section active-section">
 
-                <!-- 🔁 REPLACE WITH YOUR STRIPE LINK -->
-                <a href="https://buy.stripe.com/YOUR_GROWTH_LINK?client_reference_id=pro">
-                    <button class="btn-primary">
-                        Upgrade to Growth
-                    </button>
-                </a>
-
-                <div class="secure-payment">
-                    Secure payment powered by Stripe
+            <!-- INPUT -->
+            <section class="card">
+                <h2>Business Data Input</h2>
+                <div class="grid">
+                    <input type="month" id="month">
+                    <input type="number" id="revenue" placeholder="Revenue">
+                    <input type="number" id="expenses" placeholder="Expenses">
+                    <input type="number" id="customers" placeholder="Customers">
+                    <input type="number" id="marketing" placeholder="Marketing Spend">
+                    <button class="btn-primary" type="button" onclick="addData()">Add Data</button>
                 </div>
-            </div>
+            </section>
 
-            <!-- PREMIUM -->
-            <div class="pricing-card premium" id="premiumPlan">
-                <h3>Pro Intelligence</h3>
-                <p class="price">£19.99 / month</p>
-                <ul>
-                    <li>Unlimited Executive Reports</li>
-                    <li>Advanced Risk Analysis</li>
-                    <li>Company Logo Branding</li>
-                    <li>Priority Intelligence Engine</li>
-                </ul>
+            <!-- KPI -->
+            <section class="card">
+                <h2>Key Performance Indicators</h2>
+                <div id="kpiContainer" class="kpi-grid"></div>
+            </section>
 
-                <!-- 🔁 REPLACE WITH YOUR STRIPE LINK -->
-                <a href="https://buy.stripe.com/YOUR_PREMIUM_LINK?client_reference_id=premium">
-                    <button class="btn-primary">
-                        Upgrade to Pro Intelligence
-                    </button>
-                </a>
-
-                <div class="secure-payment">
-                    Secure payment powered by Stripe
+            <!-- CORE PERFORMANCE -->
+            <section class="card">
+                <h2>Core Performance</h2>
+                <div class="charts-grid">
+                    <div class="chart-card"><canvas id="revenueChart"></canvas></div>
+                    <div class="chart-card"><canvas id="profitChart"></canvas></div>
+                    <div class="chart-card"><canvas id="expenseChart"></canvas></div>
                 </div>
-            </div>
+            </section>
 
-        </div>
-    </section>
-</section>
+            <!-- REPORT -->
+            <section class="card">
+                <h2>Performance Intelligence Report</h2>
+                <div id="performanceReport" class="report-box">
+                    <p>No analysis available yet. Add business data to generate structured insights.</p>
+                </div>
+            </section>
+
+            <!-- LOGO UPLOAD -->
+            <section class="card">
+                <h2>Company Branding (Premium Only)</h2>
+                <p>Upload your company logo to include in Executive Reports.</p>
+                <input type="file" id="companyLogoInput" accept="image/*">
+            </section>
+
+        </section>
+
+        <!-- ================= FORECAST ================= -->
+        <section id="forecast" class="page-section">
+            <section class="card">
+                <h2>Revenue Forecast</h2>
+                <div class="chart-card">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </section>
+        </section>
+
+        <!-- ================= MULTI METRIC ================= -->
+        <section id="comparison" class="page-section">
+            <section class="card">
+                <h2>Multi-Metric Comparison</h2>
+                <div class="chart-card">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </section>
+        </section>
+
+        <!-- ================= PRICING ================= -->
+        <section id="pricing" class="page-section">
+            <section class="card">
+                <h2>Choose Your Plan</h2>
+
+                <div class="pricing-grid">
+
+                    <!-- STARTER -->
+                    <div class="pricing-card" id="starterPlan">
+                        <h3>Starter</h3>
+                        <p class="price">Free</p>
+                        <ul>
+                            <li>Core Analytics Dashboard</li>
+                            <li>Basic Performance Insights</li>
+                            <li>3 Month Data Limit</li>
+                        </ul>
+                        <button class="btn-secondary" type="button" onclick="setPlan('free')">
+                            Start Free
+                        </button>
+                    </div>
+
+                    <!-- GROWTH -->
+                    <div class="pricing-card" id="growthPlan">
+                        <h3>Growth</h3>
+                        <p class="price">£8.99 / month</p>
+                        <ul>
+                            <li>Revenue Forecasting</li>
+                            <li>Multi-Metric Comparison</li>
+                            <li>Executive PDF (3/month)</li>
+                            <li>Unlimited Data History</li>
+                        </ul>
+
+                        <!-- REPLACE LINK -->
+                        <a href="https://buy.stripe.com/YOUR_GROWTH_LINK?plan=pro">
+                            <button class="btn-primary">
+                                Upgrade to Growth
+                            </button>
+                        </a>
+
+                        <div class="secure-payment">
+                            Secure payments powered by Stripe
+                        </div>
+                    </div>
+
+                    <!-- PREMIUM -->
+                    <div class="pricing-card premium" id="premiumPlan">
+                        <h3>Pro Intelligence</h3>
+                        <p class="price">£19.99 / month</p>
+                        <ul>
+                            <li>Unlimited Executive Reports</li>
+                            <li>Advanced Risk Analysis</li>
+                            <li>Company Logo Branding</li>
+                            <li>Priority Intelligence Engine</li>
+                        </ul>
+
+                        <!-- REPLACE LINK -->
+                        <a href="https://buy.stripe.com/YOUR_PREMIUM_LINK?plan=premium">
+                            <button class="btn-primary">
+                                Upgrade to Pro Intelligence
+                            </button>
+                        </a>
+
+                        <div class="secure-payment">
+                            Secure payments powered by Stripe
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </section>
+
+        <footer class="dashboard-footer">
+            <p>© 2026 ImpactGrid Analytics. Enterprise Intelligence Platform.</p>
+        </footer>
+
+    </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
