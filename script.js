@@ -8,7 +8,6 @@ let forecastChart = null;
 let comparisonChart = null;
 
 let userPlan = localStorage.getItem("impactPlan") || "free";
-let isAdmin = false;
 
 /* ================= INIT ================= */
 
@@ -22,14 +21,17 @@ document.addEventListener("DOMContentLoaded", () => {
     bindHeaderButtons();
 });
 
-/* ================= SHOW APP (CRITICAL FIX) ================= */
+/* ================= SHOW APP ================= */
 
 function showApp() {
-    document.getElementById("authScreen")?.remove();
-    document.getElementById("app")?.classList.remove("hidden");
+    const auth = document.getElementById("authScreen");
+    const app = document.getElementById("app");
+
+    if (auth) auth.style.display = "none";
+    if (app) app.classList.remove("hidden");
 }
 
-/* ================= HEADER BUTTON BINDING ================= */
+/* ================= HEADER BUTTONS ================= */
 
 function bindHeaderButtons() {
 
@@ -40,7 +42,7 @@ function bindHeaderButtons() {
     pdfBtn?.addEventListener("click", exportExecutivePDF);
 }
 
-/* ================= ADMIN LOGIN ================= */
+/* ================= LOGIN SYSTEM ================= */
 
 function login() {
 
@@ -52,24 +54,6 @@ function login() {
         return;
     }
 
-    // ===== ADMIN ACCESS =====
-    if (user === "Impactgrid" && pass === "199419981304") {
-
-        isAdmin = true;
-        userPlan = "premium";
-
-        localStorage.setItem("impactPlan", "premium");
-        localStorage.setItem("impactUser", "admin");
-
-        showApp();
-        updatePlanUI();
-
-        alert("ADMIN MODE ACTIVATED");
-        return;
-    }
-
-    // ===== NORMAL USER =====
-    isAdmin = false;
     localStorage.setItem("impactUser", user);
 
     showApp();
@@ -80,12 +64,6 @@ function autoLogin() {
 
     const savedUser = localStorage.getItem("impactUser");
     if (!savedUser) return;
-
-    if (savedUser === "admin") {
-        isAdmin = true;
-        userPlan = "premium";
-        localStorage.setItem("impactPlan", "premium");
-    }
 
     showApp();
     updatePlanUI();
@@ -151,7 +129,7 @@ function closeSidebar() {
 
 function showSection(id, evt) {
 
-    if (!isAdmin && (id === "forecast" || id === "comparison") && userPlan === "free") {
+    if ((id === "forecast" || id === "comparison") && userPlan === "free") {
         alert("Upgrade required to access this feature.");
         activateSection("pricing");
         return;
@@ -159,8 +137,8 @@ function showSection(id, evt) {
 
     activateSection(id, evt);
 
-    if (id === "forecast") renderForecast();
-    if (id === "comparison") renderComparison();
+    if (id === "forecast") renderForecast?.();
+    if (id === "comparison") renderComparison?.();
 }
 
 function activateSection(id, evt) {
@@ -182,7 +160,7 @@ function activateSection(id, evt) {
 
 function addData() {
 
-    if (!isAdmin && userPlan === "free" && businessData.length >= 3) {
+    if (userPlan === "free" && businessData.length >= 3) {
         alert("Free plan supports only 3 months of data.");
         return;
     }
@@ -231,7 +209,7 @@ function updateAll() {
     if (!businessData.length) return;
     renderKPIs();
     renderCoreCharts();
-    generateReport();
+    generateReport?.();
 }
 
 /* ================= KPI ================= */
