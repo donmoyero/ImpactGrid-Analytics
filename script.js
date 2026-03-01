@@ -22,6 +22,13 @@ document.addEventListener("DOMContentLoaded", () => {
     bindHeaderButtons();
 });
 
+/* ================= SHOW APP (CRITICAL FIX) ================= */
+
+function showApp() {
+    document.getElementById("authScreen")?.remove();
+    document.getElementById("app")?.classList.remove("hidden");
+}
+
 /* ================= HEADER BUTTON BINDING ================= */
 
 function bindHeaderButtons() {
@@ -55,16 +62,16 @@ function login() {
         localStorage.setItem("impactUser", "admin");
 
         showApp();
-        updatePlanUI();   // critical fix
-        alert("ADMIN MODE ACTIVATED");
+        updatePlanUI();
 
+        alert("ADMIN MODE ACTIVATED");
         return;
     }
 
     // ===== NORMAL USER =====
     isAdmin = false;
-
     localStorage.setItem("impactUser", user);
+
     showApp();
     updatePlanUI();
 }
@@ -81,7 +88,7 @@ function autoLogin() {
     }
 
     showApp();
-    updatePlanUI();   // critical sync
+    updatePlanUI();
 }
 
 function logout() {
@@ -144,7 +151,7 @@ function closeSidebar() {
 
 function showSection(id, evt) {
 
-    if ((id === "forecast" || id === "comparison") && userPlan === "free") {
+    if (!isAdmin && (id === "forecast" || id === "comparison") && userPlan === "free") {
         alert("Upgrade required to access this feature.");
         activateSection("pricing");
         return;
@@ -300,65 +307,6 @@ function destroyCharts(){
     revenueChart?.destroy();
     profitChart?.destroy();
     expenseChart?.destroy();
-}
-
-/* ================= PERFORMANCE INTELLIGENCE ================= */
-
-function generateReport() {
-
-    const reportBox = document.getElementById("performanceReport");
-    if (!reportBox || !businessData.length) return;
-
-    const totalRevenue = sum("revenue");
-    const totalProfit = sum("profit");
-    const margin = ((totalProfit / totalRevenue) * 100).toFixed(1);
-    const latest = businessData[businessData.length - 1];
-
-    let insight;
-
-    if (margin >= 30)
-        insight = "Strong profit efficiency. Revenue expansion is translating into retained capital growth.";
-    else if (margin >= 15)
-        insight = "Stable margin performance with room for operational optimisation.";
-    else if (margin > 0)
-        insight = "Tight margins. Cost management strategy should be reviewed.";
-    else
-        insight = "Negative profitability detected. Strategic financial restructuring advised.";
-
-    reportBox.innerHTML = `
-        <strong>Executive Performance Summary</strong><br><br>
-        Total Revenue: ${formatCurrency(totalRevenue)}<br>
-        Total Profit: ${formatCurrency(totalProfit)}<br>
-        Profit Margin: ${margin}%<br><br>
-        Latest Month Revenue: ${formatCurrency(latest.revenue)}<br><br>
-        <strong>Strategic Insight:</strong><br>
-        ${insight}
-    `;
-}
-
-/* ================= PDF EXPORT ================= */
-
-function exportExecutivePDF() {
-
-    if (!businessData.length) {
-        alert("No data available.");
-        return;
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    const totalRevenue = sum("revenue");
-    const totalProfit = sum("profit");
-
-    doc.setFontSize(18);
-    doc.text("ImpactGrid Executive Report", 20, 20);
-
-    doc.setFontSize(12);
-    doc.text(`Total Revenue: ${formatCurrency(totalRevenue)}`, 20, 40);
-    doc.text(`Total Profit: ${formatCurrency(totalProfit)}`, 20, 50);
-
-    doc.save("ImpactGrid_Executive_Report.pdf");
 }
 
 /* ================= HELPERS ================= */
