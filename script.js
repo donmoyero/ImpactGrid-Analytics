@@ -6,7 +6,6 @@ let profitChart = null;
 let expenseChart = null;
 let forecastChart = null;
 let comparisonChart = null;
-let companyLogoData = null;
 
 let userPlan = localStorage.getItem("impactPlan") || "free";
 
@@ -14,10 +13,13 @@ let userPlan = localStorage.getItem("impactPlan") || "free";
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    loadFromStorage();
-    autoLogin();
-    loadTheme();
-    setupLogoUpload();
+    try {
+        loadFromStorage();
+        autoLogin();
+        loadTheme();
+    } catch (err) {
+        console.error("Initialization error:", err);
+    }
 
 });
 
@@ -63,8 +65,8 @@ function logout() {
 }
 
 function showApp() {
-    document.getElementById("authScreen").style.display = "none";
-    document.getElementById("app").classList.remove("hidden");
+    document.getElementById("authScreen")?.remove();
+    document.getElementById("app")?.classList.remove("hidden");
 }
 
 /* ================= THEME ================= */
@@ -102,7 +104,6 @@ function showSection(id, evt) {
 
     if (evt) evt.target.classList.add("active");
 
-    // Close sidebar on mobile after navigation
     document.getElementById("sidebar")?.classList.remove("active");
 
     if (id === "forecast") renderForecast();
@@ -231,14 +232,7 @@ function createChart(id, type, labels, data, color, label) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: true }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
+            scales: { y: { beginAtZero: true } }
         }
     });
 }
@@ -272,24 +266,24 @@ function renderComparison() {
     if (!businessData.length) return;
     if (comparisonChart) comparisonChart.destroy();
 
-    comparisonChart = new Chart(
-        document.getElementById("comparisonChart").getContext("2d"),
-        {
-            type: "line",
-            data: {
-                labels: businessData.map(d => d.month),
-                datasets: [
-                    dataset("Revenue","revenue","#4CAF50"),
-                    dataset("Profit","profit","#2196F3"),
-                    dataset("Expenses","expenses","#FF5252")
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
+    const canvas = document.getElementById("comparisonChart");
+    if (!canvas) return;
+
+    comparisonChart = new Chart(canvas.getContext("2d"), {
+        type: "line",
+        data: {
+            labels: businessData.map(d => d.month),
+            datasets: [
+                dataset("Revenue","revenue","#4CAF50"),
+                dataset("Profit","profit","#2196F3"),
+                dataset("Expenses","expenses","#FF5252")
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
         }
-    );
+    });
 }
 
 function dataset(label,key,color){
@@ -297,8 +291,8 @@ function dataset(label,key,color){
         label,
         data: map(key),
         borderColor: color,
-        tension: 0.4,
-        fill:false
+        fill:false,
+        tension:0.4
     };
 }
 
