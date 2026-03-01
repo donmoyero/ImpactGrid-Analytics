@@ -39,11 +39,6 @@ body {
     margin-bottom: 20px;
 }
 
-.auth-card input {
-    width: 100%;
-    margin-bottom: 15px;
-}
-
 /* ================= APP LAYOUT ================= */
 .app-layout {
     display: flex;
@@ -63,13 +58,6 @@ body {
     width: 80px;
 }
 
-.sidebar-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* ===== LOGO FIX ===== */
 .logo-container {
     display: flex;
     align-items: center;
@@ -78,7 +66,6 @@ body {
 
 .logo-img {
     height: 35px;
-    width: auto;
 }
 
 .logo-text {
@@ -90,15 +77,6 @@ body {
     display: none;
 }
 
-.collapse-btn {
-    background: none;
-    border: none;
-    color: #94a3b8;
-    font-size: 18px;
-    cursor: pointer;
-}
-
-/* ================= SIDEBAR MENU ================= */
 .sidebar ul {
     list-style: none;
     margin-top: 25px;
@@ -140,7 +118,7 @@ body {
 }
 
 .dashboard-header h1 {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 700;
 }
 
@@ -151,7 +129,7 @@ body {
 
 .header-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
 }
 
 /* ================= PAGE SECTIONS ================= */
@@ -172,11 +150,11 @@ body {
 
 /* ================= BUTTONS ================= */
 .btn-primary {
-    padding: 10px 16px;
+    padding: 10px 18px;
     background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
     transition: all 0.2s ease;
@@ -184,15 +162,15 @@ body {
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(59,130,246,0.4);
+    box-shadow: 0 8px 20px rgba(59,130,246,0.4);
 }
 
 .btn-secondary {
-    padding: 10px 16px;
+    padding: 10px 18px;
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.1);
     color: #e2e8f0;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -206,15 +184,15 @@ body {
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(12px);
     padding: 25px;
-    border-radius: 16px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    border-radius: 18px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.35);
     border: 1px solid rgba(255,255,255,0.05);
     margin-bottom: 25px;
     transition: transform 0.2s ease;
 }
 
 .card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-4px);
 }
 
 .card h2 {
@@ -224,39 +202,16 @@ body {
 
 /* ================= REPORT BOX ================= */
 .report-box {
-    line-height: 1.6;
+    line-height: 1.8;
     color: #cbd5e1;
+    font-size: 14px;
 }
 
 .report-box strong {
     color: #3b82f6;
 }
 
-/* ================= INPUT GRID ================= */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-}
-
-input {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05);
-    color: white;
-    outline: none;
-}
-
-input::placeholder {
-    color: #94a3b8;
-}
-
-input:focus {
-    border-color: #3b82f6;
-}
-
-/* ================= KPI GRID ================= */
+/* ================= KPI ================= */
 .kpi-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -266,29 +221,23 @@ input:focus {
 .kpi {
     background: linear-gradient(135deg, #1e293b, #0f172a);
     padding: 20px;
-    border-radius: 14px;
+    border-radius: 16px;
     text-align: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .kpi:hover {
     transform: scale(1.05);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-}
-
-.kpi h3 {
-    font-size: 14px;
-    color: #94a3b8;
-    margin-bottom: 8px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.4);
 }
 
 .kpi p {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: #3b82f6;
 }
 
-/* ================= CHART GRID ================= */
+/* ================= CHARTS ================= */
 .charts-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -298,21 +247,77 @@ input:focus {
 .chart-card {
     padding: 20px;
     background: rgba(255,255,255,0.04);
-    border-radius: 14px;
-    height: 350px;   /* 🔥 IMPORTANT FIX */
+    border-radius: 16px;
+    height: 350px;
     position: relative;
 }
 
-/* 🔥 FIXED CANVAS (REMOVED !IMPORTANT) */
 .chart-card canvas {
     width: 100%;
     height: 100%;
 }
 
+/* ================= PRICING ================= */
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 25px;
+}
+
+.pricing-card {
+    background: rgba(255,255,255,0.05);
+    padding: 25px;
+    border-radius: 18px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.3s ease;
+}
+
+.pricing-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+}
+
+.pricing-card h3 {
+    margin-bottom: 10px;
+}
+
+.price {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #3b82f6;
+}
+
+.pricing-card ul {
+    list-style: none;
+    margin-bottom: 20px;
+    line-height: 1.8;
+    font-size: 14px;
+}
+
+.pricing-card.premium {
+    background: linear-gradient(135deg, #1e293b, #111827);
+    border: 1px solid #3b82f6;
+    position: relative;
+}
+
+.pricing-card.premium::before {
+    content: "Most Powerful";
+    position: absolute;
+    top: -10px;
+    right: 15px;
+    background: #3b82f6;
+    color: white;
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 8px;
+}
+
 /* ================= FOOTER ================= */
 .dashboard-footer {
     text-align: center;
-    padding: 20px;
+    padding: 25px;
     color: #64748b;
     margin-top: auto;
 }
@@ -324,7 +329,7 @@ body.light-mode {
 }
 
 body.light-mode .sidebar {
-    background: #ffffff;
+    background: white;
     border-right: 1px solid #e2e8f0;
 }
 
@@ -333,10 +338,12 @@ body.light-mode .card {
     border: 1px solid #e2e8f0;
 }
 
-body.light-mode input {
+body.light-mode .pricing-card {
     background: white;
-    color: #1e293b;
-    border: 1px solid #cbd5e1;
+}
+
+body.light-mode .pricing-card.premium {
+    border: 2px solid #3b82f6;
 }
 
 /* ================= RESPONSIVE ================= */
