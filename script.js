@@ -8,16 +8,73 @@ let forecastChart = null;
 let comparisonChart = null;
 
 let userPlan = localStorage.getItem("impactPlan") || "free";
+let isAdmin = false;
 
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-    checkStripeReturn();     // NEW
+
+    checkStripeReturn();
     loadFromStorage();
     autoLogin();
     loadTheme();
     updatePlanUI();
+    bindHeaderButtons();
 });
+
+/* ================= HEADER BUTTON BINDING ================= */
+
+function bindHeaderButtons() {
+
+    const themeBtn = document.getElementById("themeBtn");
+    const pdfBtn = document.getElementById("pdfBtn");
+
+    themeBtn?.addEventListener("click", toggleTheme);
+    pdfBtn?.addEventListener("click", exportExecutivePDF);
+}
+
+/* ================= ADMIN LOGIN ================= */
+
+function login() {
+
+    const user = document.getElementById("username")?.value;
+    const pass = document.getElementById("password")?.value;
+
+    if (!user || !pass) {
+        alert("Enter credentials");
+        return;
+    }
+
+    // ADMIN ACCESS
+    if (user === "Impactgrid" && pass === "199419981304") {
+        isAdmin = true;
+        userPlan = "premium";
+        localStorage.setItem("impactPlan", "premium");
+        localStorage.setItem("impactUser", "admin");
+        alert("ADMIN MODE ACTIVATED");
+        showApp();
+        return;
+    }
+
+    // Normal user
+    localStorage.setItem("impactUser", user);
+    showApp();
+}
+
+function autoLogin() {
+    if (localStorage.getItem("impactUser")) {
+        if (localStorage.getItem("impactUser") === "admin") {
+            isAdmin = true;
+            userPlan = "premium";
+        }
+        showApp();
+    }
+}
+
+function logout() {
+    localStorage.removeItem("impactUser");
+    location.reload();
+}
 
 /* ================= STRIPE SUCCESS HANDLER ================= */
 
@@ -29,25 +86,8 @@ function checkStripeReturn() {
         userPlan = plan;
         localStorage.setItem("impactPlan", plan);
         alert("Subscription activated: " + plan.toUpperCase());
-
-        // Clean URL after upgrade
         window.history.replaceState({}, document.title, window.location.pathname);
     }
-}
-
-/* ================= MOBILE SIDEBAR ================= */
-
-function toggleSidebar() {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.getElementById("sidebarOverlay");
-
-    sidebar?.classList.toggle("active");
-    overlay?.classList.toggle("active");
-}
-
-function closeSidebar() {
-    document.getElementById("sidebar")?.classList.remove("active");
-    document.getElementById("sidebarOverlay")?.classList.remove("active");
 }
 
 /* ================= PLAN SYSTEM ================= */
@@ -68,51 +108,16 @@ function updatePlanUI() {
     if (userPlan === "premium") pricingCards[2]?.classList.add("current-plan");
 }
 
-/* ================= AUTH ================= */
+/* ================= SIDEBAR ================= */
 
-function login() {
-    const user = document.getElementById("username")?.value;
-    const pass = document.getElementById("password")?.value;
-
-    if (!user || !pass) {
-        alert("Enter credentials");
-        return;
-    }
-
-    localStorage.setItem("impactUser", user);
-    showApp();
+function toggleSidebar() {
+    document.getElementById("sidebar")?.classList.toggle("active");
+    document.getElementById("sidebarOverlay")?.classList.toggle("active");
 }
 
-function autoLogin() {
-    if (localStorage.getItem("impactUser")) {
-        showApp();
-    }
-}
-
-function logout() {
-    localStorage.removeItem("impactUser");
-    location.reload();
-}
-
-function showApp() {
-    document.getElementById("authScreen")?.remove();
-    document.getElementById("app")?.classList.remove("hidden");
-}
-
-/* ================= THEME ================= */
-
-function toggleTheme() {
-    document.body.classList.toggle("light-mode");
-    localStorage.setItem(
-        "impactTheme",
-        document.body.classList.contains("light-mode") ? "light" : "dark"
-    );
-}
-
-function loadTheme() {
-    if (localStorage.getItem("impactTheme") === "light") {
-        document.body.classList.add("light-mode");
-    }
+function closeSidebar() {
+    document.getElementById("sidebar")?.classList.remove("active");
+    document.getElementById("sidebarOverlay")?.classList.remove("active");
 }
 
 /* ================= SECTION NAV ================= */
@@ -120,7 +125,7 @@ function loadTheme() {
 function showSection(id, evt) {
 
     if ((id === "forecast" || id === "comparison") && userPlan === "free") {
-        alert("This feature is available on Growth and Pro plans.");
+        alert("Upgrade required to access this feature.");
         activateSection("pricing");
         return;
     }
@@ -187,7 +192,7 @@ function loadFromStorage() {
 }
 
 function clearAllData() {
-    if (confirm("Are you sure you want to reset all business data?")) {
+    if (confirm("Reset all data?")) {
         localStorage.removeItem("impactGridData");
         location.reload();
     }
@@ -267,20 +272,79 @@ function createChart(id, type, labels, data, color, label) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 600 },
-            scales: { y: { beginAtZero: true } }
+            maintainAspectRatio: false
         }
     });
 }
-
-/* ================= HELPERS ================= */
 
 function destroyCharts(){
     revenueChart?.destroy();
     profitChart?.destroy();
     expenseChart?.destroy();
 }
+
+/* ================= PERFORMANCE INTELLIGENCE ================= */
+
+function generateReport() {
+
+    const reportBox = document.getElementById("performanceReport");
+    if (!reportBox || !businessData.length) return;
+
+    const totalRevenue = sum("revenue");
+    const totalProfit = sum("profit");
+    const margin = ((totalProfit / totalRevenue) * 100).toFixed(1);
+
+    const latest = businessData[businessData.length - 1];
+
+    let insight = "";
+
+    if (margin >= 30) {
+        insight = "The business is operating with strong profitability. Revenue growth is efficiently converting into retained earnings.";
+    } else if (margin >= 15) {
+        insight = "The company demonstrates stable profitability. Cost optimisation could further enhance margins.";
+    } else if (margin > 0) {
+        insight = "Profit margins are tight. Operational efficiency and cost controls require strategic attention.";
+    } else {
+        insight = "The business is currently operating at a loss. Immediate structural review of revenue streams and cost base is recommended.";
+    }
+
+    reportBox.innerHTML = `
+        <strong>Executive Performance Summary</strong><br><br>
+        Total Revenue: ${formatCurrency(totalRevenue)}<br>
+        Total Profit: ${formatCurrency(totalProfit)}<br>
+        Profit Margin: ${margin}%<br><br>
+        Latest Month Revenue: ${formatCurrency(latest.revenue)}<br><br>
+        <strong>Strategic Insight:</strong><br>
+        ${insight}
+    `;
+}
+
+/* ================= PDF EXPORT ================= */
+
+function exportExecutivePDF() {
+
+    if (!businessData.length) {
+        alert("No data available.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const totalRevenue = sum("revenue");
+    const totalProfit = sum("profit");
+
+    doc.setFontSize(18);
+    doc.text("ImpactGrid Executive Report", 20, 20);
+
+    doc.setFontSize(12);
+    doc.text(`Total Revenue: ${formatCurrency(totalRevenue)}`, 20, 40);
+    doc.text(`Total Profit: ${formatCurrency(totalProfit)}`, 20, 50);
+
+    doc.save("ImpactGrid_Executive_Report.pdf");
+}
+
+/* ================= HELPERS ================= */
 
 function sum(key){
     return businessData.reduce((a,b)=>a+b[key],0);
