@@ -13,12 +13,10 @@ let userPlan = localStorage.getItem("impactPlan") || "free";
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-
     loadFromStorage();
     autoLogin();
     loadTheme();
     setupLogoUpload();
-
 });
 
 /* ================= PLAN SYSTEM ================= */
@@ -35,10 +33,7 @@ function login() {
     const user = document.getElementById("username")?.value;
     const pass = document.getElementById("password")?.value;
 
-    if (!user || !pass) {
-        alert("Enter credentials");
-        return;
-    }
+    if (!user || !pass) return alert("Enter credentials");
 
     localStorage.setItem("impactUser", user);
     showApp();
@@ -83,8 +78,7 @@ function loadTheme() {
 function showSection(id, evt) {
 
     if ((id === "forecast" || id === "comparison") && userPlan === "free") {
-        alert("Upgrade to Growth or Premium to access this feature.");
-        return;
+        return alert("Upgrade to Growth or Premium to access this feature.");
     }
 
     document.querySelectorAll(".page-section")
@@ -97,7 +91,6 @@ function showSection(id, evt) {
 
     if (evt) evt.target.classList.add("active");
 
-    // Mobile auto-close sidebar
     if (window.innerWidth < 768) {
         document.getElementById("sidebar")?.classList.remove("show");
     }
@@ -111,8 +104,7 @@ function showSection(id, evt) {
 function addData() {
 
     if (userPlan === "free" && businessData.length >= 3) {
-        alert("Free plan supports only 3 months of data.");
-        return;
+        return alert("Free plan supports only 3 months of data.");
     }
 
     const month = document.getElementById("month")?.value;
@@ -120,13 +112,15 @@ function addData() {
     const expenses = parseFloat(document.getElementById("expenses")?.value);
 
     if (!month || isNaN(revenue) || isNaN(expenses)) {
-        alert("Fill required fields.");
-        return;
+        return alert("Fill required fields.");
     }
 
-    const profit = revenue - expenses;
-
-    businessData.push({ month, revenue, expenses, profit });
+    businessData.push({
+        month,
+        revenue,
+        expenses,
+        profit: revenue - expenses
+    });
 
     saveToStorage();
     updateAll();
@@ -140,31 +134,27 @@ function saveToStorage() {
 
 function loadFromStorage() {
     const saved = localStorage.getItem("impactGridData");
-    if (saved) {
-        businessData = JSON.parse(saved);
-    }
+    if (saved) businessData = JSON.parse(saved);
 }
 
 function clearAllData() {
-    localStorage.removeItem("impactGridData");
     businessData = [];
+    localStorage.removeItem("impactGridData");
+    destroyAllCharts();
     updateAll();
 }
 
 /* ================= MASTER UPDATE ================= */
 
 function updateAll() {
-
     renderKPIs();
     renderCoreCharts();
     generateReport();
-
 }
 
 /* ================= KPI ================= */
 
 function renderKPIs() {
-
     const container = document.getElementById("kpiContainer");
     if (!container) return;
 
@@ -173,17 +163,14 @@ function renderKPIs() {
         return;
     }
 
-    const totalRevenue = sum("revenue");
-    const totalProfit = sum("profit");
-
     container.innerHTML = `
         <div class="kpi">
             <h3>Total Revenue</h3>
-            <p>${formatCurrency(totalRevenue)}</p>
+            <p>${formatCurrency(sum("revenue"))}</p>
         </div>
         <div class="kpi">
             <h3>Total Profit</h3>
-            <p>${formatCurrency(totalProfit)}</p>
+            <p>${formatCurrency(sum("profit"))}</p>
         </div>
     `;
 }
@@ -194,32 +181,32 @@ function renderCoreCharts() {
 
     if (typeof Chart === "undefined") return;
 
-    destroyCharts();
+    destroyCoreCharts();
 
     if (!businessData.length) return;
 
-    const labels = businessData.map(d => d.month);
+    const labels = map("month");
 
-    revenueChart = createChart("revenueChart", "line", labels, map("revenue"), "#4CAF50", "Revenue");
-    profitChart = createChart("profitChart", "line", labels, map("profit"), "#2196F3", "Profit");
-    expenseChart = createChart("expenseChart", "bar", labels, map("expenses"), "#FF5252", "Expenses");
+    revenueChart = createChart("revenueChart","line",labels,map("revenue"),"#4CAF50","Revenue");
+    profitChart = createChart("profitChart","line",labels,map("profit"),"#2196F3","Profit");
+    expenseChart = createChart("expenseChart","bar",labels,map("expenses"),"#FF5252","Expenses");
 }
 
-function createChart(id, type, labels, data, color, label) {
+function createChart(id,type,labels,data,color,label){
 
     const canvas = document.getElementById(id);
     if (!canvas) return null;
 
-    return new Chart(canvas, {
+    return new Chart(canvas,{
         type,
-        data: {
+        data:{
             labels,
-            datasets: [{
+            datasets:[{
                 label,
                 data,
-                borderColor: color,
-                backgroundColor: type === "bar" ? color : "transparent",
-                tension: 0.4
+                borderColor:color,
+                backgroundColor:type==="bar"?color:"transparent",
+                tension:0.4
             }]
         },
         options: baseChartOptions()
@@ -228,8 +215,9 @@ function createChart(id, type, labels, data, color, label) {
 
 /* ================= FORECAST ================= */
 
-function renderForecast() {
+function renderForecast(){
 
+    if (typeof Chart === "undefined") return;
     if (!businessData.length) return;
 
     if (forecastChart) forecastChart.destroy();
@@ -240,18 +228,18 @@ function renderForecast() {
     const values = map("revenue");
     if (values.length < 2) return;
 
-    const predictions = simpleRegression(values, 3);
+    const predictions = simpleRegression(values,3);
 
-    forecastChart = new Chart(canvas, {
-        type: "line",
-        data: {
-            labels: [...businessData.map(d => d.month), "F1", "F2", "F3"],
-            datasets: [{
-                label: "Revenue Forecast",
-                data: [...values, ...predictions],
-                borderColor: "#3b82f6",
-                borderDash: [5,5],
-                tension: 0.4
+    forecastChart = new Chart(canvas,{
+        type:"line",
+        data:{
+            labels:[...map("month"),"F1","F2","F3"],
+            datasets:[{
+                label:"Revenue Forecast",
+                data:[...values,...predictions],
+                borderColor:"#3b82f6",
+                borderDash:[5,5],
+                tension:0.4
             }]
         },
         options: baseChartOptions()
@@ -260,8 +248,9 @@ function renderForecast() {
 
 /* ================= MULTI METRIC ================= */
 
-function renderComparison() {
+function renderComparison(){
 
+    if (typeof Chart === "undefined") return;
     if (!businessData.length) return;
 
     if (comparisonChart) comparisonChart.destroy();
@@ -269,11 +258,11 @@ function renderComparison() {
     const canvas = document.getElementById("comparisonChart");
     if (!canvas) return;
 
-    comparisonChart = new Chart(canvas, {
-        type: "line",
-        data: {
-            labels: businessData.map(d => d.month),
-            datasets: [
+    comparisonChart = new Chart(canvas,{
+        type:"line",
+        data:{
+            labels:map("month"),
+            datasets:[
                 dataset("Revenue","revenue","#4CAF50"),
                 dataset("Profit","profit","#2196F3"),
                 dataset("Expenses","expenses","#FF5252")
@@ -294,25 +283,25 @@ function dataset(label,key,color){
 
 /* ================= SMART REPORT ================= */
 
-function generateReport() {
+function generateReport(){
 
-    const reportBox = document.getElementById("performanceReport");
-    if (!reportBox) return;
+    const box = document.getElementById("performanceReport");
+    if (!box) return;
 
-    if (!businessData.length) {
-        reportBox.innerHTML = "<p>No analysis available yet.</p>";
+    if (!businessData.length){
+        box.innerHTML="<p>No analysis available yet.</p>";
         return;
     }
 
-    const totalRevenue = sum("revenue");
-    const totalProfit = sum("profit");
-    const latest = businessData[businessData.length - 1];
+    const totalRevenue=sum("revenue");
+    const totalProfit=sum("profit");
+    const latest=businessData[businessData.length-1];
 
-    let health = "Stable";
-    if (totalProfit <= 0) health = "Critical";
-    else if (totalProfit < totalRevenue * 0.15) health = "Warning";
+    let health="Stable";
+    if(totalProfit<=0) health="Critical";
+    else if(totalProfit<totalRevenue*0.15) health="Warning";
 
-    reportBox.innerHTML = `
+    box.innerHTML=`
         <p><strong>Business Health:</strong> ${health}</p>
         <p>Total Revenue: ${formatCurrency(totalRevenue)}</p>
         <p>Total Profit: ${formatCurrency(totalProfit)}</p>
@@ -320,12 +309,58 @@ function generateReport() {
     `;
 }
 
+/* ================= LOGO ================= */
+
+function setupLogoUpload(){
+    const input=document.getElementById("companyLogoInput");
+    if(!input) return;
+
+    input.addEventListener("change",e=>{
+        const file=e.target.files[0];
+        if(!file) return;
+
+        const reader=new FileReader();
+        reader.onload=ev=> companyLogoData=ev.target.result;
+        reader.readAsDataURL(file);
+    });
+}
+
+/* ================= PDF EXPORT ================= */
+
+async function exportExecutivePDF(){
+
+    if(userPlan==="free") return alert("Upgrade to export PDFs.");
+    if(!businessData.length) return alert("No data to export.");
+
+    const { jsPDF } = window.jspdf;
+    const doc=new jsPDF();
+
+    if(companyLogoData && userPlan==="premium"){
+        doc.addImage(companyLogoData,"PNG",15,10,30,30);
+    }
+
+    doc.setFontSize(18);
+    doc.text("ImpactGrid Executive Report",105,20,{align:"center"});
+
+    doc.setFontSize(12);
+    doc.text("Total Revenue: "+formatCurrency(sum("revenue")),20,50);
+    doc.text("Total Profit: "+formatCurrency(sum("profit")),20,60);
+
+    doc.save("ImpactGrid_Report.pdf");
+}
+
 /* ================= HELPERS ================= */
 
-function destroyCharts(){
+function destroyCoreCharts(){
     revenueChart?.destroy();
     profitChart?.destroy();
     expenseChart?.destroy();
+}
+
+function destroyAllCharts(){
+    destroyCoreCharts();
+    forecastChart?.destroy();
+    comparisonChart?.destroy();
 }
 
 function sum(key){
@@ -347,27 +382,26 @@ function baseChartOptions(){
     return { responsive:true, maintainAspectRatio:false };
 }
 
-function simpleRegression(data, periods){
+function simpleRegression(data,periods){
 
-    const n = data.length;
-    if (n < 2) return [];
+    const n=data.length;
+    if(n<2) return [];
 
-    const x = [...Array(n).keys()];
-    const sumX = x.reduce((a,b)=>a+b,0);
-    const sumY = data.reduce((a,b)=>a+b,0);
-    const sumXY = x.reduce((s,xi,i)=>s+xi*data[i],0);
-    const sumXX = x.reduce((s,xi)=>s+xi*xi,0);
+    const x=[...Array(n).keys()];
+    const sumX=x.reduce((a,b)=>a+b,0);
+    const sumY=data.reduce((a,b)=>a+b,0);
+    const sumXY=x.reduce((s,xi,i)=>s+xi*data[i],0);
+    const sumXX=x.reduce((s,xi)=>s+xi*xi,0);
 
-    const denominator = (n*sumXX - sumX*sumX);
-    if (denominator === 0) return [];
+    const denom=(n*sumXX - sumX*sumX);
+    if(denom===0) return [];
 
-    const slope = (n*sumXY - sumX*sumY) / denominator;
-    const intercept = (sumY - slope*sumX)/n;
+    const slope=(n*sumXY - sumX*sumY)/denom;
+    const intercept=(sumY - slope*sumX)/n;
 
-    const result = [];
+    const result=[];
     for(let i=1;i<=periods;i++){
         result.push(slope*(n+i-1)+intercept);
     }
-
     return result;
 }
