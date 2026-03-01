@@ -1,11 +1,8 @@
 /* ================= GLOBAL STATE ================= */
 
 let businessData = [];
-let revenueChart = null;
-let profitChart = null;
-let expenseChart = null;
-let forecastChart = null;
-let comparisonChart = null;
+let revenueChart, profitChart, expenseChart;
+let forecastChart, comparisonChart;
 
 /* ================= INIT ================= */
 
@@ -17,16 +14,15 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ================= AUTH ================= */
 
 function login() {
-    const user = document.getElementById("username").value.trim();
-    const pass = document.getElementById("password").value.trim();
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
 
-    if (!user || !pass) {
+    if (user && pass) {
+        localStorage.setItem("impactUser", user);
+        showApp();
+    } else {
         alert("Enter credentials");
-        return;
     }
-
-    localStorage.setItem("impactUser", user);
-    showApp();
 }
 
 function autoLogin() {
@@ -42,27 +38,28 @@ function logout() {
 function showApp() {
     document.getElementById("authScreen").style.display = "none";
     document.getElementById("app").classList.remove("hidden");
-    updateAll();
 }
 
-/* ================= SECTION NAV ================= */
+/* ================= SIDEBAR ================= */
+
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("collapsed");
+}
+
+/* ================= SECTION NAV (FIXED) ================= */
 
 function showSection(id, evt) {
-    document.querySelectorAll(".page-section")
-        .forEach(section => section.classList.remove("active-section"));
+    document.querySelectorAll(".page-section").forEach(s =>
+        s.classList.remove("active-section")
+    );
 
-    const target = document.getElementById(id);
-    if (target) target.classList.add("active-section");
+    document.getElementById(id).classList.add("active-section");
 
-    document.querySelectorAll(".sidebar li")
-        .forEach(li => li.classList.remove("active"));
+    document.querySelectorAll(".sidebar li").forEach(li =>
+        li.classList.remove("active")
+    );
 
-    if (evt && evt.target) {
-        evt.target.classList.add("active");
-    }
-
-    // small delay ensures charts render after visibility
-    setTimeout(updateAll, 50);
+    if (evt) evt.target.classList.add("active");
 }
 
 /* ================= DATA ================= */
@@ -95,7 +92,13 @@ function loadFromStorage() {
     const saved = localStorage.getItem("impactGridData");
     if (saved) {
         businessData = JSON.parse(saved);
+        updateAll();
     }
+}
+
+function clearAllData() {
+    localStorage.removeItem("impactGridData");
+    location.reload();
 }
 
 /* ================= UPDATE ================= */
@@ -113,7 +116,7 @@ function updateAll() {
 
 function renderKPIs() {
     const container = document.getElementById("kpiContainer");
-    if (!container) return;
+    container.innerHTML = "";
 
     const totalRevenue = sum("revenue");
     const totalProfit = sum("profit");
@@ -133,17 +136,11 @@ function renderKPIs() {
 /* ================= CORE CHARTS ================= */
 
 function renderCoreCharts() {
-    destroyAllCharts();
-
-    const revenueCanvas = document.getElementById("revenueChart");
-    const profitCanvas = document.getElementById("profitChart");
-    const expenseCanvas = document.getElementById("expenseChart");
-
-    if (!revenueCanvas || !profitCanvas || !expenseCanvas) return;
+    destroyCharts();
 
     const labels = businessData.map(d => d.month);
 
-    revenueChart = new Chart(revenueCanvas, {
+    revenueChart = new Chart(document.getElementById("revenueChart"), {
         type: "line",
         data: {
             labels,
@@ -156,7 +153,7 @@ function renderCoreCharts() {
         }
     });
 
-    profitChart = new Chart(profitCanvas, {
+    profitChart = new Chart(document.getElementById("profitChart"), {
         type: "line",
         data: {
             labels,
@@ -169,7 +166,7 @@ function renderCoreCharts() {
         }
     });
 
-    expenseChart = new Chart(expenseCanvas, {
+    expenseChart = new Chart(document.getElementById("expenseChart"), {
         type: "bar",
         data: {
             labels,
@@ -182,21 +179,19 @@ function renderCoreCharts() {
     });
 }
 
-/* ================= FORECAST ================= */
+/* ================= FORECAST (Simple Regression) ================= */
 
 function renderForecast() {
     if (forecastChart) forecastChart.destroy();
 
-    const canvas = document.getElementById("forecastChart");
-    if (!canvas) return;
-
+    const labels = businessData.map(d => d.month);
     const values = map("revenue");
+
     if (values.length < 2) return;
 
-    const labels = businessData.map(d => d.month);
     const predictions = simpleRegression(values, 3);
 
-    forecastChart = new Chart(canvas, {
+    forecastChart = new Chart(document.getElementById("forecastChart"), {
         type: "line",
         data: {
             labels: [...labels, "F1", "F2", "F3"],
@@ -209,29 +204,6 @@ function renderForecast() {
         }
     });
 }
-
-/* ================= MULTI METRIC ================= */
-
-function renderComparison() {
-    if (comparisonChart) comparisonChart.destroy();
-
-    const canvas = document.getElementById("comparisonChart");
-    if (!canvas) return;
-
-    comparisonChart = new Chart(canvas, {
-        type: "line",
-        data: {
-            labels: businessData.map(d => d.month),
-            datasets: [
-                { label: "Revenue", data: map("revenue"), borderColor: "#4CAF50" },
-                { label: "Profit", data: map("profit"), borderColor: "#2196F3" },
-                { label: "Expenses", data: map("expenses"), borderColor: "#FF5252" }
-            ]
-        }
-    });
-}
-
-/* ================= REGRESSION ================= */
 
 function simpleRegression(data, periods) {
     const n = data.length;
@@ -251,14 +223,42 @@ function simpleRegression(data, periods) {
     return result;
 }
 
-/* ================= UTILITIES ================= */
+/* ================= MULTI METRIC ================= */
 
-function destroyAllCharts() {
+function renderComparison() {
+    if (comparisonChart) comparisonChart.destroy();
+
+    comparisonChart = new Chart(document.getElementById("comparisonChart"), {
+        type: "line",
+        data: {
+            labels: businessData.map(d=>d.month),
+            datasets: [
+                {
+                    label:"Revenue",
+                    data: map("revenue"),
+                    borderColor:"#4CAF50"
+                },
+                {
+                    label:"Profit",
+                    data: map("profit"),
+                    borderColor:"#2196F3"
+                },
+                {
+                    label:"Expenses",
+                    data: map("expenses"),
+                    borderColor:"#FF5252"
+                }
+            ]
+        }
+    });
+}
+
+/* ================= HELPERS ================= */
+
+function destroyCharts() {
     if (revenueChart) revenueChart.destroy();
     if (profitChart) profitChart.destroy();
     if (expenseChart) expenseChart.destroy();
-    if (forecastChart) forecastChart.destroy();
-    if (comparisonChart) comparisonChart.destroy();
 }
 
 function sum(key){ return businessData.reduce((a,b)=>a+b[key],0); }
@@ -269,22 +269,4 @@ function formatCurrency(val){
         minimumFractionDigits:2,
         maximumFractionDigits:2
     });
-}
-
-function toggleTheme() {
-    document.body.classList.toggle("light-mode");
-}
-
-function exportData() {
-    if (businessData.length === 0) return;
-
-    const headers = Object.keys(businessData[0]).join(",");
-    const rows = businessData.map(obj => Object.values(obj).join(",")).join("\n");
-
-    const blob = new Blob([headers + "\n" + rows], { type: "text/csv" });
-    const link = document.createElement("a");
-
-    link.href = URL.createObjectURL(blob);
-    link.download = "business_data.csv";
-    link.click();
 }
