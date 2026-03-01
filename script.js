@@ -13,16 +13,20 @@ let userPlan = localStorage.getItem("impactPlan") || "free";
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+
     loadFromStorage();
     autoLogin();
     loadTheme();
+    setupLogoUpload();
+
 });
 
 /* ================= MOBILE SIDEBAR ================= */
 
 function toggleSidebar() {
     const sidebar = document.getElementById("sidebar");
-    if (sidebar) sidebar.classList.toggle("active");
+    if (!sidebar) return;
+    sidebar.classList.toggle("active");
 }
 
 /* ================= PLAN SYSTEM ================= */
@@ -36,20 +40,21 @@ function setPlan(plan) {
 /* ================= AUTH ================= */
 
 function login() {
-    const user = document.getElementById("username")?.value.trim();
-    const pass = document.getElementById("password")?.value.trim();
+    const user = document.getElementById("username")?.value;
+    const pass = document.getElementById("password")?.value;
 
-    if (!user || !pass) {
+    if (user && pass) {
+        localStorage.setItem("impactUser", user);
+        showApp();
+    } else {
         alert("Enter credentials");
-        return;
     }
-
-    localStorage.setItem("impactUser", user);
-    showApp();
 }
 
 function autoLogin() {
-    if (localStorage.getItem("impactUser")) showApp();
+    if (localStorage.getItem("impactUser")) {
+        showApp();
+    }
 }
 
 function logout() {
@@ -97,7 +102,7 @@ function showSection(id, evt) {
 
     if (evt) evt.target.classList.add("active");
 
-    // Auto-close mobile sidebar
+    // Close sidebar on mobile after navigation
     document.getElementById("sidebar")?.classList.remove("active");
 
     if (id === "forecast") renderForecast();
@@ -146,17 +151,19 @@ function loadFromStorage() {
 
 function clearAllData() {
     localStorage.removeItem("impactGridData");
-    businessData = [];
     location.reload();
 }
 
 /* ================= MASTER UPDATE ================= */
 
 function updateAll() {
+
     if (!businessData.length) return;
+
     renderKPIs();
     renderCoreCharts();
     generateReport();
+
 }
 
 /* ================= KPI ================= */
@@ -224,8 +231,14 @@ function createChart(id, type, labels, data, color, label) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: true } },
-            scales: { y: { beginAtZero: true } }
+            plugins: {
+                legend: { display: true }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
     });
 }
@@ -259,33 +272,33 @@ function renderComparison() {
     if (!businessData.length) return;
     if (comparisonChart) comparisonChart.destroy();
 
-    const ctx = document.getElementById("comparisonChart");
-    if (!ctx) return;
-
-    comparisonChart = new Chart(ctx.getContext("2d"), {
-        type: "line",
-        data: {
-            labels: businessData.map(d => d.month),
-            datasets: [
-                dataset("Revenue", "revenue", "#4CAF50"),
-                dataset("Profit", "profit", "#2196F3"),
-                dataset("Expenses", "expenses", "#FF5252")
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
+    comparisonChart = new Chart(
+        document.getElementById("comparisonChart").getContext("2d"),
+        {
+            type: "line",
+            data: {
+                labels: businessData.map(d => d.month),
+                datasets: [
+                    dataset("Revenue","revenue","#4CAF50"),
+                    dataset("Profit","profit","#2196F3"),
+                    dataset("Expenses","expenses","#FF5252")
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
         }
-    });
+    );
 }
 
-function dataset(label, key, color) {
+function dataset(label,key,color){
     return {
         label,
         data: map(key),
         borderColor: color,
         tension: 0.4,
-        fill: false
+        fill:false
     };
 }
 
@@ -312,50 +325,49 @@ function generateReport() {
         <p><strong>Business Health:</strong> ${health}</p>
         <p>Total Revenue: ${formatCurrency(totalRevenue)}</p>
         <p>Total Profit: ${formatCurrency(totalProfit)}</p>
-        <p>Profit Margin: ${((totalProfit / totalRevenue) * 100).toFixed(1)}%</p>
+        <p>Profit Margin: ${((totalProfit/totalRevenue)*100).toFixed(1)}%</p>
         <p>Latest Month Revenue: ${formatCurrency(latest.revenue)}</p>
     `;
 }
 
 /* ================= HELPERS ================= */
 
-function destroyCharts() {
+function destroyCharts(){
     revenueChart?.destroy();
     profitChart?.destroy();
     expenseChart?.destroy();
 }
 
-function sum(key) {
-    return businessData.reduce((a, b) => a + b[key], 0);
+function sum(key){
+    return businessData.reduce((a,b)=>a+b[key],0);
 }
 
-function map(key) {
-    return businessData.map(d => d[key]);
+function map(key){
+    return businessData.map(d=>d[key]);
 }
 
-function formatCurrency(val) {
-    return "£" + Number(val).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+function formatCurrency(val){
+    return "£"+Number(val).toLocaleString(undefined,{
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
     });
 }
 
-function simpleRegression(data, periods) {
+function simpleRegression(data, periods){
 
     const n = data.length;
     const x = [...Array(n).keys()];
+    const sumX = x.reduce((a,b)=>a+b,0);
+    const sumY = data.reduce((a,b)=>a+b,0);
+    const sumXY = x.reduce((s,xi,i)=>s+xi*data[i],0);
+    const sumXX = x.reduce((s,xi)=>s+xi*xi,0);
 
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = data.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((sum, xi, i) => sum + xi * data[i], 0);
-    const sumXX = x.reduce((sum, xi) => sum + xi * xi, 0);
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
+    const slope = (n*sumXY - sumX*sumY) / (n*sumXX - sumX*sumX);
+    const intercept = (sumY - slope*sumX)/n;
 
     const result = [];
-    for (let i = 1; i <= periods; i++) {
-        result.push(slope * (n + i - 1) + intercept);
+    for(let i=1;i<=periods;i++){
+        result.push(slope*(n+i-1)+intercept);
     }
 
     return result;
