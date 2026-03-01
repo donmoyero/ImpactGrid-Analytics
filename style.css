@@ -12,7 +12,7 @@
         left: -260px;
         height: 100%;
         width: 260px;
-        z-index: 1001;
+        z-index: 1000;
         transition: left 0.3s ease;
         box-shadow: 15px 0 40px rgba(0,0,0,0.6);
     }
@@ -21,21 +21,21 @@
         left: 0;
     }
 
-    /* ===== Clean Overlay System ===== */
-    .sidebar-overlay {
+    /* Overlay effect */
+    .sidebar::after {
+        content: "";
         position: fixed;
         inset: 0;
         background: rgba(0,0,0,0.4);
         backdrop-filter: blur(2px);
-        z-index: 1000;
         opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.3s ease;
+        pointer-events: none;
+        transition: 0.3s ease;
     }
 
-    .sidebar-overlay.active {
+    .sidebar.active::after {
         opacity: 1;
-        visibility: visible;
+        pointer-events: auto;
     }
 
     .main-content {
