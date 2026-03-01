@@ -26,14 +26,13 @@
         <p class="auth-sub">Enterprise Intelligence Access</p>
         <input type="text" id="username" placeholder="Username" autocomplete="off">
         <input type="password" id="password" placeholder="Password" autocomplete="off">
-        <button class="btn-primary" onclick="login()">Login</button>
+        <button class="btn-primary" onclick="login()">Access Platform</button>
     </div>
 </div>
 
 <!-- ================= MAIN APP ================= -->
 <div id="app" class="app-layout hidden">
 
-    <!-- Overlay -->
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- SIDEBAR -->
@@ -54,6 +53,12 @@
                 <li onclick="logout()">Logout</li>
             </ul>
         </nav>
+
+        <!-- PLAN BADGE -->
+        <div class="plan-indicator">
+            Current Plan:
+            <span id="planBadge">FREE</span>
+        </div>
 
     </aside>
 
@@ -85,7 +90,8 @@
         <!-- ================= DASHBOARD ================= -->
         <section id="dashboard" class="page-section active-section">
 
-            <section class="card">
+            <!-- INPUT -->
+            <section class="card elevated">
                 <h2>Business Data Input</h2>
                 <div class="grid">
                     <input type="month" id="month">
@@ -97,22 +103,25 @@
                 </div>
             </section>
 
-            <section class="card">
+            <!-- KPI -->
+            <section class="card elevated">
                 <h2>Key Performance Indicators</h2>
                 <div id="kpiContainer" class="kpi-grid"></div>
             </section>
 
-            <section class="card">
-                <h2>Core Performance</h2>
+            <!-- CHARTS -->
+            <section class="card elevated">
+                <h2>Core Performance Analytics</h2>
                 <div class="charts-grid">
-                    <div class="chart-card"><canvas id="revenueChart"></canvas></div>
-                    <div class="chart-card"><canvas id="profitChart"></canvas></div>
-                    <div class="chart-card"><canvas id="expenseChart"></canvas></div>
+                    <div class="chart-card glow"><canvas id="revenueChart"></canvas></div>
+                    <div class="chart-card glow"><canvas id="profitChart"></canvas></div>
+                    <div class="chart-card glow"><canvas id="expenseChart"></canvas></div>
                 </div>
             </section>
 
-            <section class="card">
-                <h2>Performance Intelligence Report</h2>
+            <!-- REPORT -->
+            <section class="card intelligence-card">
+                <h2>Executive Intelligence Summary</h2>
                 <div id="performanceReport" class="report-box">
                     <p>No analysis available yet. Add business data to generate structured insights.</p>
                 </div>
@@ -120,37 +129,36 @@
 
         </section>
 
-        <!-- ================= FORECAST ================= -->
+        <!-- FORECAST -->
         <section id="forecast" class="page-section">
-            <section class="card">
-                <h2>Revenue Forecast</h2>
-                <div class="chart-card">
+            <section class="card elevated">
+                <h2>Revenue Forecast Engine</h2>
+                <div class="chart-card glow">
                     <canvas id="forecastChart"></canvas>
                 </div>
             </section>
         </section>
 
-        <!-- ================= MULTI METRIC ================= -->
+        <!-- COMPARISON -->
         <section id="comparison" class="page-section">
-            <section class="card">
-                <h2>Multi-Metric Comparison</h2>
-                <div class="chart-card">
+            <section class="card elevated">
+                <h2>Multi-Metric Intelligence Matrix</h2>
+                <div class="chart-card glow">
                     <canvas id="comparisonChart"></canvas>
                 </div>
             </section>
         </section>
 
-        <!-- ================= PRICING ================= -->
+        <!-- PRICING -->
         <section id="pricing" class="page-section">
-            <section class="card">
-                <h2>Choose Your Plan</h2>
+            <section class="card elevated">
+                <h2>Enterprise Subscription Plans</h2>
                 <p class="report-box">
-                    Upgrade for forecasting, comparison modeling, and executive export capabilities.
+                    Upgrade to unlock forecasting engines, advanced modeling, and executive-grade reporting.
                 </p>
 
                 <div class="pricing-grid">
 
-                    <!-- Starter -->
                     <div class="pricing-card">
                         <h3>Starter</h3>
                         <p class="price">Free</p>
@@ -160,17 +168,16 @@
                             <li>3 Month Data Limit</li>
                         </ul>
                         <button class="btn-secondary" onclick="setPlan('free')">
-                            Start Free
+                            Activate Starter
                         </button>
                     </div>
 
-                    <!-- Growth -->
                     <div class="pricing-card highlight">
                         <h3>Growth</h3>
                         <p class="price">£8.99 / month</p>
                         <ul>
                             <li>Revenue Forecasting</li>
-                            <li>Multi-Metric Comparison</li>
+                            <li>Multi-Metric Modeling</li>
                             <li>Executive Reports</li>
                         </ul>
                         <a href="https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201"
@@ -180,14 +187,13 @@
                         </a>
                     </div>
 
-                    <!-- Pro Intelligence -->
                     <div class="pricing-card premium">
                         <h3>Pro Intelligence</h3>
                         <p class="price">£19.99 / month</p>
                         <ul>
                             <li>Unlimited Reports</li>
-                            <li>Advanced Intelligence</li>
-                            <li>Priority Analytics Engine</li>
+                            <li>Advanced Intelligence Engine</li>
+                            <li>Priority Analytics Processing</li>
                         </ul>
                         <a href="https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200"
                            target="_blank"
@@ -197,7 +203,6 @@
                     </div>
 
                 </div>
-
             </section>
         </section>
 
