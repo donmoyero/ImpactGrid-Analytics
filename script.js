@@ -12,23 +12,24 @@ let userPlan = localStorage.getItem("impactPlan") || "free";
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-
-    try {
-        loadFromStorage();
-        autoLogin();
-        loadTheme();
-    } catch (err) {
-        console.error("Initialization error:", err);
-    }
-
+    loadFromStorage();
+    autoLogin();
+    loadTheme();
 });
 
 /* ================= MOBILE SIDEBAR ================= */
 
 function toggleSidebar() {
     const sidebar = document.getElementById("sidebar");
-    if (!sidebar) return;
-    sidebar.classList.toggle("active");
+    const overlay = document.getElementById("sidebarOverlay");
+
+    sidebar?.classList.toggle("active");
+    overlay?.classList.toggle("active");
+}
+
+function closeSidebar() {
+    document.getElementById("sidebar")?.classList.remove("active");
+    document.getElementById("sidebarOverlay")?.classList.remove("active");
 }
 
 /* ================= PLAN SYSTEM ================= */
@@ -45,12 +46,13 @@ function login() {
     const user = document.getElementById("username")?.value;
     const pass = document.getElementById("password")?.value;
 
-    if (user && pass) {
-        localStorage.setItem("impactUser", user);
-        showApp();
-    } else {
+    if (!user || !pass) {
         alert("Enter credentials");
+        return;
     }
+
+    localStorage.setItem("impactUser", user);
+    showApp();
 }
 
 function autoLogin() {
@@ -102,9 +104,9 @@ function showSection(id, evt) {
     document.querySelectorAll(".sidebar li")
         .forEach(li => li.classList.remove("active"));
 
-    if (evt) evt.target.classList.add("active");
+    if (evt?.target) evt.target.classList.add("active");
 
-    document.getElementById("sidebar")?.classList.remove("active");
+    closeSidebar();
 
     if (id === "forecast") renderForecast();
     if (id === "comparison") renderComparison();
@@ -151,20 +153,20 @@ function loadFromStorage() {
 }
 
 function clearAllData() {
-    localStorage.removeItem("impactGridData");
-    location.reload();
+    if (confirm("Are you sure you want to reset all business data?")) {
+        localStorage.removeItem("impactGridData");
+        location.reload();
+    }
 }
 
 /* ================= MASTER UPDATE ================= */
 
 function updateAll() {
-
     if (!businessData.length) return;
 
     renderKPIs();
     renderCoreCharts();
     generateReport();
-
 }
 
 /* ================= KPI ================= */
@@ -196,7 +198,7 @@ function renderKPIs() {
     `;
 }
 
-/* ================= CORE CHARTS ================= */
+/* ================= CHARTS ================= */
 
 function renderCoreCharts() {
 
@@ -232,6 +234,7 @@ function createChart(id, type, labels, data, color, label) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: { duration: 600 },
             scales: { y: { beginAtZero: true } }
         }
     });
@@ -259,7 +262,7 @@ function renderForecast() {
     );
 }
 
-/* ================= MULTI METRIC ================= */
+/* ================= COMPARISON ================= */
 
 function renderComparison() {
 
@@ -296,7 +299,7 @@ function dataset(label,key,color){
     };
 }
 
-/* ================= SMART REPORT ================= */
+/* ================= REPORT ================= */
 
 function generateReport() {
 
