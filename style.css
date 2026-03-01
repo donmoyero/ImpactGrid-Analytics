@@ -13,7 +13,7 @@ body {
     transition: all 0.3s ease;
 }
 
-/* ================= HIDDEN ================= */
+/* ================= HIDDEN STATE ================= */
 .hidden {
     display: none;
 }
@@ -24,7 +24,6 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    padding: 20px;
 }
 
 .auth-card {
@@ -71,17 +70,17 @@ body {
     align-items: center;
 }
 
-.logo {
-    font-size: 18px;
-    font-weight: 700;
-}
-
 .collapse-btn {
     background: none;
     border: none;
     color: #94a3b8;
     font-size: 18px;
     cursor: pointer;
+}
+
+.logo {
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .sidebar ul {
@@ -95,7 +94,8 @@ body {
     border-radius: 8px;
     cursor: pointer;
     color: #94a3b8;
-    transition: 0.2s ease;
+    transition: all 0.2s ease;
+    font-size: 14px;
 }
 
 .sidebar li:hover {
@@ -142,10 +142,16 @@ body {
 .page-section {
     display: none;
     padding: 0 5% 50px 5%;
+    animation: fadeIn 0.3s ease;
 }
 
 .active-section {
     display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ================= BUTTONS ================= */
@@ -157,6 +163,12 @@ body {
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(59,130,246,0.4);
 }
 
 .btn-secondary {
@@ -166,6 +178,11 @@ body {
     color: #e2e8f0;
     border-radius: 8px;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.15);
 }
 
 /* ================= CARD ================= */
@@ -174,8 +191,14 @@ body {
     backdrop-filter: blur(12px);
     padding: 25px;
     border-radius: 16px;
-    margin-bottom: 25px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     border: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 25px;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
 }
 
 .card h2 {
@@ -196,6 +219,15 @@ input {
     border: 1px solid rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.05);
     color: white;
+    outline: none;
+}
+
+input::placeholder {
+    color: #94a3b8;
+}
+
+input:focus {
+    border-color: #3b82f6;
 }
 
 /* ================= KPI GRID ================= */
@@ -210,6 +242,12 @@ input {
     padding: 20px;
     border-radius: 14px;
     text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
 }
 
 .kpi h3 {
@@ -235,13 +273,12 @@ input {
     padding: 20px;
     background: rgba(255,255,255,0.04);
     border-radius: 14px;
-    height: 350px;
 }
 
-/* Let Chart.js handle canvas size */
-.chart-card canvas {
+/* Force canvas height */
+canvas {
     width: 100% !important;
-    height: 100% !important;
+    height: 300px !important;
 }
 
 /* ================= FOOTER ================= */
@@ -259,7 +296,7 @@ body.light-mode {
 }
 
 body.light-mode .sidebar {
-    background: white;
+    background: #ffffff;
     border-right: 1px solid #e2e8f0;
 }
 
@@ -271,4 +308,16 @@ body.light-mode .card {
 body.light-mode input {
     background: white;
     color: #1e293b;
+    border: 1px solid #cbd5e1;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+    .sidebar {
+        display: none;
+    }
+
+    .app-layout {
+        flex-direction: column;
+    }
 }
