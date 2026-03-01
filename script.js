@@ -21,6 +21,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
+/* ================= MOBILE SIDEBAR ================= */
+
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+    sidebar.classList.toggle("active");
+}
+
 /* ================= PLAN SYSTEM ================= */
 
 function setPlan(plan) {
@@ -94,6 +102,9 @@ function showSection(id, evt) {
 
     if (evt) evt.target.classList.add("active");
 
+    // Close sidebar on mobile after navigation
+    document.getElementById("sidebar")?.classList.remove("active");
+
     if (id === "forecast") renderForecast();
     if (id === "comparison") renderComparison();
 }
@@ -164,6 +175,9 @@ function renderKPIs() {
 
     const totalRevenue = sum("revenue");
     const totalProfit = sum("profit");
+    const margin = totalRevenue
+        ? ((totalProfit / totalRevenue) * 100).toFixed(1)
+        : 0;
 
     container.innerHTML = `
         <div class="kpi">
@@ -173,6 +187,10 @@ function renderKPIs() {
         <div class="kpi">
             <h3>Total Profit</h3>
             <p>${formatCurrency(totalProfit)}</p>
+        </div>
+        <div class="kpi">
+            <h3>Profit Margin</h3>
+            <p>${margin}%</p>
         </div>
     `;
 }
@@ -197,7 +215,7 @@ function createChart(id, type, labels, data, color, label) {
     const canvas = document.getElementById(id);
     if (!canvas) return null;
 
-    return new Chart(canvas, {
+    return new Chart(canvas.getContext("2d"), {
         type,
         data: {
             labels,
@@ -206,10 +224,22 @@ function createChart(id, type, labels, data, color, label) {
                 data,
                 borderColor: color,
                 backgroundColor: type === "bar" ? color : "transparent",
+                fill: false,
                 tension: 0.4
             }]
         },
-        options: baseChartOptions()
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
     });
 }
 
@@ -225,22 +255,13 @@ function renderForecast() {
 
     const predictions = simpleRegression(values, 3);
 
-    forecastChart = new Chart(
-        document.getElementById("forecastChart"),
-        {
-            type: "line",
-            data: {
-                labels: [...businessData.map(d => d.month), "F1", "F2", "F3"],
-                datasets: [{
-                    label: "Revenue Forecast",
-                    data: [...values, ...predictions],
-                    borderColor: "#3b82f6",
-                    borderDash: [5,5],
-                    tension: 0.4
-                }]
-            },
-            options: baseChartOptions()
-        }
+    forecastChart = createChart(
+        "forecastChart",
+        "line",
+        [...businessData.map(d => d.month), "F1", "F2", "F3"],
+        [...values, ...predictions],
+        "#3b82f6",
+        "Revenue Forecast"
     );
 }
 
@@ -252,7 +273,7 @@ function renderComparison() {
     if (comparisonChart) comparisonChart.destroy();
 
     comparisonChart = new Chart(
-        document.getElementById("comparisonChart"),
+        document.getElementById("comparisonChart").getContext("2d"),
         {
             type: "line",
             data: {
@@ -263,7 +284,10 @@ function renderComparison() {
                     dataset("Expenses","expenses","#FF5252")
                 ]
             },
-            options: baseChartOptions()
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
         }
     );
 }
@@ -273,7 +297,8 @@ function dataset(label,key,color){
         label,
         data: map(key),
         borderColor: color,
-        tension: 0.4
+        tension: 0.4,
+        fill:false
     };
 }
 
@@ -294,108 +319,15 @@ function generateReport() {
     let health = "Stable";
     if (totalProfit <= 0) health = "Critical";
     else if (totalProfit < totalRevenue * 0.15) health = "Warning";
+    else if (totalProfit > totalRevenue * 0.25) health = "Strong";
 
     reportBox.innerHTML = `
         <p><strong>Business Health:</strong> ${health}</p>
         <p>Total Revenue: ${formatCurrency(totalRevenue)}</p>
         <p>Total Profit: ${formatCurrency(totalProfit)}</p>
+        <p>Profit Margin: ${((totalProfit/totalRevenue)*100).toFixed(1)}%</p>
         <p>Latest Month Revenue: ${formatCurrency(latest.revenue)}</p>
     `;
-}
-
-/* ================= LOGO UPLOAD ================= */
-
-function setupLogoUpload() {
-
-    const input = document.getElementById("companyLogoInput");
-    if (!input) return;
-
-    input.addEventListener("change", function(e) {
-
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            companyLogoData = event.target.result;
-        };
-        reader.readAsDataURL(file);
-
-    });
-}
-
-/* ================= EXPORT CONTROL ================= */
-
-function canExportPDF() {
-
-    if (userPlan === "free") {
-        alert("Upgrade to export Executive PDFs.");
-        return false;
-    }
-
-    if (userPlan === "premium") return true;
-
-    let month = new Date().getMonth();
-    let savedMonth = localStorage.getItem("exportMonth");
-    let count = parseInt(localStorage.getItem("exportCount") || "0");
-
-    if (savedMonth != month) {
-        count = 0;
-        localStorage.setItem("exportMonth", month);
-        localStorage.setItem("exportCount", "0");
-    }
-
-    if (count >= 3) {
-        alert("Monthly export limit reached.");
-        return false;
-    }
-
-    localStorage.setItem("exportCount", count + 1);
-    return true;
-}
-
-/* ================= EXECUTIVE PDF ================= */
-
-async function exportExecutivePDF() {
-
-    if (!businessData.length) {
-        alert("No data to export.");
-        return;
-    }
-
-    if (!canExportPDF()) return;
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    const totalRevenue = sum("revenue");
-    const totalProfit = sum("profit");
-    const margin = totalRevenue
-        ? ((totalProfit / totalRevenue) * 100).toFixed(1)
-        : 0;
-
-    let y = 20;
-
-    if (companyLogoData && userPlan === "premium") {
-        doc.addImage(companyLogoData, "PNG", 15, 10, 30, 30);
-    }
-
-    doc.setFontSize(18);
-    doc.text("ImpactGrid Intelligence Report", 105, y, { align: "center" });
-    y += 12;
-
-    doc.setFontSize(12);
-    doc.text("Enterprise Performance Overview", 105, y, { align: "center" });
-    y += 20;
-
-    doc.setFontSize(11);
-    doc.text("Total Revenue: " + formatCurrency(totalRevenue), 20, y);
-    y += 8;
-    doc.text("Total Profit: " + formatCurrency(totalProfit), 20, y);
-    y += 8;
-    doc.text("Profit Margin: " + margin + "%", 20, y);
-
-    doc.save("ImpactGrid_Executive_Report.pdf");
 }
 
 /* ================= HELPERS ================= */
@@ -419,10 +351,6 @@ function formatCurrency(val){
         minimumFractionDigits:2,
         maximumFractionDigits:2
     });
-}
-
-function baseChartOptions(){
-    return { responsive:true, maintainAspectRatio:false };
 }
 
 function simpleRegression(data, periods){
