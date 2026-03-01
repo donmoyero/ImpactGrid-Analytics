@@ -8,7 +8,7 @@
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Chart.js ONLY -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <link rel="stylesheet" href="style.css">
@@ -32,7 +32,13 @@
     <!-- ================= SIDEBAR ================= -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-top">
-            <h2 class="logo">ImpactGrid</h2>
+
+            <!-- LOGO FIX -->
+            <div class="logo-container">
+                <img src="logo.png" alt="ImpactGrid Logo" class="logo-img">
+                <span class="logo-text">ImpactGrid</span>
+            </div>
+
             <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
         </div>
 
@@ -64,6 +70,7 @@
         <!-- ================= DASHBOARD ================= -->
         <section id="dashboard" class="page-section active-section">
 
+            <!-- INPUT -->
             <section class="card input-card">
                 <h2>Business Data Input</h2>
                 <div class="grid">
@@ -76,23 +83,38 @@
                 </div>
             </section>
 
+            <!-- KPI -->
             <section class="card">
                 <h2>Key Performance Indicators</h2>
                 <div id="kpiContainer" class="kpi-grid"></div>
             </section>
 
+            <!-- CORE PERFORMANCE -->
             <section class="card">
                 <h2>Core Performance</h2>
+
                 <div class="charts-grid">
+
                     <div class="chart-card">
-                        <canvas id="revenueChart"></canvas>
+                        <canvas id="revenueChart" height="120"></canvas>
                     </div>
+
                     <div class="chart-card">
-                        <canvas id="profitChart"></canvas>
+                        <canvas id="profitChart" height="120"></canvas>
                     </div>
+
                     <div class="chart-card">
-                        <canvas id="expenseChart"></canvas>
+                        <canvas id="expenseChart" height="120"></canvas>
                     </div>
+
+                </div>
+            </section>
+
+            <!-- SMART REPORT (NEW SECTION) -->
+            <section class="card">
+                <h2>Performance Intelligence Report</h2>
+                <div id="performanceReport" class="report-box">
+                    <p>No analysis available yet. Add business data to generate insights.</p>
                 </div>
             </section>
 
@@ -103,7 +125,7 @@
             <section class="card">
                 <h2>Revenue Forecast</h2>
                 <div class="chart-card">
-                    <canvas id="forecastChart"></canvas>
+                    <canvas id="forecastChart" height="140"></canvas>
                 </div>
             </section>
         </section>
@@ -113,7 +135,7 @@
             <section class="card">
                 <h2>Multi-Metric Comparison</h2>
                 <div class="chart-card">
-                    <canvas id="comparisonChart"></canvas>
+                    <canvas id="comparisonChart" height="140"></canvas>
                 </div>
             </section>
         </section>
