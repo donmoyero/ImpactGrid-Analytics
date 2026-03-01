@@ -59,7 +59,6 @@ body {
     padding: 25px 20px;
     border-right: 1px solid rgba(255,255,255,0.05);
     transition: width 0.3s ease;
-    overflow: hidden;
 }
 
 .sidebar.collapsed {
@@ -75,7 +74,6 @@ body {
 .logo {
     font-size: 18px;
     font-weight: 700;
-    white-space: nowrap;
 }
 
 .collapse-btn {
@@ -98,7 +96,6 @@ body {
     cursor: pointer;
     color: #94a3b8;
     transition: 0.2s ease;
-    font-size: 14px;
 }
 
 .sidebar li:hover {
@@ -199,7 +196,6 @@ input {
     border: 1px solid rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.05);
     color: white;
-    outline: none;
 }
 
 /* ================= KPI GRID ================= */
@@ -239,13 +235,13 @@ input {
     padding: 20px;
     background: rgba(255,255,255,0.04);
     border-radius: 14px;
-    position: relative;
+    height: 350px;
 }
 
-/* FIXED CHART HEIGHT FOR STABILITY */
-canvas {
+/* Let Chart.js handle canvas size */
+.chart-card canvas {
     width: 100% !important;
-    height: 320px !important;
+    height: 100% !important;
 }
 
 /* ================= FOOTER ================= */
