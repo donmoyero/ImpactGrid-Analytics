@@ -1,11 +1,245 @@
-/* ================= RESPONSIVE ================= */
+/* ================= GLOBAL RESET ================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: radial-gradient(circle at top left, #0f172a, #020617 70%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ================= APP LAYOUT ================= */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, #0b1220, #0f172a);
+    padding: 30px 24px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-img {
+    height: 38px;
+    width: auto;
+    max-width: 100%;
+}
+
+.logo-text {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.sidebar ul {
+    list-style: none;
+    margin-top: 40px;
+}
+
+.sidebar li {
+    padding: 13px 16px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: 0.25s ease;
+    font-size: 14px;
+}
+
+.sidebar li:hover {
+    background: rgba(59,130,246,0.18);
+    color: white;
+}
+
+.sidebar li.active {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+/* ================= MAIN CONTENT ================= */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ================= HEADER ================= */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 45px 6%;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.dashboard-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.dashboard-header p {
+    color: #94a3b8;
+    margin-top: 6px;
+    font-size: 14px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 14px;
+}
+
+/* ================= SECTIONS ================= */
+.page-section {
+    display: none;
+    padding: 50px 6% 80px 6%;
+}
+
+.active-section {
+    display: block;
+}
+
+/* ================= BUTTONS ================= */
+.btn-primary {
+    padding: 12px 22px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-secondary {
+    padding: 12px 22px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e2e8f0;
+    border-radius: 14px;
+    cursor: pointer;
+}
+
+/* ================= CARD ================= */
+.card {
+    background: rgba(255,255,255,0.04);
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 40px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.card h2 {
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+/* ================= GRID ================= */
+.grid {
+    display: grid;
+    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+/* ================= KPI ================= */
+.kpi-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.kpi {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.kpi h3 {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.kpi p {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+/* ================= CHARTS ================= */
+.charts-grid {
+    display: grid;
+    gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.chart-card {
+    height: 400px;
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 18px;
+}
+
+.chart-card canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* ================= REPORT ================= */
+.report-box {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #cbd5e1;
+}
+
+/* ================= FOOTER ================= */
+.dashboard-footer {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
+    margin-top: auto;
+    font-size: 13px;
+}
+
+/* ================= LIGHT MODE ================= */
+body.light-mode {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+body.light-mode .sidebar {
+    background: white;
+    border-right: 1px solid #e2e8f0;
+}
+
+body.light-mode .card {
+    background: white;
+    border: 1px solid #e2e8f0;
+}
+
+/* ================= MOBILE ================= */
 @media (max-width: 900px) {
 
     .app-layout {
         flex-direction: column;
     }
 
-    /* ===== Sidebar Mobile Slide System ===== */
     .sidebar {
         position: fixed;
         top: 0;
@@ -21,23 +255,6 @@
         left: 0;
     }
 
-    /* Overlay effect */
-    .sidebar::after {
-        content: "";
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.4);
-        backdrop-filter: blur(2px);
-        opacity: 0;
-        pointer-events: none;
-        transition: 0.3s ease;
-    }
-
-    .sidebar.active::after {
-        opacity: 1;
-        pointer-events: auto;
-    }
-
     .main-content {
         width: 100%;
     }
@@ -46,10 +263,6 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 20px;
-    }
-
-    .header-actions {
-        flex-wrap: wrap;
     }
 
     .charts-grid {
@@ -61,6 +274,6 @@
     }
 
     .card {
-        padding: 24px;
+        padding: 20px;
     }
 }
