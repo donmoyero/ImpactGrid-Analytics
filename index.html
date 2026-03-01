@@ -59,10 +59,17 @@
 
         <!-- HEADER -->
         <header class="dashboard-header">
+
+            <!-- MOBILE MENU BUTTON (NEW) -->
+            <button class="btn-secondary mobile-menu-btn" type="button" onclick="toggleSidebar()">
+                ☰ Menu
+            </button>
+
             <div>
                 <h1>Enterprise Intelligence Platform</h1>
                 <p>Structured Forecasting • Strategic Modeling • Performance Diagnostics</p>
             </div>
+
             <div class="header-actions">
                 <button class="btn-secondary" type="button" onclick="exportExecutivePDF()">
                     Export Executive PDF
@@ -93,6 +100,28 @@
             <section class="card">
                 <h2>Key Performance Indicators</h2>
                 <div id="kpiContainer" class="kpi-grid"></div>
+            </section>
+
+            <!-- HOW IT WORKS (NEW SECTION) -->
+            <section class="card">
+                <h2>How ImpactGrid Works</h2>
+                <div class="report-box">
+                    <p><strong>1. Data Entry:</strong> Input monthly revenue, expenses, customers, and marketing spend.</p>
+
+                    <p><strong>2. KPI Engine:</strong> The system automatically calculates:</p>
+                    <ul>
+                        <li>Net Profit</li>
+                        <li>Profit Margin</li>
+                        <li>Customer Growth Trends</li>
+                        <li>Marketing Efficiency Ratio</li>
+                    </ul>
+
+                    <p><strong>3. Visualization Layer:</strong> Real-time charts model revenue flow, profitability, and cost structure.</p>
+
+                    <p><strong>4. Forecasting Logic:</strong> Historical revenue performance powers predictive modeling.</p>
+
+                    <p><strong>5. Executive Intelligence:</strong> Structured written diagnostics transform raw numbers into strategic business insights suitable for founders, executives, and enterprise teams.</p>
+                </div>
             </section>
 
             <!-- CORE PERFORMANCE -->
@@ -174,7 +203,6 @@
                             <li>Unlimited Data History</li>
                         </ul>
 
-                        <!-- REPLACE LINK -->
                         <a href="https://buy.stripe.com/YOUR_GROWTH_LINK?plan=pro">
                             <button class="btn-primary">
                                 Upgrade to Growth
@@ -197,7 +225,6 @@
                             <li>Priority Intelligence Engine</li>
                         </ul>
 
-                        <!-- REPLACE LINK -->
                         <a href="https://buy.stripe.com/YOUR_PREMIUM_LINK?plan=premium">
                             <button class="btn-primary">
                                 Upgrade to Pro Intelligence
