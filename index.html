@@ -11,6 +11,9 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- jsPDF for Executive Reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -32,13 +35,10 @@
     <!-- ================= SIDEBAR ================= -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-top">
-
-            <!-- LOGO FIX -->
             <div class="logo-container">
                 <img src="logo.png" alt="ImpactGrid Logo" class="logo-img">
                 <span class="logo-text">ImpactGrid</span>
             </div>
-
             <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
         </div>
 
@@ -47,6 +47,7 @@
                 <li onclick="showSection('dashboard', event)" class="active">Dashboard</li>
                 <li onclick="showSection('forecast', event)">Forecasting</li>
                 <li onclick="showSection('comparison', event)">Multi-Metric</li>
+                <li onclick="showSection('pricing', event)">Pricing</li>
                 <li onclick="clearAllData()">Reset Data</li>
                 <li onclick="logout()">Logout</li>
             </ul>
@@ -56,13 +57,14 @@
     <!-- ================= MAIN CONTENT ================= -->
     <div class="main-content">
 
+        <!-- ================= HEADER ================= -->
         <header class="dashboard-header">
             <div>
                 <h1>Enterprise Intelligence Platform</h1>
                 <p>Forecasting • Strategic Modeling • Business Analytics</p>
             </div>
             <div class="header-actions">
-                <button class="btn-secondary" onclick="exportData()">Export CSV</button>
+                <button class="btn-secondary" onclick="exportExecutivePDF()">Export Executive PDF</button>
                 <button class="btn-primary" onclick="toggleTheme()">Toggle Theme</button>
             </div>
         </header>
@@ -92,30 +94,32 @@
             <!-- CORE PERFORMANCE -->
             <section class="card">
                 <h2>Core Performance</h2>
-
                 <div class="charts-grid">
-
                     <div class="chart-card">
-                        <canvas id="revenueChart" height="120"></canvas>
+                        <canvas id="revenueChart"></canvas>
                     </div>
-
                     <div class="chart-card">
-                        <canvas id="profitChart" height="120"></canvas>
+                        <canvas id="profitChart"></canvas>
                     </div>
-
                     <div class="chart-card">
-                        <canvas id="expenseChart" height="120"></canvas>
+                        <canvas id="expenseChart"></canvas>
                     </div>
-
                 </div>
             </section>
 
-            <!-- SMART REPORT (NEW SECTION) -->
+            <!-- SMART REPORT -->
             <section class="card">
                 <h2>Performance Intelligence Report</h2>
                 <div id="performanceReport" class="report-box">
                     <p>No analysis available yet. Add business data to generate insights.</p>
                 </div>
+            </section>
+
+            <!-- PREMIUM BRANDING -->
+            <section class="card">
+                <h2>Company Branding (Premium Only)</h2>
+                <p>Upload your company logo to appear in Executive Reports.</p>
+                <input type="file" id="companyLogoInput" accept="image/*">
             </section>
 
         </section>
@@ -125,7 +129,7 @@
             <section class="card">
                 <h2>Revenue Forecast</h2>
                 <div class="chart-card">
-                    <canvas id="forecastChart" height="140"></canvas>
+                    <canvas id="forecastChart"></canvas>
                 </div>
             </section>
         </section>
@@ -135,13 +139,59 @@
             <section class="card">
                 <h2>Multi-Metric Comparison</h2>
                 <div class="chart-card">
-                    <canvas id="comparisonChart" height="140"></canvas>
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </section>
+        </section>
+
+        <!-- ================= PRICING PAGE ================= -->
+        <section id="pricing" class="page-section">
+            <section class="card">
+                <h2>Choose Your Plan</h2>
+
+                <div class="pricing-grid">
+
+                    <div class="pricing-card">
+                        <h3>Starter</h3>
+                        <p class="price">Free</p>
+                        <ul>
+                            <li>Core Analytics</li>
+                            <li>Basic Report</li>
+                            <li>No Forecast</li>
+                            <li>No PDF Export</li>
+                        </ul>
+                        <button class="btn-secondary" onclick="setPlan('free')">Select</button>
+                    </div>
+
+                    <div class="pricing-card">
+                        <h3>Growth</h3>
+                        <p class="price">£8.99 / month</p>
+                        <ul>
+                            <li>Forecasting</li>
+                            <li>Multi-Metric</li>
+                            <li>Executive PDF (3/month)</li>
+                        </ul>
+                        <button class="btn-primary" onclick="setPlan('pro')">Select</button>
+                    </div>
+
+                    <div class="pricing-card premium">
+                        <h3>Pro Intelligence</h3>
+                        <p class="price">£19.99 / month</p>
+                        <ul>
+                            <li>Unlimited Executive PDFs</li>
+                            <li>Premium Intelligence Watermark</li>
+                            <li>Executive Risk Analysis</li>
+                            <li>Company Logo Branding</li>
+                        </ul>
+                        <button class="btn-primary" onclick="setPlan('premium')">Select</button>
+                    </div>
+
                 </div>
             </section>
         </section>
 
         <footer class="dashboard-footer">
-            <p>© 2026 ImpactGrid SaaS Intelligence</p>
+            <p>© 2026 ImpactGridGroup</p>
         </footer>
 
     </div>
