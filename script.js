@@ -42,15 +42,10 @@ function logout() {
 function showApp() {
     document.getElementById("authScreen").style.display = "none";
     document.getElementById("app").classList.remove("hidden");
+    updateAll();
 }
 
-/* ================= SIDEBAR ================= */
-
-function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle("collapsed");
-}
-
-/* ================= SECTION NAV ================= */
+/* ================= SECTION NAV (FIXED) ================= */
 
 function showSection(id, evt) {
     document.querySelectorAll(".page-section")
@@ -62,9 +57,10 @@ function showSection(id, evt) {
     document.querySelectorAll(".sidebar li")
         .forEach(li => li.classList.remove("active"));
 
-    if (evt && evt.target) {
-        evt.target.classList.add("active");
-    }
+    if (evt && evt.target) evt.target.classList.add("active");
+
+    // Important: re-render after visible
+    setTimeout(updateAll, 100);
 }
 
 /* ================= DATA ================= */
@@ -97,13 +93,7 @@ function loadFromStorage() {
     const saved = localStorage.getItem("impactGridData");
     if (saved) {
         businessData = JSON.parse(saved);
-        updateAll();
     }
-}
-
-function clearAllData() {
-    localStorage.removeItem("impactGridData");
-    location.reload();
 }
 
 /* ================= UPDATE ================= */
@@ -123,17 +113,14 @@ function renderKPIs() {
     const container = document.getElementById("kpiContainer");
     if (!container) return;
 
-    const totalRevenue = sum("revenue");
-    const totalProfit = sum("profit");
-
     container.innerHTML = `
         <div class="kpi">
             <h3>Total Revenue</h3>
-            <p>${formatCurrency(totalRevenue)}</p>
+            <p>${formatCurrency(sum("revenue"))}</p>
         </div>
         <div class="kpi">
             <h3>Total Profit</h3>
-            <p>${formatCurrency(totalProfit)}</p>
+            <p>${formatCurrency(sum("profit"))}</p>
         </div>
     `;
 }
@@ -147,12 +134,12 @@ function renderCoreCharts() {
 
     revenueChart = new Chart(
         document.getElementById("revenueChart"),
-        createLineConfig("Revenue", labels, map("revenue"), "#4CAF50")
+        createLine("Revenue", labels, map("revenue"), "#4CAF50")
     );
 
     profitChart = new Chart(
         document.getElementById("profitChart"),
-        createLineConfig("Profit", labels, map("profit"), "#2196F3")
+        createLine("Profit", labels, map("profit"), "#2196F3")
     );
 
     expenseChart = new Chart(
@@ -166,8 +153,7 @@ function renderCoreCharts() {
                     data: map("expenses"),
                     backgroundColor: "#FF5252"
                 }]
-            },
-            options: baseChartOptions()
+            }
         }
     );
 }
@@ -185,31 +171,13 @@ function renderForecast() {
 
     forecastChart = new Chart(
         document.getElementById("forecastChart"),
-        createLineConfig(
+        createLine(
             "Revenue Forecast",
             [...labels, "F1", "F2", "F3"],
             [...values, ...predictions],
             "#3b82f6"
         )
     );
-}
-
-function simpleRegression(data, periods) {
-    const n = data.length;
-    const x = [...Array(n).keys()];
-    const sumX = x.reduce((a,b)=>a+b);
-    const sumY = data.reduce((a,b)=>a+b);
-    const sumXY = x.reduce((s,xi,i)=>s+xi*data[i],0);
-    const sumXX = x.reduce((s,xi)=>s+xi*xi,0);
-
-    const slope = (n*sumXY - sumX*sumY) / (n*sumXX - sumX*sumX);
-    const intercept = (sumY - slope*sumX)/n;
-
-    const result = [];
-    for(let i=1;i<=periods;i++){
-        result.push(slope*(n+i-1)+intercept);
-    }
-    return result;
 }
 
 /* ================= MULTI METRIC ================= */
@@ -222,21 +190,38 @@ function renderComparison() {
         {
             type: "line",
             data: {
-                labels: businessData.map(d=>d.month),
+                labels: businessData.map(d => d.month),
                 datasets: [
-                    { label:"Revenue", data: map("revenue"), borderColor:"#4CAF50" },
-                    { label:"Profit", data: map("profit"), borderColor:"#2196F3" },
-                    { label:"Expenses", data: map("expenses"), borderColor:"#FF5252" }
+                    { label: "Revenue", data: map("revenue"), borderColor: "#4CAF50" },
+                    { label: "Profit", data: map("profit"), borderColor: "#2196F3" },
+                    { label: "Expenses", data: map("expenses"), borderColor: "#FF5252" }
                 ]
-            },
-            options: baseChartOptions()
+            }
         }
     );
 }
 
-/* ================= CHART HELPERS ================= */
+/* ================= REGRESSION ================= */
 
-function createLineConfig(label, labels, data, color) {
+function simpleRegression(data, periods) {
+    const n = data.length;
+    const x = [...Array(n).keys()];
+    const sumX = x.reduce((a,b)=>a+b);
+    const sumY = data.reduce((a,b)=>a+b);
+    const sumXY = x.reduce((s,xi,i)=>s+xi*data[i],0);
+    const sumXX = x.reduce((s,xi)=>s+xi*xi,0);
+
+    const slope = (n*sumXY - sumX*sumY) / (n*sumXX - sumX*sumX);
+    const intercept = (sumY - slope*sumX)/n;
+
+    return Array.from({length:periods}, (_,i) =>
+        slope*(n+i)+intercept
+    );
+}
+
+/* ================= HELPERS ================= */
+
+function createLine(label, labels, data, color) {
     return {
         type: "line",
         data: {
@@ -249,14 +234,7 @@ function createLineConfig(label, labels, data, color) {
                 fill: true,
                 tension: 0.4
             }]
-        },
-        options: baseChartOptions()
-    };
-}
-
-function baseChartOptions() {
-    return {
-        responsive: true
+        }
     };
 }
 
@@ -265,8 +243,6 @@ function destroyCharts() {
     if (profitChart) profitChart.destroy();
     if (expenseChart) expenseChart.destroy();
 }
-
-/* ================= UTILITIES ================= */
 
 function sum(key){ return businessData.reduce((a,b)=>a+b[key],0); }
 function map(key){ return businessData.map(d=>d[key]); }
@@ -277,8 +253,6 @@ function formatCurrency(val){
         maximumFractionDigits:2
     });
 }
-
-/* ================= EXTRA REQUIRED ================= */
 
 function toggleTheme() {
     document.body.classList.toggle("light-mode");
