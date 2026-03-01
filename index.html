@@ -1,159 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>ImpactGrid Analytics | Enterprise Intelligence Platform</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+/* Overlay */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.3s ease;
+    z-index: 900;
+}
 
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+/* Header layout refinement */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
 
-    <!-- jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+.mobile-menu-btn {
+    display: none;
+    font-size: 22px;
+    background: none;
+    border: none;
+    color: #e2e8f0;
+    cursor: pointer;
+}
 
-    <link rel="stylesheet" href="./style.css">
-</head>
-
-<body>
-
-<!-- ================= AUTH SCREEN ================= -->
-<div id="authScreen" class="auth-screen">
-    <div class="auth-card">
-        <h2>ImpactGrid Analytics</h2>
-        <p class="auth-sub">Enterprise Intelligence Access</p>
-        <input type="text" id="username" placeholder="Username" autocomplete="off">
-        <input type="password" id="password" placeholder="Password" autocomplete="off">
-        <button class="btn-primary" onclick="login()">Login</button>
-    </div>
-</div>
-
-<!-- ================= MAIN APP ================= -->
-<div id="app" class="app-layout hidden">
-
-    <!-- Overlay for mobile -->
-    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
-
-        <div class="logo-container">
-            <img src="./logo.png" alt="ImpactGrid Logo" class="logo-img">
-            <span class="logo-text">ImpactGrid</span>
-        </div>
-
-        <nav class="sidebar-nav">
-            <ul>
-                <li onclick="showSection('dashboard', event)" class="active">Dashboard</li>
-                <li onclick="showSection('forecast', event)">Forecasting</li>
-                <li onclick="showSection('comparison', event)">Multi-Metric</li>
-                <li onclick="showSection('pricing', event)">Pricing</li>
-                <li onclick="clearAllData()">Reset Data</li>
-                <li onclick="logout()">Logout</li>
-            </ul>
-        </nav>
-
-    </aside>
-
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-
-        <!-- HEADER -->
-        <header class="dashboard-header">
-
-            <div class="header-left">
-                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
-                <div>
-                    <h1>Enterprise Intelligence Platform</h1>
-                    <p>Structured Forecasting • Strategic Modeling • Performance Diagnostics</p>
-                </div>
-            </div>
-
-            <div class="header-actions">
-                <button class="btn-secondary" onclick="exportExecutivePDF()">
-                    Export Executive PDF
-                </button>
-                <button class="btn-primary" onclick="toggleTheme()">
-                    Toggle Theme
-                </button>
-            </div>
-        </header>
-
-        <!-- ================= DASHBOARD ================= -->
-        <section id="dashboard" class="page-section active-section">
-
-            <section class="card">
-                <h2>Business Data Input</h2>
-                <div class="grid">
-                    <input type="month" id="month">
-                    <input type="number" id="revenue" placeholder="Revenue">
-                    <input type="number" id="expenses" placeholder="Expenses">
-                    <input type="number" id="customers" placeholder="Customers">
-                    <input type="number" id="marketing" placeholder="Marketing Spend">
-                    <button class="btn-primary" onclick="addData()">Add Data</button>
-                </div>
-            </section>
-
-            <section class="card">
-                <h2>Key Performance Indicators</h2>
-                <div id="kpiContainer" class="kpi-grid"></div>
-            </section>
-
-            <section class="card">
-                <h2>Core Performance</h2>
-                <div class="charts-grid">
-                    <div class="chart-card"><canvas id="revenueChart"></canvas></div>
-                    <div class="chart-card"><canvas id="profitChart"></canvas></div>
-                    <div class="chart-card"><canvas id="expenseChart"></canvas></div>
-                </div>
-            </section>
-
-            <section class="card">
-                <h2>Performance Intelligence Report</h2>
-                <div id="performanceReport" class="report-box">
-                    <p>No analysis available yet. Add business data to generate structured insights.</p>
-                </div>
-            </section>
-
-        </section>
-
-        <!-- ================= FORECAST ================= -->
-        <section id="forecast" class="page-section">
-            <section class="card">
-                <h2>Revenue Forecast</h2>
-                <div class="chart-card">
-                    <canvas id="forecastChart"></canvas>
-                </div>
-            </section>
-        </section>
-
-        <!-- ================= MULTI METRIC ================= -->
-        <section id="comparison" class="page-section">
-            <section class="card">
-                <h2>Multi-Metric Comparison</h2>
-                <div class="chart-card">
-                    <canvas id="comparisonChart"></canvas>
-                </div>
-            </section>
-        </section>
-
-        <!-- ================= PRICING ================= -->
-        <section id="pricing" class="page-section">
-            <section class="card">
-                <h2>Choose Your Plan</h2>
-                <p class="report-box">Upgrade for forecasting, comparison modeling, and executive export capabilities.</p>
-            </section>
-        </section>
-
-        <footer class="dashboard-footer">
-            © 2026 ImpactGrid Analytics. Enterprise Intelligence Platform.
-        </footer>
-
-    </div>
-</div>
-
-<script src="./script.js"></script>
-</body>
-</html>
+@media (max-width: 900px) {
+    .mobile-menu-btn {
+        display: block;
+    }
+}
