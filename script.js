@@ -54,15 +54,17 @@ function toggleSidebar() {
 
 function showSection(id, evt) {
     document.querySelectorAll(".page-section")
-        .forEach(s => s.classList.remove("active-section"));
+        .forEach(section => section.classList.remove("active-section"));
 
-    const section = document.getElementById(id);
-    if (section) section.classList.add("active-section");
+    const target = document.getElementById(id);
+    if (target) target.classList.add("active-section");
 
     document.querySelectorAll(".sidebar li")
         .forEach(li => li.classList.remove("active"));
 
-    if (evt && evt.target) evt.target.classList.add("active");
+    if (evt && evt.target) {
+        evt.target.classList.add("active");
+    }
 }
 
 /* ================= DATA ================= */
@@ -232,7 +234,7 @@ function renderComparison() {
     );
 }
 
-/* ================= CHART CONFIG HELPERS ================= */
+/* ================= CHART HELPERS ================= */
 
 function createLineConfig(label, labels, data, color) {
     return {
@@ -254,32 +256,17 @@ function createLineConfig(label, labels, data, color) {
 
 function baseChartOptions() {
     return {
-        responsive: true,
-        plugins: {
-            legend: {
-                labels: { color: "#ccc" }
-            }
-        },
-        scales: {
-            x: {
-                ticks: { color: "#aaa" },
-                grid: { color: "rgba(255,255,255,0.05)" }
-            },
-            y: {
-                ticks: { color: "#aaa" },
-                grid: { color: "rgba(255,255,255,0.05)" }
-            }
-        }
+        responsive: true
     };
 }
-
-/* ================= UTILITIES ================= */
 
 function destroyCharts() {
     if (revenueChart) revenueChart.destroy();
     if (profitChart) profitChart.destroy();
     if (expenseChart) expenseChart.destroy();
 }
+
+/* ================= UTILITIES ================= */
 
 function sum(key){ return businessData.reduce((a,b)=>a+b[key],0); }
 function map(key){ return businessData.map(d=>d[key]); }
@@ -291,7 +278,7 @@ function formatCurrency(val){
     });
 }
 
-/* ================= EXTRA (REQUIRED BY INDEX) ================= */
+/* ================= EXTRA REQUIRED ================= */
 
 function toggleTheme() {
     document.body.classList.toggle("light-mode");
