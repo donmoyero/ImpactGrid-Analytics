@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadFromStorage();
     autoLogin();
     loadTheme();
+    updatePlanUI();
 });
 
 /* ================= MOBILE SIDEBAR ================= */
@@ -37,7 +38,17 @@ function closeSidebar() {
 function setPlan(plan) {
     userPlan = plan;
     localStorage.setItem("impactPlan", plan);
-    alert("Plan updated to: " + plan.toUpperCase());
+    updatePlanUI();
+    alert("Your plan is now: " + plan.toUpperCase());
+}
+
+function updatePlanUI() {
+    const pricingCards = document.querySelectorAll(".pricing-card");
+    pricingCards.forEach(card => card.classList.remove("current-plan"));
+
+    if (userPlan === "free") pricingCards[0]?.classList.add("current-plan");
+    if (userPlan === "growth") pricingCards[1]?.classList.add("current-plan");
+    if (userPlan === "premium") pricingCards[2]?.classList.add("current-plan");
 }
 
 /* ================= AUTH ================= */
@@ -92,9 +103,18 @@ function loadTheme() {
 function showSection(id, evt) {
 
     if ((id === "forecast" || id === "comparison") && userPlan === "free") {
-        alert("Upgrade to Growth or Premium to access this feature.");
+        alert("This feature is available on Growth and Pro plans.");
+        activateSection("pricing");
         return;
     }
+
+    activateSection(id, evt);
+
+    if (id === "forecast") renderForecast();
+    if (id === "comparison") renderComparison();
+}
+
+function activateSection(id, evt) {
 
     document.querySelectorAll(".page-section")
         .forEach(s => s.classList.remove("active-section"));
@@ -107,9 +127,6 @@ function showSection(id, evt) {
     if (evt?.target) evt.target.classList.add("active");
 
     closeSidebar();
-
-    if (id === "forecast") renderForecast();
-    if (id === "comparison") renderComparison();
 }
 
 /* ================= DATA ================= */
