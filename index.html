@@ -12,6 +12,7 @@
 
 <body>
 
+<!-- ================= AUTH ================= -->
 <div id="authScreen" class="auth-screen">
     <div class="auth-card">
         <h2>ImpactGrid Login</h2>
@@ -21,16 +22,19 @@
     </div>
 </div>
 
+<!-- ================= APP ================= -->
 <div id="app" class="app-layout hidden">
 
+    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-top">
             <h2 class="logo">ImpactGrid</h2>
             <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
         </div>
+
         <nav>
             <ul>
-                <li onclick="showSection('dashboard', event)" class="active">Dashboard</li>
+                <li class="active" onclick="showSection('dashboard', event)">Dashboard</li>
                 <li onclick="showSection('forecast', event)">Forecasting</li>
                 <li onclick="showSection('comparison', event)">Multi-Metric</li>
                 <li onclick="clearAllData()">Reset Data</li>
@@ -39,8 +43,10 @@
         </nav>
     </aside>
 
+    <!-- MAIN -->
     <div class="main-content">
 
+        <!-- HEADER -->
         <header class="dashboard-header">
             <div>
                 <h1>Enterprise Intelligence Platform</h1>
@@ -52,10 +58,10 @@
             </div>
         </header>
 
-        <!-- DASHBOARD -->
-        <section id="dashboard" class="page-section active-section">
+        <!-- ================= DASHBOARD ================= -->
+        <div id="dashboard" class="page-section active-section">
 
-            <section class="card input-card">
+            <div class="card">
                 <h2>Business Data Input</h2>
                 <div class="grid">
                     <input type="month" id="month">
@@ -65,39 +71,53 @@
                     <input type="number" id="marketing" placeholder="Marketing Spend">
                     <button class="btn-primary" onclick="addData()">Add Data</button>
                 </div>
-            </section>
+            </div>
 
-            <section class="card">
+            <div class="card">
                 <h2>Intelligence KPIs</h2>
                 <div id="kpiContainer" class="kpi-grid"></div>
-            </section>
+            </div>
 
-            <section class="card">
-                <h2>Core Performance (Anomaly + MA Overlay)</h2>
+            <div class="card">
+                <h2>Core Performance</h2>
                 <div class="charts-grid">
-                    <div class="chart-card"><canvas id="revenueChart"></canvas></div>
-                    <div class="chart-card"><canvas id="profitChart"></canvas></div>
-                    <div class="chart-card"><canvas id="expenseChart"></canvas></div>
+                    <div class="chart-card">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <canvas id="profitChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
                 </div>
-            </section>
+            </div>
 
-        </section>
+        </div>
 
-        <!-- FORECAST -->
-        <section id="forecast" class="page-section">
-            <section class="card">
-                <h2>Regression Forecast + 95% Confidence Interval</h2>
-                <canvas id="forecastChart"></canvas>
-            </section>
-        </section>
+        <!-- ================= FORECAST ================= -->
+        <div id="forecast" class="page-section">
 
-        <!-- MULTI METRIC -->
-        <section id="comparison" class="page-section">
-            <section class="card">
+            <div class="card">
+                <h2>Regression Forecast</h2>
+                <div class="chart-card">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= MULTI METRIC ================= -->
+        <div id="comparison" class="page-section">
+
+            <div class="card">
                 <h2>Multi-Metric Strategic View</h2>
-                <canvas id="comparisonChart"></canvas>
-            </section>
-        </section>
+                <div class="chart-card">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+
+        </div>
 
         <footer class="dashboard-footer">
             <p>© 2026 ImpactGrid SaaS Intelligence</p>
