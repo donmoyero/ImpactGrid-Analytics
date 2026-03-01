@@ -1,8 +1,11 @@
 /* ================= GLOBAL STATE ================= */
 
 let businessData = [];
-let revenueChart, profitChart, expenseChart;
-let forecastChart, comparisonChart;
+let revenueChart = null;
+let profitChart = null;
+let expenseChart = null;
+let forecastChart = null;
+let comparisonChart = null;
 
 /* ================= INIT ================= */
 
@@ -46,7 +49,7 @@ function toggleSidebar() {
     document.getElementById("sidebar").classList.toggle("collapsed");
 }
 
-/* ================= SECTION NAV (FIXED) ================= */
+/* ================= SECTION NAV ================= */
 
 function showSection(id, evt) {
     document.querySelectorAll(".page-section").forEach(s =>
@@ -101,7 +104,7 @@ function clearAllData() {
     location.reload();
 }
 
-/* ================= UPDATE ================= */
+/* ================= MASTER UPDATE ================= */
 
 function updateAll() {
     if (businessData.length === 0) return;
@@ -110,6 +113,7 @@ function updateAll() {
     renderCoreCharts();
     renderForecast();
     renderComparison();
+    generateReport();   // NEW 🔥
 }
 
 /* ================= KPI ================= */
@@ -136,52 +140,70 @@ function renderKPIs() {
 /* ================= CORE CHARTS ================= */
 
 function renderCoreCharts() {
+
     destroyCharts();
 
     const labels = businessData.map(d => d.month);
 
-    revenueChart = new Chart(document.getElementById("revenueChart"), {
-        type: "line",
-        data: {
-            labels,
-            datasets: [{
-                label: "Revenue",
-                data: map("revenue"),
-                borderColor: "#4CAF50",
-                tension: 0.4
-            }]
+    revenueChart = new Chart(
+        document.getElementById("revenueChart").getContext("2d"),
+        {
+            type: "line",
+            data: {
+                labels,
+                datasets: [{
+                    label: "Revenue",
+                    data: map("revenue"),
+                    borderColor: "#4CAF50",
+                    backgroundColor: "rgba(76,175,80,0.1)",
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: baseChartOptions()
         }
-    });
+    );
 
-    profitChart = new Chart(document.getElementById("profitChart"), {
-        type: "line",
-        data: {
-            labels,
-            datasets: [{
-                label: "Profit",
-                data: map("profit"),
-                borderColor: "#2196F3",
-                tension: 0.4
-            }]
+    profitChart = new Chart(
+        document.getElementById("profitChart").getContext("2d"),
+        {
+            type: "line",
+            data: {
+                labels,
+                datasets: [{
+                    label: "Profit",
+                    data: map("profit"),
+                    borderColor: "#2196F3",
+                    backgroundColor: "rgba(33,150,243,0.1)",
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: baseChartOptions()
         }
-    });
+    );
 
-    expenseChart = new Chart(document.getElementById("expenseChart"), {
-        type: "bar",
-        data: {
-            labels,
-            datasets: [{
-                label: "Expenses",
-                data: map("expenses"),
-                backgroundColor: "#FF5252"
-            }]
+    expenseChart = new Chart(
+        document.getElementById("expenseChart").getContext("2d"),
+        {
+            type: "bar",
+            data: {
+                labels,
+                datasets: [{
+                    label: "Expenses",
+                    data: map("expenses"),
+                    backgroundColor: "#FF5252"
+                }]
+            },
+            options: baseChartOptions()
         }
-    });
+    );
 }
 
-/* ================= FORECAST (Simple Regression) ================= */
+/* ================= FORECAST ================= */
 
 function renderForecast() {
+
     if (forecastChart) forecastChart.destroy();
 
     const labels = businessData.map(d => d.month);
@@ -191,23 +213,87 @@ function renderForecast() {
 
     const predictions = simpleRegression(values, 3);
 
-    forecastChart = new Chart(document.getElementById("forecastChart"), {
-        type: "line",
-        data: {
-            labels: [...labels, "F1", "F2", "F3"],
-            datasets: [{
-                label: "Revenue Forecast",
-                data: [...values, ...predictions],
-                borderColor: "#3b82f6",
-                tension: 0.4
-            }]
+    forecastChart = new Chart(
+        document.getElementById("forecastChart").getContext("2d"),
+        {
+            type: "line",
+            data: {
+                labels: [...labels, "F1", "F2", "F3"],
+                datasets: [{
+                    label: "Revenue Forecast",
+                    data: [...values, ...predictions],
+                    borderColor: "#3b82f6",
+                    borderDash: [5,5],
+                    tension: 0.4
+                }]
+            },
+            options: baseChartOptions()
         }
-    });
+    );
 }
 
+/* ================= MULTI METRIC ================= */
+
+function renderComparison() {
+
+    if (comparisonChart) comparisonChart.destroy();
+
+    comparisonChart = new Chart(
+        document.getElementById("comparisonChart").getContext("2d"),
+        {
+            type: "line",
+            data: {
+                labels: businessData.map(d => d.month),
+                datasets: [
+                    { label:"Revenue", data: map("revenue"), borderColor:"#4CAF50" },
+                    { label:"Profit", data: map("profit"), borderColor:"#2196F3" },
+                    { label:"Expenses", data: map("expenses"), borderColor:"#FF5252" }
+                ]
+            },
+            options: baseChartOptions()
+        }
+    );
+}
+
+/* ================= SMART REPORT (NEW) ================= */
+
+function generateReport() {
+
+    const reportBox = document.getElementById("performanceReport");
+
+    const totalRevenue = sum("revenue");
+    const totalProfit = sum("profit");
+    const latest = businessData[businessData.length - 1];
+
+    let health = "Stable";
+    if (totalProfit <= 0) health = "Critical";
+    else if (totalProfit < totalRevenue * 0.15) health = "Warning";
+
+    reportBox.innerHTML = `
+        <p><strong>Business Health:</strong> ${health}</p>
+        <p>Total Revenue: ${formatCurrency(totalRevenue)}</p>
+        <p>Total Profit: ${formatCurrency(totalProfit)}</p>
+        <p>Latest Month Revenue: ${formatCurrency(latest.revenue)}</p>
+        <hr>
+        <p><strong>Strategic Advice:</strong></p>
+        <p>
+        ${health === "Critical" ? 
+            "Expenses are too high relative to revenue. Reduce operational cost immediately." :
+         health === "Warning" ?
+            "Profit margins are thin. Consider optimizing marketing ROI and pricing strategy." :
+            "Performance is strong. Focus on scaling revenue channels and customer acquisition."
+        }
+        </p>
+    `;
+}
+
+/* ================= REGRESSION ================= */
+
 function simpleRegression(data, periods) {
+
     const n = data.length;
     const x = [...Array(n).keys()];
+
     const sumX = x.reduce((a,b)=>a+b);
     const sumY = data.reduce((a,b)=>a+b);
     const sumXY = x.reduce((s,xi,i)=>s+xi*data[i],0);
@@ -220,37 +306,8 @@ function simpleRegression(data, periods) {
     for(let i=1;i<=periods;i++){
         result.push(slope*(n+i-1)+intercept);
     }
+
     return result;
-}
-
-/* ================= MULTI METRIC ================= */
-
-function renderComparison() {
-    if (comparisonChart) comparisonChart.destroy();
-
-    comparisonChart = new Chart(document.getElementById("comparisonChart"), {
-        type: "line",
-        data: {
-            labels: businessData.map(d=>d.month),
-            datasets: [
-                {
-                    label:"Revenue",
-                    data: map("revenue"),
-                    borderColor:"#4CAF50"
-                },
-                {
-                    label:"Profit",
-                    data: map("profit"),
-                    borderColor:"#2196F3"
-                },
-                {
-                    label:"Expenses",
-                    data: map("expenses"),
-                    borderColor:"#FF5252"
-                }
-            ]
-        }
-    });
 }
 
 /* ================= HELPERS ================= */
@@ -269,4 +326,17 @@ function formatCurrency(val){
         minimumFractionDigits:2,
         maximumFractionDigits:2
     });
+}
+
+function baseChartOptions(){
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: { beginAtZero: true }
+        },
+        plugins: {
+            legend: { display: true }
+        }
+    };
 }
