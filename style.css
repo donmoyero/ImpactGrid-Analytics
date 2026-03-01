@@ -1,306 +1,144 @@
-/* ================= GLOBAL RESET ================= */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ImpactGrid SaaS Intelligence Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    color: #e2e8f0;
-    min-height: 100vh;
-    transition: all 0.3s ease;
-}
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-/* ================= HIDDEN ================= */
-.hidden { display: none; }
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-/* ================= AUTH ================= */
-.auth-screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
+    <link rel="stylesheet" href="style.css">
+</head>
 
-.auth-card {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(14px);
-    padding: 40px;
-    border-radius: 18px;
-    width: 340px;
-    text-align: center;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-}
+<body>
 
-.auth-card h2 {
-    margin-bottom: 20px;
-    font-weight: 700;
-}
+<!-- ================= AUTH LAYER ================= -->
+<div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+        <h2>ImpactGrid Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button class="btn-primary" onclick="login()">Login</button>
+    </div>
+</div>
 
-/* ================= APP LAYOUT ================= */
-.app-layout {
-    display: flex;
-    min-height: 100vh;
-}
+<!-- ================= APPLICATION ================= -->
+<div id="app" class="app-layout hidden">
 
-/* ================= SIDEBAR ================= */
-.sidebar {
-    width: 240px;
-    background: #0f172a;
-    padding: 25px 20px;
-    border-right: 1px solid rgba(255,255,255,0.05);
-    transition: width 0.3s ease;
-}
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+            <h2 class="logo">ImpactGrid</h2>
+            <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
+        </div>
 
-.sidebar.collapsed { width: 70px; }
+        <nav>
+            <ul>
+                <li class="active" onclick="showSection('dashboard', event)">Dashboard</li>
+                <li onclick="showSection('forecast', event)">Forecasting</li>
+                <li onclick="showSection('comparison', event)">Multi-Metric</li>
+                <li onclick="clearAllData()">Reset Data</li>
+                <li onclick="logout()">Logout</li>
+            </ul>
+        </nav>
+    </aside>
 
-.sidebar-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+    <!-- ===== MAIN AREA ===== -->
+    <div class="main-content">
 
-.logo {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
+        <!-- HEADER -->
+        <header class="dashboard-header">
+            <div>
+                <h1>Enterprise Intelligence Platform</h1>
+                <p>Strategic Analytics • Forecast Modeling • Performance Insights</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-secondary" onclick="exportData()">Export CSV</button>
+                <button class="btn-primary" onclick="toggleTheme()">Toggle Theme</button>
+            </div>
+        </header>
 
-.sidebar ul {
-    list-style: none;
-    margin-top: 25px;
-}
+        <!-- CONTENT WRAPPER -->
+        <div class="content-wrapper">
 
-.sidebar li {
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #94a3b8;
-    transition: all 0.2s ease;
-    font-size: 14px;
-}
+            <!-- ================= DASHBOARD ================= -->
+            <section id="dashboard" class="page-section active-section">
 
-.sidebar li:hover {
-    background: rgba(59,130,246,0.1);
-    color: white;
-}
+                <!-- DATA INPUT -->
+                <div class="card">
+                    <h2>Business Data Input</h2>
+                    <div class="grid">
+                        <input type="month" id="month">
+                        <input type="number" id="revenue" placeholder="Revenue">
+                        <input type="number" id="expenses" placeholder="Expenses">
+                        <input type="number" id="customers" placeholder="Customers">
+                        <input type="number" id="marketing" placeholder="Marketing Spend">
+                        <button class="btn-primary" onclick="addData()">Add Data</button>
+                    </div>
+                </div>
 
-.sidebar li.active {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
-}
+                <!-- KPI ROW -->
+                <div class="card">
+                    <h2>Key Performance Indicators</h2>
+                    <div id="kpiContainer" class="kpi-grid"></div>
+                </div>
 
-/* ================= MAIN ================= */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
+                <!-- CORE CHARTS -->
+                <div class="card">
+                    <h2>Core Performance</h2>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <canvas id="profitChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <canvas id="expenseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
 
-/* ================= HEADER ================= */
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 30px 5%;
-}
+            </section>
 
-.dashboard-header h1 {
-    font-size: 26px;
-    font-weight: 700;
-}
+            <!-- ================= FORECAST ================= -->
+            <section id="forecast" class="page-section">
 
-.dashboard-header p {
-    color: #94a3b8;
-    margin-top: 6px;
-}
+                <div class="card">
+                    <h2>Revenue Forecast (Trend Projection)</h2>
+                    <div class="chart-card">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
 
-/* ================= PAGE SECTIONS ================= */
-.page-section {
-    display: none;
-    padding: 0 5% 50px 5%;
-    animation: fadeIn 0.3s ease;
-}
+            </section>
 
-.active-section { display: block; }
+            <!-- ================= MULTI METRIC ================= -->
+            <section id="comparison" class="page-section">
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+                <div class="card">
+                    <h2>Multi-Metric Performance Comparison</h2>
+                    <div class="chart-card">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </div>
 
-/* ================= BUTTONS ================= */
-.btn-primary {
-    padding: 10px 16px;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
+            </section>
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(59,130,246,0.4);
-}
+        </div>
 
-.btn-secondary {
-    padding: 10px 16px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #e2e8f0;
-    border-radius: 8px;
-    cursor: pointer;
-}
+        <!-- FOOTER -->
+        <footer class="dashboard-footer">
+            <p>© 2026 ImpactGrid SaaS Intelligence Platform</p>
+        </footer>
 
-/* ================= CARD ================= */
-.card {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(14px);
-    padding: 25px;
-    border-radius: 18px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.05);
-    margin-bottom: 25px;
-    transition: all 0.2s ease;
-}
+    </div>
+</div>
 
-.card:hover {
-    transform: translateY(-4px);
-}
-
-/* ================= INPUT ================= */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-}
-
-input {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05);
-    color: white;
-    outline: none;
-}
-
-input:focus {
-    border-color: #3b82f6;
-}
-
-/* ================= KPI ================= */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-}
-
-.kpi {
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    padding: 22px;
-    border-radius: 16px;
-    text-align: center;
-    transition: all 0.2s ease;
-    position: relative;
-}
-
-.kpi:hover {
-    transform: scale(1.05);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.5);
-}
-
-.kpi h3 {
-    font-size: 13px;
-    color: #94a3b8;
-    margin-bottom: 8px;
-}
-
-.kpi p {
-    font-size: 24px;
-    font-weight: 700;
-}
-
-/* ===== Trend Colors ===== */
-.trend-up { color: #22c55e; }
-.trend-down { color: #ef4444; }
-.trend-neutral { color: #94a3b8; }
-
-/* ===== KPI States ===== */
-.kpi.good { border: 1px solid rgba(34,197,94,0.4); }
-.kpi.warning { border: 1px solid rgba(234,179,8,0.4); }
-.kpi.risk { border: 1px solid rgba(239,68,68,0.4); }
-
-/* ================= CHARTS ================= */
-.charts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 25px;
-}
-
-.chart-card {
-    padding: 20px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 16px;
-}
-
-/* Anomaly pulse effect */
-@keyframes pulseRed {
-    0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
-    70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
-    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
-}
-
-.anomaly-point {
-    animation: pulseRed 1.5s infinite;
-}
-
-/* Confidence band subtle */
-.confidence-line {
-    opacity: 0.4;
-}
-
-/* ================= CANVAS ================= */
-canvas {
-    width: 100% !important;
-    height: 300px !important;
-}
-
-/* ================= FOOTER ================= */
-.dashboard-footer {
-    text-align: center;
-    padding: 20px;
-    color: #64748b;
-    margin-top: auto;
-}
-
-/* ================= LIGHT MODE ================= */
-body.light-mode {
-    background: #f1f5f9;
-    color: #1e293b;
-}
-
-body.light-mode .sidebar {
-    background: #ffffff;
-    border-right: 1px solid #e2e8f0;
-}
-
-body.light-mode .card {
-    background: white;
-    border: 1px solid #e2e8f0;
-}
-
-body.light-mode .kpi {
-    background: #ffffff;
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 900px) {
-    .sidebar { display: none; }
-    .app-layout { flex-direction: column; }
-}
+<script src="script.js"></script>
+</body>
+</html>
