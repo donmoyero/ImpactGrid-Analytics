@@ -24,6 +24,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    padding: 20px;
 }
 
 .auth-card {
@@ -58,6 +59,7 @@ body {
     padding: 25px 20px;
     border-right: 1px solid rgba(255,255,255,0.05);
     transition: width 0.3s ease;
+    overflow: hidden;
 }
 
 .sidebar.collapsed {
@@ -73,6 +75,7 @@ body {
 .logo {
     font-size: 18px;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .collapse-btn {
@@ -95,6 +98,7 @@ body {
     cursor: pointer;
     color: #94a3b8;
     transition: 0.2s ease;
+    font-size: 14px;
 }
 
 .sidebar li:hover {
@@ -124,6 +128,7 @@ body {
 
 .dashboard-header h1 {
     font-size: 24px;
+    font-weight: 700;
 }
 
 .dashboard-header p {
@@ -178,6 +183,7 @@ body {
 
 .card h2 {
     margin-bottom: 20px;
+    font-weight: 600;
 }
 
 /* ================= INPUT GRID ================= */
@@ -193,6 +199,7 @@ input {
     border: 1px solid rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.05);
     color: white;
+    outline: none;
 }
 
 /* ================= KPI GRID ================= */
@@ -232,12 +239,13 @@ input {
     padding: 20px;
     background: rgba(255,255,255,0.04);
     border-radius: 14px;
+    position: relative;
 }
 
-/* Force chart height */
+/* FIXED CHART HEIGHT FOR STABILITY */
 canvas {
     width: 100% !important;
-    height: 300px !important;
+    height: 320px !important;
 }
 
 /* ================= FOOTER ================= */
