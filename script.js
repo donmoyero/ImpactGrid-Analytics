@@ -57,9 +57,11 @@ function showSection(id, evt) {
     document.querySelectorAll(".sidebar li")
         .forEach(li => li.classList.remove("active"));
 
-    if (evt) evt.target.classList.add("active");
+    if (evt && evt.target) {
+        evt.target.classList.add("active");
+    }
 
-    // Delay ensures canvas has visible dimensions
+    // small delay ensures charts render after visibility
     setTimeout(updateAll, 50);
 }
 
@@ -91,7 +93,9 @@ function saveToStorage() {
 
 function loadFromStorage() {
     const saved = localStorage.getItem("impactGridData");
-    if (saved) businessData = JSON.parse(saved);
+    if (saved) {
+        businessData = JSON.parse(saved);
+    }
 }
 
 /* ================= UPDATE ================= */
