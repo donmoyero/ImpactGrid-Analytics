@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ImpactGrid Analytics | SME Intelligence Platform</title>
+    <title>ImpactGrid | SME Financial Reporting & Risk Interpretation Engine</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ImpactGrid Analytics - Financial Intelligence & Risk Diagnostics for Small Businesses.">
+    <meta name="description" content="ImpactGrid - Institutional Financial Intelligence & Risk Diagnostics for SMEs.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="./style.css">
@@ -17,173 +16,220 @@
 
 <body>
 
-<!-- ================= AUTH SCREEN ================= -->
-<div id="authScreen" class="auth-screen">
-    <div class="auth-container">
+<div id="app" class="app-layout">
 
-        <div class="auth-left">
-            <h1>ImpactGrid Analytics</h1>
-            <p class="tagline">
-                Financial Intelligence & Risk Diagnostics for Small Businesses
-            </p>
-
-            <ul class="auth-benefits">
-                <li>✔ Revenue Stability Tracking</li>
-                <li>✔ Cash Flow Risk Alerts</li>
-                <li>✔ Forecast Scenario Modeling</li>
-                <li>✔ Executive Financial Insights</li>
-            </ul>
-        </div>
-
-        <div class="auth-card">
-            <h2>Access Platform</h2>
-            <form onsubmit="event.preventDefault(); login();">
-                <label>Email</label>
-                <input type="email" id="username" required>
-
-                <label>Password</label>
-                <input type="password" id="password" required>
-
-                <button type="submit" class="btn-primary">
-                    Enter Dashboard
-                </button>
-            </form>
-        </div>
-
+<aside class="sidebar">
+    <div class="logo-container">
+        <span class="logo-text">ImpactGrid</span>
     </div>
-</div>
 
-<!-- ================= MAIN APP ================= -->
-<div id="app" class="app-layout hidden">
+    <nav>
+        <ul>
+            <li onclick="showSection('dashboard', event)" class="active">Financial Overview</li>
+            <li onclick="showSection('forecast', event)">Forecast Horizons</li>
+            <li onclick="showSection('matrix', event)">Performance Matrix</li>
+            <li onclick="showSection('risk', event)">Risk Assessment</li>
+            <li onclick="logout()">Logout</li>
+        </ul>
+    </nav>
+</aside>
 
-    <aside class="sidebar">
-        <div class="logo-container">
-            <span class="logo-text">ImpactGrid</span>
+<main class="main-content">
+
+<header class="dashboard-header">
+    <h1>SME Financial Reporting & Risk Interpretation Engine</h1>
+</header>
+
+<!-- ================= FINANCIAL OVERVIEW ================= -->
+<section id="dashboard" class="page-section active-section">
+
+    <!-- Business Profile -->
+    <section class="card elevated">
+        <h2>Business Profile & Reporting Context</h2>
+        <div class="grid">
+            <div>
+                <label>Business Start Date</label>
+                <input type="date" id="businessStartDate">
+            </div>
+            <div>
+                <label>Current Reporting Date</label>
+                <input type="date" id="reportingDate">
+            </div>
+        </div>
+        <div id="lifecycleClassification"></div>
+    </section>
+
+    <!-- Monthly Data Input -->
+    <section class="card elevated">
+        <h2>Monthly Financial Data Entry</h2>
+        <div class="grid">
+            <div>
+                <label>Reporting Month</label>
+                <input type="month" id="month">
+            </div>
+            <div>
+                <label>Total Revenue (£)</label>
+                <input type="number" id="revenue">
+            </div>
+            <div>
+                <label>Total Expenses (£)</label>
+                <input type="number" id="expenses">
+            </div>
+            <div>
+                <button class="btn-primary" onclick="addData()">Add Data</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Executive Financial Summary -->
+    <section class="card elevated">
+        <h2>Executive Financial Summary</h2>
+
+        <div id="financialPositionSummary"></div>
+
+        <div class="structured-block">
+            <h3>Financial Status Classification</h3>
+            <div id="financialClassification"></div>
         </div>
 
-        <nav>
-            <ul>
-                <li onclick="showSection('dashboard', event)" class="active">Dashboard</li>
-                <li onclick="showSection('forecast', event)">Forecast</li>
-                <li onclick="showSection('comparison', event)">Performance Matrix</li>
-                <li onclick="logout()">Logout</li>
-            </ul>
-        </nav>
-    </aside>
+        <div class="structured-block">
+            <h3>Structured Commentary</h3>
+            <div id="executiveCommentary"></div>
+        </div>
+    </section>
 
-    <main class="main-content">
+    <!-- Business Intelligence Insights -->
+    <section class="card elevated">
+        <h2>Business Intelligence Interpretation</h2>
+        <div id="insightEngine"></div>
+    </section>
 
-        <header class="dashboard-header">
-            <h1>SME Financial Intelligence Dashboard</h1>
-            <p>Growth • Stability • Risk • Survival</p>
-        </header>
+    <!-- Charts -->
+    <section class="card elevated">
+        <h2>Operational Performance Charts</h2>
 
-        <!-- ================= DASHBOARD ================= -->
-        <section id="dashboard" class="page-section active-section">
+        <div class="chart-card">
+            <h3>Revenue Trend</h3>
+            <canvas id="revenueChart"></canvas>
+            <div class="chart-explanation" id="revenueExplanation"></div>
+        </div>
 
-            <!-- Data Input -->
-            <section class="card elevated">
-                <h2>Monthly Business Data</h2>
+        <div class="chart-card">
+            <h3>Profit Trend</h3>
+            <canvas id="profitChart"></canvas>
+            <div class="chart-explanation" id="profitExplanation"></div>
+        </div>
 
-                <div class="grid">
-                    <div>
-                        <label>Reporting Month</label>
-                        <input type="month" id="month">
-                    </div>
+        <div class="chart-card">
+            <h3>Expense Trend</h3>
+            <canvas id="expenseChart"></canvas>
+            <div class="chart-explanation" id="expenseExplanation"></div>
+        </div>
 
-                    <div>
-                        <label>Total Revenue (£)</label>
-                        <input type="number" id="revenue">
-                    </div>
+    </section>
 
-                    <div>
-                        <label>Total Expenses (£)</label>
-                        <input type="number" id="expenses">
-                    </div>
+</section>
 
-                    <div>
-                        <button class="btn-primary" onclick="addData()">
-                            Add Data
-                        </button>
-                    </div>
-                </div>
-            </section>
+<!-- ================= FORECAST HORIZONS ================= -->
+<section id="forecast" class="page-section">
 
-            <!-- KPI -->
-            <section class="card elevated">
-                <h2>Core Financial Metrics</h2>
-                <div id="kpiContainer" class="kpi-grid"></div>
-            </section>
+    <section class="card elevated">
+        <h2>Forecast Horizons</h2>
 
-            <!-- Executive Summary -->
-            <section class="card elevated">
-                <h2>Executive Financial Summary</h2>
-                <div id="executiveSummary" class="kpi-grid"></div>
-            </section>
+        <div class="forecast-block">
+            <h3>6-Month Operational Projection</h3>
+            <canvas id="forecast6m"></canvas>
+            <div id="assumptions6m"></div>
+            <div id="interpretation6m"></div>
+        </div>
 
-            <!-- Insight Engine -->
-            <section class="card elevated">
-                <h2>Business Intelligence Insights</h2>
-                <div id="insightEngine"></div>
-            </section>
+        <div class="forecast-block">
+            <h3>1-Year Planning Projection</h3>
+            <canvas id="forecast1y"></canvas>
+            <div id="assumptions1y"></div>
+            <div id="interpretation1y"></div>
+        </div>
 
-            <!-- Charts -->
-            <section class="card elevated">
-                <h2>Performance Charts</h2>
-                <div class="charts-grid">
-                    <div class="chart-card"><canvas id="revenueChart"></canvas></div>
-                    <div class="chart-card"><canvas id="profitChart"></canvas></div>
-                    <div class="chart-card"><canvas id="expenseChart"></canvas></div>
-                </div>
-            </section>
+        <div class="forecast-block">
+            <h3>3-Year Strategic Projection</h3>
+            <canvas id="forecast3y"></canvas>
+            <div id="assumptions3y"></div>
+            <div id="interpretation3y"></div>
+        </div>
 
-        </section>
+        <div class="forecast-block">
+            <h3>5-Year Vision Projection</h3>
+            <canvas id="forecast5y"></canvas>
+            <div id="assumptions5y"></div>
+            <div id="interpretation5y"></div>
+        </div>
 
-        <!-- ================= FORECAST ================= -->
-        <section id="forecast" class="page-section">
-            <section class="card elevated">
-                <h2>Revenue Forecast (6-Month Projection)</h2>
-                <div class="chart-card">
-                    <canvas id="forecastChart"></canvas>
-                </div>
-            </section>
-        </section>
+    </section>
 
-        <!-- ================= PERFORMANCE MATRIX ================= -->
-        <section id="comparison" class="page-section">
-            <section class="card elevated">
-                <h2>Advanced Performance Matrix</h2>
-                <div class="chart-card">
-                    <canvas id="comparisonChart"></canvas>
-                </div>
-            </section>
-        </section>
+</section>
 
-        <footer class="dashboard-footer">
-            © 2026 ImpactGrid Analytics
-        </footer>
+<!-- ================= PERFORMANCE MATRIX ================= -->
+<section id="matrix" class="page-section">
 
-    </main>
+    <section class="card elevated">
+        <h2>Performance Matrix</h2>
 
+        <div class="chart-card">
+            <h3>Performance Scores (0–100)</h3>
+            <canvas id="performanceBarChart"></canvas>
+        </div>
+
+        <div class="chart-card">
+            <h3>Revenue Distribution</h3>
+            <canvas id="distributionPieChart"></canvas>
+        </div>
+
+        <div class="structured-block">
+            <h3>Composite Business Health Index</h3>
+            <div id="businessHealthIndex"></div>
+        </div>
+
+        <div class="structured-block">
+            <h3>Structured Interpretation</h3>
+            <div id="matrixInterpretation"></div>
+        </div>
+
+    </section>
+
+</section>
+
+<!-- ================= RISK ASSESSMENT ================= -->
+<section id="risk" class="page-section">
+
+    <section class="card elevated">
+        <h2>Operational Risk Assessment</h2>
+
+        <div class="structured-block">
+            <h3>Stability Risk</h3>
+            <div id="stabilityRisk"></div>
+        </div>
+
+        <div class="structured-block">
+            <h3>Margin Risk</h3>
+            <div id="marginRisk"></div>
+        </div>
+
+        <div class="structured-block">
+            <h3>Liquidity Exposure</h3>
+            <div id="liquidityRisk"></div>
+        </div>
+
+    </section>
+
+</section>
+
+<footer class="dashboard-footer">
+    © 2026 ImpactGrid
+</footer>
+
+</main>
 </div>
 
 <script src="./script.js"></script>
-
-<script>
-function showSection(sectionId, event) {
-    document.querySelectorAll(".page-section").forEach(sec =>
-        sec.classList.remove("active-section")
-    );
-
-    document.getElementById(sectionId).classList.add("active-section");
-
-    document.querySelectorAll(".sidebar li").forEach(li =>
-        li.classList.remove("active")
-    );
-
-    if (event) event.target.classList.add("active");
-}
-</script>
-
 </body>
 </html>
