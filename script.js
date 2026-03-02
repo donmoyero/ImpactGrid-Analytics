@@ -39,20 +39,40 @@ function showApp() {
 /* ================= ADD DATA ================= */
 
 function addData() {
-    const month = document.getElementById("month")?.value;
+
+    const monthValue = document.getElementById("month")?.value;
     const revenue = parseFloat(document.getElementById("revenue")?.value);
     const expenses = parseFloat(document.getElementById("expenses")?.value);
 
-    if (!month || isNaN(revenue) || isNaN(expenses)) {
-        alert("Fill required fields correctly.");
+    if (!monthValue || isNaN(revenue) || isNaN(expenses)) {
+        alert("Please enter valid month, revenue and expenses.");
+        return;
+    }
+
+    const date = new Date(monthValue + "-01");
+
+    if (revenue < 0 || expenses < 0) {
+        alert("Revenue and expenses must be positive values.");
         return;
     }
 
     const profit = revenue - expenses;
 
-    businessData.push({ month, revenue, expenses, profit });
+    businessData.push({
+        date,
+        revenue,
+        expenses,
+        profit
+    });
 
+    sortDataChronologically();
     updateAll();
+}
+
+/* ================= SORT DATA ================= */
+
+function sortDataChronologically() {
+    businessData.sort((a, b) => a.date - b.date);
 }
 
 /* ================= UPDATE ALL ================= */
@@ -69,13 +89,16 @@ function updateAll() {
 /* ================= KPI ================= */
 
 function renderKPIs() {
+
     const container = document.getElementById("kpiContainer");
+    if (!container) return;
 
     const totalRevenue = sum("revenue");
     const totalProfit = sum("profit");
-    const margin = totalRevenue
-        ? ((totalProfit / totalRevenue) * 100).toFixed(1)
-        : 0;
+
+    const margin = totalRevenue > 0
+        ? ((totalProfit / totalRevenue) * 100).toFixed(2)
+        : "0.00";
 
     container.innerHTML = `
         <div class="kpi">
@@ -101,35 +124,69 @@ function renderCoreCharts() {
     profitChart?.destroy();
     expenseChart?.destroy();
 
-    const labels = businessData.map(d => d.month);
+    const labels = businessData.map(d =>
+        d.date.toISOString().slice(0,7)
+    );
 
-    revenueChart = createChart("revenueChart", "line", labels, map("revenue"), "#4CAF50", "Revenue");
-    profitChart = createChart("profitChart", "line", labels, map("profit"), "#2196F3", "Profit");
-    expenseChart = createChart("expenseChart", "bar", labels, map("expenses"), "#FF5252", "Expenses");
+    revenueChart = createChart(
+        "revenueChart",
+        "line",
+        labels,
+        businessData.map(d => d.revenue),
+        "#4CAF50",
+        "Revenue"
+    );
+
+    profitChart = createChart(
+        "profitChart",
+        "line",
+        labels,
+        businessData.map(d => d.profit),
+        "#2196F3",
+        "Profit"
+    );
+
+    expenseChart = createChart(
+        "expenseChart",
+        "bar",
+        labels,
+        businessData.map(d => d.expenses),
+        "#FF5252",
+        "Expenses"
+    );
 }
 
-/* ================= FORECAST ENGINE ================= */
+/* ================= FORECAST (CAGR MODEL) ================= */
 
 function renderForecast() {
 
-    if (businessData.length < 2) return;
+    if (businessData.length < 3) return;
 
     forecastChart?.destroy();
 
-    const lastRevenue = businessData[businessData.length - 1].revenue;
-    const prevRevenue = businessData[businessData.length - 2].revenue;
+    const first = businessData[0];
+    const last = businessData[businessData.length - 1];
 
-    const growthRate = (lastRevenue - prevRevenue) / prevRevenue;
+    const monthsDiff =
+        (last.date.getFullYear() - first.date.getFullYear()) * 12 +
+        (last.date.getMonth() - first.date.getMonth());
 
-    let projected = [];
+    if (monthsDiff <= 0 || first.revenue <= 0) return;
+
+    const cagr = Math.pow(last.revenue / first.revenue, 1 / monthsDiff) - 1;
+
+    let projections = [];
     let labels = [];
 
-    let current = lastRevenue;
+    let projectedRevenue = last.revenue;
+    let projectedDate = new Date(last.date);
 
     for (let i = 1; i <= 6; i++) {
-        current = current * (1 + growthRate);
-        projected.push(Math.round(current));
-        labels.push("Month +" + i);
+        projectedRevenue = projectedRevenue * (1 + cagr);
+        projectedDate.setMonth(projectedDate.getMonth() + 1);
+
+        projections.push(Math.round(projectedRevenue));
+        labels.push(projectedDate.toISOString().slice(0,7));
     }
 
     forecastChart = new Chart(
@@ -139,8 +196,8 @@ function renderForecast() {
             data: {
                 labels,
                 datasets: [{
-                    label: "Projected Revenue",
-                    data: projected,
+                    label: "Projected Revenue (CAGR)",
+                    data: projections,
                     borderColor: "#f59e0b",
                     tension: 0.4
                 }]
@@ -153,7 +210,7 @@ function renderForecast() {
     );
 }
 
-/* ================= MULTI METRIC MATRIX ================= */
+/* ================= MULTI METRIC ================= */
 
 function renderComparison() {
 
@@ -170,7 +227,7 @@ function renderComparison() {
             data: {
                 labels: ["Revenue", "Expenses", "Profit"],
                 datasets: [{
-                    label: "Business Metrics",
+                    label: "Cumulative Performance",
                     data: [totalRevenue, totalExpenses, totalProfit],
                     backgroundColor: [
                         "#4CAF50",
@@ -190,6 +247,7 @@ function renderComparison() {
 /* ================= CHART FACTORY ================= */
 
 function createChart(id, type, labels, data, color, label) {
+
     const canvas = document.getElementById(id);
     if (!canvas) return null;
 
@@ -208,7 +266,12 @@ function createChart(id, type, labels, data, color, label) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
     });
 }
@@ -216,15 +279,11 @@ function createChart(id, type, labels, data, color, label) {
 /* ================= HELPERS ================= */
 
 function sum(key){
-    return businessData.reduce((a,b)=>a+b[key],0);
-}
-
-function map(key){
-    return businessData.map(d=>d[key]);
+    return businessData.reduce((a,b)=>a+(b[key] || 0),0);
 }
 
 function formatCurrency(val){
-    return "£"+Number(val).toLocaleString(undefined,{
+    return "£" + Number(val).toLocaleString(undefined,{
         minimumFractionDigits:2,
         maximumFractionDigits:2
     });
