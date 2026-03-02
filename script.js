@@ -49,16 +49,10 @@ function addData() {
         return;
     }
 
-    if (revenue < 0 || expenses < 0) {
-        alert("Values must be positive.");
-        return;
-    }
-
     const date = new Date(monthValue + "-01");
     const profit = revenue - expenses;
 
     businessData.push({ date, revenue, expenses, profit });
-
     businessData.sort((a,b)=>a.date-b.date);
 
     updateAll();
@@ -74,6 +68,7 @@ function updateAll() {
     renderCoreCharts();
     renderForecast();
     renderComparison();
+    renderInsights();
 }
 
 /* ================= KPI ================= */
@@ -104,49 +99,6 @@ function renderKPIs() {
     `;
 }
 
-/* ================= EXECUTIVE SUMMARY ================= */
-
-function renderExecutiveSummary() {
-
-    const container = document.getElementById("executiveSummary");
-    if (!container || businessData.length < 2) return;
-
-    const monthlyGrowth = calculateMonthlyGrowth();
-    const rollingAvg = calculateRollingAverage(3);
-    const volatility = calculateVolatility();
-    const burnRate = calculateBurnRate();
-    const runway = calculateRunway();
-    const efficiency = calculateExpenseEfficiency();
-    const healthScore = calculateHealthScore(volatility, monthlyGrowth, getMargin());
-
-    container.innerHTML = `
-        <div class="kpi">
-            <h3>Avg Monthly Growth</h3>
-            <p>${monthlyGrowth.toFixed(2)}%</p>
-        </div>
-        <div class="kpi">
-            <h3>3M Rolling Avg</h3>
-            <p>${formatCurrency(rollingAvg)}</p>
-        </div>
-        <div class="kpi">
-            <h3>Revenue Volatility</h3>
-            <p>${volatility.toFixed(2)}%</p>
-        </div>
-        <div class="kpi">
-            <h3>Burn Rate</h3>
-            <p>${formatCurrency(burnRate)}</p>
-        </div>
-        <div class="kpi">
-            <h3>Runway (Months)</h3>
-            <p>${runway === Infinity ? "Stable" : runway.toFixed(1)}</p>
-        </div>
-        <div class="kpi">
-            <h3>Business Health Score</h3>
-            <p>${healthScore.toFixed(0)}/100</p>
-        </div>
-    `;
-}
-
 /* ================= ANALYTICS ================= */
 
 function calculateMonthlyGrowth() {
@@ -158,23 +110,6 @@ function calculateMonthlyGrowth() {
     }
     if (!growthRates.length) return 0;
     return (growthRates.reduce((a,b)=>a+b,0)/growthRates.length)*100;
-}
-
-function calculateExpenseGrowth() {
-    let growthRates = [];
-    for (let i=1; i<businessData.length; i++) {
-        const prev = businessData[i-1].expenses;
-        const current = businessData[i].expenses;
-        if (prev > 0) growthRates.push((current-prev)/prev);
-    }
-    if (!growthRates.length) return 0;
-    return (growthRates.reduce((a,b)=>a+b,0)/growthRates.length)*100;
-}
-
-function calculateRollingAverage(period) {
-    if (businessData.length < period) return 0;
-    const recent = businessData.slice(-period);
-    return recent.reduce((a,b)=>a+b.revenue,0)/period;
 }
 
 function calculateVolatility() {
@@ -198,28 +133,57 @@ function calculateRunway() {
     return lastRevenue/burn;
 }
 
-function calculateExpenseEfficiency() {
-    const revGrowth = calculateMonthlyGrowth();
-    const expGrowth = calculateExpenseGrowth();
-    if (expGrowth === 0) return 100;
-    const ratio = revGrowth/expGrowth;
-    return Math.max(0, Math.min(ratio*100,100));
-}
-
-function calculateHealthScore(volatility,growth,margin) {
-    const stability = 100-volatility;
-    const growthScore = Math.min(growth*5,100);
-    const marginScore = Math.min(margin*3,100);
-    return (stability+growthScore+marginScore)/3;
-}
-
 function getMargin() {
     const totalRevenue=sum("revenue");
     const totalProfit=sum("profit");
     return totalRevenue>0 ? (totalProfit/totalRevenue)*100 : 0;
 }
 
-/* ================= CORE CHARTS ================= */
+/* ================= SMART INSIGHT ENGINE ================= */
+
+function renderInsights() {
+
+    const container = document.getElementById("insightEngine");
+    if (!container || businessData.length < 2) return;
+
+    const growth = calculateMonthlyGrowth();
+    const volatility = calculateVolatility();
+    const margin = getMargin();
+    const burn = calculateBurnRate();
+    const runway = calculateRunway();
+
+    let insights = [];
+
+    if (growth > 10) {
+        insights.push("📈 Strong revenue growth detected. Consider reinvesting profits to accelerate scaling.");
+    } else if (growth < 0) {
+        insights.push("⚠ Revenue decline detected. Immediate review of sales channels is recommended.");
+    } else {
+        insights.push("📊 Revenue growth is moderate. Focus on improving customer retention.");
+    }
+
+    if (volatility > 35) {
+        insights.push("⚠ Revenue volatility is high. Consider recurring revenue models for stability.");
+    }
+
+    if (margin < 10) {
+        insights.push("⚠ Low profit margin. Review expense structure and pricing strategy.");
+    }
+
+    if (burn > 0 && runway < 6) {
+        insights.push("🚨 Cash runway below 6 months. Cost control or capital injection required.");
+    }
+
+    if (margin > 20 && volatility < 20) {
+        insights.push("✅ Business appears financially stable with strong operational efficiency.");
+    }
+
+    container.innerHTML = insights.map(text =>
+        `<p style="margin-bottom:12px;">${text}</p>`
+    ).join("");
+}
+
+/* ================= CHARTS ================= */
 
 function renderCoreCharts() {
 
@@ -233,8 +197,6 @@ function renderCoreCharts() {
     profitChart = createChart("profitChart","line",labels,businessData.map(d=>d.profit),"#2196F3","Profit");
     expenseChart = createChart("expenseChart","bar",labels,businessData.map(d=>d.expenses),"#FF5252","Expenses");
 }
-
-/* ================= FORECAST WITH SCENARIOS ================= */
 
 function renderForecast() {
 
@@ -253,70 +215,45 @@ function renderForecast() {
 
     const cagr = Math.pow(last.revenue/first.revenue,1/monthsDiff)-1;
 
-    let base=[], optimistic=[], stress=[], labels=[];
-    let baseVal=last.revenue;
-    let optVal=last.revenue;
-    let stressVal=last.revenue;
+    let base=[],labels=[];
+    let val=last.revenue;
     let futureDate=new Date(last.date);
 
     for(let i=1;i<=6;i++){
         futureDate.setMonth(futureDate.getMonth()+1);
         labels.push(futureDate.toISOString().slice(0,7));
-
-        baseVal*=1+cagr;
-        optVal*=1+(cagr+0.05);
-        stressVal*=1+(cagr-0.15);
-
-        base.push(Math.round(baseVal));
-        optimistic.push(Math.round(optVal));
-        stress.push(Math.round(stressVal));
+        val*=1+cagr;
+        base.push(Math.round(val));
     }
 
     forecastChart=new Chart(
         document.getElementById("forecastChart").getContext("2d"),
         {
             type:"line",
-            data:{
-                labels,
-                datasets:[
-                    {label:"Base",data:base,borderColor:"#f59e0b",tension:0.4},
-                    {label:"Optimistic",data:optimistic,borderColor:"#22c55e",tension:0.4},
-                    {label:"Stress",data:stress,borderColor:"#ef4444",tension:0.4}
-                ]
-            },
+            data:{ labels, datasets:[{label:"Projected Revenue",data:base,borderColor:"#f59e0b"}]},
             options:{responsive:true,maintainAspectRatio:false}
         }
     );
 }
 
-/* ================= ADVANCED PERFORMANCE MATRIX ================= */
-
 function renderComparison() {
 
     comparisonChart?.destroy();
 
-    if (businessData.length < 3) return;
-
-    const volatility=calculateVolatility();
-    const growth=calculateMonthlyGrowth();
-    const efficiency=calculateExpenseEfficiency();
-    const health=calculateHealthScore(volatility,growth,getMargin());
+    const stability = 100 - calculateVolatility();
+    const growth = Math.min(calculateMonthlyGrowth()*5,100);
+    const marginScore = Math.min(getMargin()*3,100);
 
     comparisonChart=new Chart(
         document.getElementById("comparisonChart").getContext("2d"),
         {
             type:"bar",
             data:{
-                labels:["Stability","Efficiency","Growth","Health Score"],
+                labels:["Stability","Growth","Profitability"],
                 datasets:[{
                     label:"Performance Index (0-100)",
-                    data:[
-                        100-volatility,
-                        efficiency,
-                        Math.min(growth*5,100),
-                        health
-                    ],
-                    backgroundColor:["#22c55e","#3b82f6","#f59e0b","#8b5cf6"]
+                    data:[stability,growth,marginScore],
+                    backgroundColor:["#22c55e","#f59e0b","#8b5cf6"]
                 }]
             },
             options:{
@@ -328,47 +265,25 @@ function renderComparison() {
     );
 }
 
-/* ================= CHART FACTORY ================= */
+/* ================= UTIL ================= */
 
 function createChart(id,type,labels,data,color,label){
     const canvas=document.getElementById(id);
     if(!canvas) return null;
-
     return new Chart(canvas.getContext("2d"),{
         type,
-        data:{
-            labels,
-            datasets:[{
-                label,
-                data,
-                borderColor:color,
-                backgroundColor:type==="bar"?color:"transparent",
-                tension:0.4,
-                fill:false
-            }]
-        },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false,
-            scales:{y:{beginAtZero:true}}
-        }
+        data:{labels,datasets:[{label,data,borderColor:color,backgroundColor:type==="bar"?color:"transparent",tension:0.4}]},
+        options:{responsive:true,maintainAspectRatio:false}
     });
 }
-
-/* ================= HELPERS ================= */
 
 function sum(key){
     return businessData.reduce((a,b)=>a+(b[key]||0),0);
 }
 
 function formatCurrency(val){
-    return "£"+Number(val).toLocaleString(undefined,{
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-    });
+    return "£"+Number(val).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 }
-
-/* ================= GLOBAL BIND ================= */
 
 function bindGlobalFunctions(){
     window.login=login;
