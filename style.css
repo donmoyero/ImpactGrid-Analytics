@@ -20,6 +20,7 @@ body {
     color: #e2e8f0;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    letter-spacing: 0.2px;
 }
 
 .hidden {
@@ -28,10 +29,16 @@ body {
 
 .page-section {
     display: none;
+    animation: fadeIn 0.3s ease forwards;
 }
 
 .active-section {
     display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* =========================================================
@@ -66,7 +73,7 @@ body {
 .auth-left h1 {
     font-size: 36px;
     margin-bottom: 18px;
-    letter-spacing: -0.5px;
+    font-weight: 700;
 }
 
 .tagline {
@@ -95,18 +102,6 @@ body {
     justify-content: center;
 }
 
-.auth-card h2 {
-    margin-bottom: 25px;
-    font-size: 22px;
-}
-
-.auth-card label {
-    font-size: 13px;
-    margin-bottom: 6px;
-    display: block;
-    color: #94a3b8;
-}
-
 .auth-card input {
     margin-bottom: 20px;
     padding: 14px;
@@ -114,7 +109,6 @@ body {
     border: 1px solid rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.04);
     color: white;
-    font-size: 14px;
     transition: 0.3s ease;
 }
 
@@ -141,10 +135,7 @@ body {
     padding: 32px 24px;
     border-right: 1px solid rgba(255,255,255,0.05);
     transition: transform 0.3s ease;
-}
-
-.sidebar.open {
-    transform: translateX(0);
+    position: relative;
 }
 
 .logo-container {
@@ -156,7 +147,6 @@ body {
 
 .logo-img {
     width: 42px;
-    height: auto;
 }
 
 .logo-text {
@@ -174,7 +164,7 @@ body {
     border-radius: 14px;
     cursor: pointer;
     color: #94a3b8;
-    transition: 0.25s ease;
+    transition: all 0.25s ease;
     font-size: 14px;
 }
 
@@ -213,7 +203,7 @@ body {
 }
 
 .dashboard-header h1 {
-    font-size: 30px;
+    font-size: 28px;
     font-weight: 700;
 }
 
@@ -239,7 +229,7 @@ body {
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(59,130,246,0.4);
+    box-shadow: 0 15px 35px rgba(59,130,246,0.45);
 }
 
 /* =========================================================
@@ -261,19 +251,12 @@ body {
 }
 
 /* =========================================================
-   GRID INPUT
+   GRID
 ========================================================= */
 .grid {
     display: grid;
-    gap: 18px;
+    gap: 20px;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.grid label {
-    font-size: 12px;
-    color: #94a3b8;
-    margin-bottom: 6px;
-    display: block;
 }
 
 .grid input {
@@ -282,7 +265,6 @@ body {
     border: 1px solid rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.05);
     color: white;
-    transition: 0.3s ease;
 }
 
 .grid input:focus {
@@ -319,7 +301,7 @@ body {
 }
 
 .kpi p {
-    font-size: 30px;
+    font-size: 28px;
     font-weight: 700;
     background: linear-gradient(135deg, #60a5fa, #2563eb);
     -webkit-background-clip: text;
@@ -340,6 +322,40 @@ body {
     background: rgba(255,255,255,0.05);
     padding: 26px;
     border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* =========================================================
+   INFO GRID (HOW IT WORKS)
+========================================================= */
+.info-grid {
+    display: grid;
+    gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin-top: 30px;
+}
+
+.info-block {
+    background: rgba(255,255,255,0.05);
+    padding: 28px;
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: 0.3s ease;
+}
+
+.info-block:hover {
+    transform: translateY(-5px);
+}
+
+.info-block h3 {
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.info-block p {
+    font-size: 14px;
+    color: #94a3b8;
+    line-height: 1.6;
 }
 
 /* =========================================================
@@ -371,7 +387,7 @@ body {
         top: 0;
         height: 100%;
         z-index: 1000;
-        transform: translateX(0);
+        transition: transform 0.3s ease;
     }
 
     .sidebar.open {
