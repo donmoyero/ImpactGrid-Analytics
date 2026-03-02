@@ -1,17 +1,24 @@
-/* ================= SUPABASE SETUP ================= */
+/* =========================================================
+   SUPABASE CONFIG
+========================================================= */
 
-// ✅ Keep your real values here
+// 🔐 INSERT YOUR REAL PUBLISHABLE KEY
 const SUPABASE_URL = "https://bikpmjstyikjyrtsdtew.supabase.co";
 const SUPABASE_ANON_KEY = "PASTE_YOUR_REAL_PUBLISHABLE_KEY_HERE";
 
-// ✅ Proper client initialization
+if (!window.supabase) {
+    console.error("Supabase library not loaded. Make sure CDN is added before this script.");
+}
+
 const supabase = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
 );
 
 
-/* ================= GLOBAL STATE ================= */
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
 
 let businessData = [];
 let revenueChart = null;
@@ -22,25 +29,58 @@ let userPlan = "free";
 let currentUser = null;
 
 
-/* ================= INIT ================= */
+/* =========================================================
+   INIT
+========================================================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
+    console.log("App Initialising...");
 
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
+    await restoreSession();
 
-        if (session) {
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log("Auth event:", event);
+
+        if (session?.user) {
             currentUser = session.user;
             await loadUserProfile();
             showApp();
+        } else {
+            currentUser = null;
+            showAuth();
         }
-    } catch (err) {
-        console.error("Session restore error:", err);
-    }
+    });
 });
 
 
-/* ================= AUTH ================= */
+/* =========================================================
+   SESSION RESTORE
+========================================================= */
+
+async function restoreSession() {
+    try {
+        const { data, error } = await supabase.auth.getSession();
+
+        if (error) {
+            console.error("Session restore failed:", error.message);
+            return;
+        }
+
+        if (data?.session?.user) {
+            currentUser = data.session.user;
+            await loadUserProfile();
+            showApp();
+        }
+
+    } catch (err) {
+        console.error("Session restore error:", err);
+    }
+}
+
+
+/* =========================================================
+   AUTH
+========================================================= */
 
 async function login() {
 
@@ -48,7 +88,7 @@ async function login() {
     const password = document.getElementById("password")?.value?.trim();
 
     if (!email || !password) {
-        alert("Enter email and password");
+        alert("Please enter email and password.");
         return;
     }
 
@@ -64,12 +104,11 @@ async function login() {
         }
 
         currentUser = data.user;
-
         await loadUserProfile();
         showApp();
 
     } catch (err) {
-        console.error("Login error:", err);
+        console.error("Login failed:", err);
         alert("Login failed. Check console.");
     }
 }
@@ -80,23 +119,28 @@ async function logout() {
 }
 
 
-/* ================= PROFILE ================= */
+/* =========================================================
+   PROFILE LOADING
+========================================================= */
 
 async function loadUserProfile() {
+
+    if (!currentUser) return;
 
     try {
         const { data, error } = await supabase
             .from("profiles")
-            .select("*")
+            .select("plan")
             .eq("id", currentUser.id)
-            .single();
+            .maybeSingle();
 
         if (error) {
-            console.error("Profile error:", error);
-            return;
+            console.error("Profile error:", error.message);
+            userPlan = "free";
+        } else {
+            userPlan = data?.plan || "free";
         }
 
-        userPlan = data.plan || "free";
         updatePlanUI();
 
     } catch (err) {
@@ -105,31 +149,42 @@ async function loadUserProfile() {
 }
 
 
-/* ================= SHOW APP ================= */
+/* =========================================================
+   UI CONTROL
+========================================================= */
 
 function showApp() {
     document.getElementById("authScreen")?.style.setProperty("display", "none");
     document.getElementById("app")?.classList.remove("hidden");
 }
 
+function showAuth() {
+    document.getElementById("authScreen")?.style.setProperty("display", "flex");
+    document.getElementById("app")?.classList.add("hidden");
+}
 
-/* ================= PLAN UI ================= */
+
+/* =========================================================
+   PLAN UI
+========================================================= */
 
 function updatePlanUI() {
 
-    const pricingCards = document.querySelectorAll(".pricing-card");
-    pricingCards.forEach(card => card.classList.remove("current-plan"));
+    const cards = document.querySelectorAll(".pricing-card");
+    cards.forEach(card => card.classList.remove("current-plan"));
 
-    if (userPlan === "free") pricingCards[0]?.classList.add("current-plan");
-    if (userPlan === "growth") pricingCards[1]?.classList.add("current-plan");
-    if (userPlan === "premium") pricingCards[2]?.classList.add("current-plan");
+    if (userPlan === "free") cards[0]?.classList.add("current-plan");
+    if (userPlan === "growth") cards[1]?.classList.add("current-plan");
+    if (userPlan === "premium") cards[2]?.classList.add("current-plan");
 
     const badge = document.getElementById("planBadge");
     if (badge) badge.textContent = userPlan.toUpperCase();
 }
 
 
-/* ================= DATA (TEMP LOCAL STATE) ================= */
+/* =========================================================
+   DATA ENTRY
+========================================================= */
 
 function addData() {
 
@@ -143,7 +198,7 @@ function addData() {
     const expenses = parseFloat(document.getElementById("expenses")?.value);
 
     if (!month || isNaN(revenue) || isNaN(expenses)) {
-        alert("Fill required fields.");
+        alert("Please fill all required fields.");
         return;
     }
 
@@ -155,16 +210,20 @@ function addData() {
 }
 
 
-/* ================= MASTER UPDATE ================= */
+/* =========================================================
+   MASTER UPDATE
+========================================================= */
 
 function updateAll() {
     if (!businessData.length) return;
     renderKPIs();
-    renderCoreCharts();
+    renderCharts();
 }
 
 
-/* ================= KPI ================= */
+/* =========================================================
+   KPI RENDER
+========================================================= */
 
 function renderKPIs() {
 
@@ -194,11 +253,16 @@ function renderKPIs() {
 }
 
 
-/* ================= CHARTS ================= */
+/* =========================================================
+   CHARTS
+========================================================= */
 
-function renderCoreCharts() {
+function renderCharts() {
 
-    if (typeof Chart === "undefined") return;
+    if (typeof Chart === "undefined") {
+        console.error("Chart.js not loaded.");
+        return;
+    }
 
     revenueChart?.destroy();
     profitChart?.destroy();
@@ -206,17 +270,17 @@ function renderCoreCharts() {
 
     const labels = businessData.map(d => d.month);
 
-    revenueChart = createChart("revenueChart", "line", labels, map("revenue"), "#4CAF50", "Revenue");
-    profitChart = createChart("profitChart", "line", labels, map("profit"), "#2196F3", "Profit");
-    expenseChart = createChart("expenseChart", "bar", labels, map("expenses"), "#FF5252", "Expenses");
+    revenueChart = buildChart("revenueChart", "line", labels, map("revenue"), "#4CAF50", "Revenue");
+    profitChart = buildChart("profitChart", "line", labels, map("profit"), "#2196F3", "Profit");
+    expenseChart = buildChart("expenseChart", "bar", labels, map("expenses"), "#FF5252", "Expenses");
 }
 
-function createChart(id, type, labels, data, color, label) {
+function buildChart(id, type, labels, data, color, label) {
 
     const canvas = document.getElementById(id);
     if (!canvas) return null;
 
-    return new Chart(canvas.getContext("2d"), {
+    return new Chart(canvas, {
         type,
         data: {
             labels,
@@ -225,7 +289,6 @@ function createChart(id, type, labels, data, color, label) {
                 data,
                 borderColor: color,
                 backgroundColor: type === "bar" ? color : "transparent",
-                fill: false,
                 tension: 0.4
             }]
         },
@@ -237,25 +300,29 @@ function createChart(id, type, labels, data, color, label) {
 }
 
 
-/* ================= HELPERS ================= */
+/* =========================================================
+   HELPERS
+========================================================= */
 
-function sum(key){
-    return businessData.reduce((a,b)=>a+b[key],0);
+function sum(key) {
+    return businessData.reduce((acc, cur) => acc + cur[key], 0);
 }
 
-function map(key){
-    return businessData.map(d=>d[key]);
+function map(key) {
+    return businessData.map(d => d[key]);
 }
 
-function formatCurrency(val){
-    return "£"+Number(val).toLocaleString(undefined,{
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
+function formatCurrency(val) {
+    return "£" + Number(val).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
     });
 }
 
 
-/* ================= MAKE FUNCTIONS GLOBAL ================= */
+/* =========================================================
+   GLOBAL EXPORT
+========================================================= */
 
 window.login = login;
 window.logout = logout;
