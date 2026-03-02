@@ -4,7 +4,7 @@
 
 // 🔐 INSERT YOUR REAL PUBLISHABLE KEY
 const SUPABASE_URL = "https://bikpmjstyikjyrtsdtew.supabase.co";
-const SUPABASE_ANON_KEY = "PASTE_YOUR_REAL_PUBLISHABLE_KEY_HERE";
+const SUPABASE_ANON_KEY = "sb_publishable_DWHc6BmV1pR8envWo8ql3g_Qc5dhKhH";
 
 if (!window.supabase) {
     console.error("Supabase library not loaded. Make sure CDN is added before this script.");
