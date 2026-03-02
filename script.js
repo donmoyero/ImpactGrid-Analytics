@@ -4,7 +4,7 @@
 const SUPABASE_URL = "https://bikpmjstyikjyrtsdtew.supabase.co";
 const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_PUBLIC_KEY_HERE";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, sb_publishable_DWHc6BmV1pR8envWo8ql3g_Qc5dhKhH);
 
 
 /* ================= GLOBAL STATE ================= */
