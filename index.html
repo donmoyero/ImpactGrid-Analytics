@@ -3,19 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>ImpactGrid Analytics | Enterprise Intelligence Platform</title>
+
+    <!-- SEO / Meta -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ImpactGrid Analytics - Enterprise Intelligence Platform for SMEs. KPI tracking, forecasting, and performance diagnostics.">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
+    <!-- Styles -->
+    <link rel="stylesheet" href="./style.css">
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Supabase (MUST load before script.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Styles -->
-    <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
@@ -28,6 +37,7 @@
         <!-- LEFT SIDE -->
         <div class="auth-left">
             <h1>ImpactGrid Analytics</h1>
+
             <p class="tagline">
                 Enterprise Intelligence Platform for Growth-Focused SMEs
             </p>
@@ -43,28 +53,35 @@
             <div class="auth-note">
                 <strong>Login Requirements</strong><br>
                 Use your registered email and password.<br>
-                All sessions are securely authenticated via encrypted infrastructure.
+                Sessions secured via encrypted infrastructure.
             </div>
         </div>
 
-        <!-- RIGHT SIDE (LOGIN FORM) -->
+        <!-- RIGHT SIDE -->
         <div class="auth-card">
 
             <h2>Sign In</h2>
 
-            <input type="email"
-                   id="username"
-                   placeholder="Registered Email"
-                   autocomplete="off">
+            <!-- FORM prevents refresh issues -->
+            <form onsubmit="event.preventDefault(); login();">
 
-            <input type="password"
-                   id="password"
-                   placeholder="Password"
-                   autocomplete="off">
+                <input type="email"
+                       id="username"
+                       placeholder="Registered Email"
+                       autocomplete="email"
+                       required>
 
-            <button class="btn-primary" onclick="login()">
-                Access Platform
-            </button>
+                <input type="password"
+                       id="password"
+                       placeholder="Password"
+                       autocomplete="current-password"
+                       required>
+
+                <button type="submit" class="btn-primary">
+                    Access Platform
+                </button>
+
+            </form>
 
             <p class="auth-footer">
                 If you don’t have access, contact the administrator.
@@ -75,6 +92,7 @@
     </div>
 
 </div>
+
 
 <!-- ================= MAIN APP ================= -->
 <div id="app" class="app-layout hidden">
@@ -107,11 +125,15 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <div class="main-content">
+    <main class="main-content">
 
         <header class="dashboard-header">
             <div class="header-left">
-                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                <button class="mobile-menu-btn"
+                        onclick="toggleSidebar()"
+                        aria-label="Open Menu">
+                    ☰
+                </button>
                 <div>
                     <h1>Enterprise Intelligence Platform</h1>
                     <p>Structured Forecasting • Strategic Modeling • Performance Diagnostics</p>
@@ -168,16 +190,28 @@
             </section>
         </section>
 
+        <!-- PRICING -->
+        <section id="pricing" class="page-section">
+            <section class="card elevated">
+                <h2>Platform Plans</h2>
+                <div class="pricing-grid">
+                    <div class="pricing-card">Free</div>
+                    <div class="pricing-card">Growth</div>
+                    <div class="pricing-card">Premium</div>
+                </div>
+            </section>
+        </section>
+
         <footer class="dashboard-footer">
             © 2026 ImpactGrid Analytics.
         </footer>
 
-    </div>
+    </main>
+
 </div>
 
-<!-- ================= SCRIPTS ================= -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- ================= CORE SCRIPT ================= -->
 <script src="./script.js"></script>
 
 </body>
