@@ -55,10 +55,79 @@ function updateAll() {
     renderExecutiveSummary();
     renderLifecycle();
     renderInsights();
-    renderCoreCharts();
+    renderCoreCharts();        // FIXED
     renderForecasts();
     renderPerformanceMatrix();
     renderRiskAssessment();
+}
+
+/* ================= CORE CHARTS (RESTORED) ================= */
+
+function renderCoreCharts() {
+
+    if (businessData.length === 0) return;
+
+    revenueChart?.destroy();
+    profitChart?.destroy();
+    expenseChart?.destroy();
+
+    const labels = businessData.map(d =>
+        d.date.toISOString().slice(0,7)
+    );
+
+    revenueChart = createChart(
+        "revenueChart",
+        "line",
+        labels,
+        businessData.map(d=>d.revenue),
+        "#22c55e",
+        "Revenue"
+    );
+
+    profitChart = createChart(
+        "profitChart",
+        "line",
+        labels,
+        businessData.map(d=>d.profit),
+        "#3b82f6",
+        "Profit"
+    );
+
+    expenseChart = createChart(
+        "expenseChart",
+        "bar",
+        labels,
+        businessData.map(d=>d.expenses),
+        "#ef4444",
+        "Expenses"
+    );
+}
+
+/* ================= CHART FACTORY ================= */
+
+function createChart(id,type,labels,data,color,label){
+
+    const canvas = document.getElementById(id);
+    if (!canvas) return null;
+
+    return new Chart(canvas.getContext("2d"),{
+        type,
+        data:{
+            labels,
+            datasets:[{
+                label,
+                data,
+                borderColor:color,
+                backgroundColor:type==="bar"?color:"transparent",
+                tension:0.4
+            }]
+        },
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            scales:{ y:{ beginAtZero:true } }
+        }
+    });
 }
 
 /* ================= BUSINESS AGE ================= */
@@ -199,15 +268,14 @@ function generateProjection(id, months, cagr) {
     for (let i = 1; i <= months; i++) {
         revenue *= (1 + cagr);
         date.setMonth(date.getMonth() + 1);
-
         labels.push(date.toISOString().slice(0,7));
         data.push(Math.round(revenue));
     }
 
-    const ctx = document.getElementById(id)?.getContext("2d");
-    if (!ctx) return;
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
 
-    forecastCharts[id] = new Chart(ctx, {
+    forecastCharts[id] = new Chart(canvas.getContext("2d"), {
         type: "line",
         data: { labels, datasets: [{ label: "Projected Revenue", data, borderColor:"#f59e0b", tension:0.4 }]},
         options: { responsive:true, maintainAspectRatio:false }
@@ -230,9 +298,9 @@ function renderPerformanceMatrix() {
 
     performanceBarChart?.destroy();
 
-    const ctx = document.getElementById("performanceBarChart")?.getContext("2d");
-    if (ctx) {
-        performanceBarChart = new Chart(ctx,{
+    const barCanvas = document.getElementById("performanceBarChart");
+    if (barCanvas) {
+        performanceBarChart = new Chart(barCanvas.getContext("2d"),{
             type:"bar",
             data:{
                 labels:["Stability","Growth Strength","Profitability"],
@@ -245,15 +313,14 @@ function renderPerformanceMatrix() {
         });
     }
 
-    const totalRevenue = sum("revenue");
     const totalExpenses = sum("expenses");
     const totalProfit = sum("profit");
 
     distributionPieChart?.destroy();
 
-    const pieCtx = document.getElementById("distributionPieChart")?.getContext("2d");
-    if (pieCtx) {
-        distributionPieChart = new Chart(pieCtx,{
+    const pieCanvas = document.getElementById("distributionPieChart");
+    if (pieCanvas) {
+        distributionPieChart = new Chart(pieCanvas.getContext("2d"),{
             type:"pie",
             data:{
                 labels:["Expenses","Net Profit"],
@@ -265,10 +332,11 @@ function renderPerformanceMatrix() {
         });
     }
 
-    document.getElementById("businessHealthIndex").innerHTML =
-        `Composite Business Health Index: ${composite} / 100`;
+    const health = document.getElementById("businessHealthIndex");
+    if (health) health.innerHTML = `Composite Business Health Index: ${composite} / 100`;
 
-    document.getElementById("matrixInterpretation").innerHTML =
+    const interp = document.getElementById("matrixInterpretation");
+    if (interp) interp.innerHTML =
         "Composite score reflects aggregated performance across stability, growth strength and profitability resilience.";
 }
 
@@ -279,17 +347,13 @@ function renderRiskAssessment() {
     const volatility = calculateVolatility();
     const margin = getMargin();
 
-    let stabilityRisk = "Low";
-    if (volatility > 35) stabilityRisk = "Elevated";
+    const stability = document.getElementById("stabilityRisk");
+    const marginEl = document.getElementById("marginRisk");
+    const liquidity = document.getElementById("liquidityRisk");
 
-    let marginRisk = "Low";
-    if (margin < 8) marginRisk = "Moderate";
-    if (margin < 4) marginRisk = "Elevated";
-
-    document.getElementById("stabilityRisk").innerHTML = stabilityRisk;
-    document.getElementById("marginRisk").innerHTML = marginRisk;
-    document.getElementById("liquidityRisk").innerHTML =
-        margin > 5 ? "Stable" : "Constrained";
+    if (stability) stability.innerHTML = volatility > 35 ? "Elevated" : "Low";
+    if (marginEl) marginEl.innerHTML = margin < 4 ? "Elevated" : margin < 8 ? "Moderate" : "Low";
+    if (liquidity) liquidity.innerHTML = margin > 5 ? "Stable" : "Constrained";
 }
 
 /* ================= HELPERS ================= */
@@ -330,6 +394,29 @@ function formatCurrency(val){
     });
 }
 
+/* ================= NAVIGATION FIX ================= */
+
+function showSection(sectionId, event) {
+    document.querySelectorAll(".page-section").forEach(sec =>
+        sec.classList.remove("active-section")
+    );
+    document.getElementById(sectionId)?.classList.add("active-section");
+
+    document.querySelectorAll(".sidebar li").forEach(li =>
+        li.classList.remove("active")
+    );
+
+    if (event) event.target.classList.add("active");
+}
+
+function logout() {
+    location.reload();
+}
+
+/* ================= GLOBAL BIND ================= */
+
 function bindGlobalFunctions(){
-    window.addData=addData;
+    window.addData = addData;
+    window.showSection = showSection;
+    window.logout = logout;
 }
