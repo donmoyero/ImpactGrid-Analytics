@@ -17,16 +17,14 @@
     <!-- Styles -->
     <link rel="stylesheet" href="./style.css">
 
-    <!-- Chart.js (Must load before script.js) -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 </head>
 
 <body>
 
 <!-- ================= AUTH SCREEN ================= -->
 <div id="authScreen" class="auth-screen">
-
     <div class="auth-container">
 
         <div class="auth-left">
@@ -47,35 +45,24 @@
             <h2>Access Platform</h2>
 
             <form onsubmit="event.preventDefault(); login();">
-
                 <label><strong>Email Address</strong></label>
-                <input type="email"
-                       id="username"
-                       placeholder="Enter your email"
-                       required>
+                <input type="email" id="username" required>
 
                 <label><strong>Password</strong></label>
-                <input type="password"
-                       id="password"
-                       placeholder="Enter your password"
-                       required>
+                <input type="password" id="password" required>
 
                 <button type="submit" class="btn-primary">
                     Enter Dashboard
                 </button>
             </form>
-
         </div>
 
     </div>
-
 </div>
-
 
 <!-- ================= MAIN APP ================= -->
 <div id="app" class="app-layout hidden">
 
-    <!-- Sidebar Overlay -->
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- SIDEBAR -->
@@ -91,6 +78,7 @@
                 <li onclick="showSection('dashboard', event)" class="active">Dashboard</li>
                 <li onclick="showSection('forecast', event)">Forecasting</li>
                 <li onclick="showSection('comparison', event)">Multi-Metric</li>
+                <li onclick="showSection('howItWorks', event)">How It Works</li>
                 <li onclick="showSection('pricing', event)">Pricing</li>
                 <li onclick="logout()">Logout</li>
             </ul>
@@ -107,11 +95,7 @@
 
         <header class="dashboard-header">
             <div class="header-left">
-                <button class="mobile-menu-btn"
-                        onclick="toggleSidebar()"
-                        aria-label="Open Menu">
-                    ☰
-                </button>
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
                 <div>
                     <h1>Enterprise Intelligence Dashboard</h1>
                     <p>Structured Forecasting • Strategic Modeling • KPI Diagnostics</p>
@@ -119,24 +103,13 @@
             </div>
         </header>
 
-        <!-- ================= DASHBOARD ================= -->
+        <!-- DASHBOARD -->
         <section id="dashboard" class="page-section active-section">
 
             <section class="card elevated">
                 <h2>Business Data Input</h2>
 
                 <div class="grid">
-
-                    <div>
-                        <label><strong>Business Start Date</strong></label>
-                        <input type="date" id="startDate">
-                    </div>
-
-                    <div>
-                        <label><strong>Current Date</strong></label>
-                        <input type="date" id="currentDate">
-                    </div>
-
                     <div>
                         <label><strong>Reporting Month</strong></label>
                         <input type="month" id="month">
@@ -144,20 +117,19 @@
 
                     <div>
                         <label><strong>Total Revenue (£)</strong></label>
-                        <input type="number" id="revenue" placeholder="Enter revenue">
+                        <input type="number" id="revenue">
                     </div>
 
                     <div>
                         <label><strong>Total Expenses (£)</strong></label>
-                        <input type="number" id="expenses" placeholder="Enter expenses">
+                        <input type="number" id="expenses">
                     </div>
 
-                    <div class="full-width">
+                    <div>
                         <button class="btn-primary" onclick="addData()">
                             Add Business Data
                         </button>
                     </div>
-
                 </div>
             </section>
 
@@ -177,7 +149,7 @@
 
         </section>
 
-        <!-- ================= FORECAST ================= -->
+        <!-- FORECAST -->
         <section id="forecast" class="page-section">
             <section class="card elevated">
                 <h2>Revenue Forecast Engine</h2>
@@ -187,7 +159,7 @@
             </section>
         </section>
 
-        <!-- ================= COMPARISON ================= -->
+        <!-- MULTI-METRIC -->
         <section id="comparison" class="page-section">
             <section class="card elevated">
                 <h2>Multi-Metric Intelligence Matrix</h2>
@@ -197,7 +169,52 @@
             </section>
         </section>
 
-        <!-- ================= PRICING ================= -->
+        <!-- HOW IT WORKS -->
+        <section id="howItWorks" class="page-section">
+            <section class="card elevated">
+                <h2>How ImpactGrid Works</h2>
+
+                <div class="info-grid">
+
+                    <div class="info-block">
+                        <h3>📊 Dashboard Intelligence</h3>
+                        <p>
+                            Aggregates business data into total revenue,
+                            profit and margin analytics. Charts display
+                            trend visibility across reporting periods.
+                        </p>
+                    </div>
+
+                    <div class="info-block">
+                        <h3>📈 Forecast Engine</h3>
+                        <p>
+                            Uses historical revenue growth rates to project
+                            forward performance for 6 months to assist
+                            strategic planning.
+                        </p>
+                    </div>
+
+                    <div class="info-block">
+                        <h3>📉 Multi-Metric Matrix</h3>
+                        <p>
+                            Compares cumulative revenue, expenses and profit
+                            to provide instant operational performance insight.
+                        </p>
+                    </div>
+
+                    <div class="info-block">
+                        <h3>🔐 Data Mode</h3>
+                        <p>
+                            Currently running in frontend mode.
+                            All data remains within the browser session.
+                        </p>
+                    </div>
+
+                </div>
+            </section>
+        </section>
+
+        <!-- PRICING -->
         <section id="pricing" class="page-section">
             <section class="card elevated">
                 <h2>Platform Plans</h2>
@@ -217,11 +234,9 @@
 
 </div>
 
-
-<!-- ================= CORE SCRIPT ================= -->
+<!-- SCRIPT -->
 <script src="./script.js"></script>
 
-<!-- ================= NAVIGATION SCRIPT ================= -->
 <script>
 function showSection(sectionId, event) {
     document.querySelectorAll(".page-section").forEach(sec => {
@@ -230,7 +245,7 @@ function showSection(sectionId, event) {
 
     document.getElementById(sectionId).classList.add("active-section");
 
-    document.querySelectorAll(".sidebar nav ul li").forEach(li => {
+    document.querySelectorAll(".sidebar li").forEach(li => {
         li.classList.remove("active");
     });
 
@@ -241,12 +256,10 @@ function showSection(sectionId, event) {
 
 function toggleSidebar() {
     document.getElementById("sidebar").classList.toggle("open");
-    document.getElementById("sidebarOverlay").classList.toggle("active");
 }
 
 function closeSidebar() {
     document.getElementById("sidebar").classList.remove("open");
-    document.getElementById("sidebarOverlay").classList.remove("active");
 }
 </script>
 
