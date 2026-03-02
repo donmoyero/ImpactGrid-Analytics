@@ -46,35 +46,75 @@
     <!-- Business Profile -->
     <section class="card elevated">
         <h2>Business Profile & Reporting Context</h2>
+
         <div class="grid">
+
             <div>
                 <label>Business Start Date</label>
                 <input type="date" id="businessStartDate">
             </div>
+
             <div>
                 <label>Current Reporting Date</label>
                 <input type="date" id="reportingDate">
             </div>
+
+            <div>
+                <label>Primary Business Type</label>
+                <select id="businessType">
+                    <option value="cafe">Café / Hospitality</option>
+                    <option value="retail">Retail Store</option>
+                    <option value="ecommerce">E-commerce</option>
+                    <option value="consulting">Consulting / Professional Services</option>
+                    <option value="trade">Trade / Contractor</option>
+                    <option value="service">Service-Based SME</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Average Monthly Revenue Range</label>
+                <select id="revenueRange">
+                    <option value="micro">Under £2,000</option>
+                    <option value="small">£2,000 – £20,000</option>
+                    <option value="growing">£20,000 – £100,000</option>
+                    <option value="established">Over £100,000</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Chart Display Mode</label>
+                <select id="displayMode">
+                    <option value="absolute">Absolute (£)</option>
+                    <option value="relative">Relative Growth (%)</option>
+                </select>
+            </div>
+
         </div>
-        <div id="lifecycleClassification"></div>
+
+        <div id="lifecycleClassification" style="margin-top:20px;"></div>
     </section>
 
     <!-- Monthly Data Input -->
     <section class="card elevated">
         <h2>Monthly Financial Data Entry</h2>
+
         <div class="grid">
             <div>
                 <label>Reporting Month</label>
                 <input type="month" id="month">
             </div>
+
             <div>
                 <label>Total Revenue (£)</label>
                 <input type="number" id="revenue">
             </div>
+
             <div>
                 <label>Total Expenses (£)</label>
                 <input type="number" id="expenses">
             </div>
+
             <div>
                 <button class="btn-primary" onclick="addData()">Add Data</button>
             </div>
