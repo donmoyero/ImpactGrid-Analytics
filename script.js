@@ -1,12 +1,10 @@
 /* ================= SUPABASE SETUP ================= */
 
-// ✅ Keep URL exactly like this
+// ✅ Keep your real values here
 const SUPABASE_URL = "https://bikpmjstyikjyrtsdtew.supabase.co";
-
-// 🔁 PASTE YOUR REAL PUBLISHABLE KEY BETWEEN THE QUOTES
 const SUPABASE_ANON_KEY = "PASTE_YOUR_REAL_PUBLISHABLE_KEY_HERE";
 
-// ✅ Correct client initialization
+// ✅ Proper client initialization
 const supabase = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
@@ -28,8 +26,6 @@ let currentUser = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-    bindHeaderButtons();
-
     try {
         const { data: { session } } = await supabase.auth.getSession();
 
@@ -39,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             showApp();
         }
     } catch (err) {
-        console.error("Session error:", err);
+        console.error("Session restore error:", err);
     }
 });
 
@@ -88,19 +84,24 @@ async function logout() {
 
 async function loadUserProfile() {
 
-    const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", currentUser.id)
-        .single();
+    try {
+        const { data, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", currentUser.id)
+            .single();
 
-    if (error) {
-        console.error("Profile error:", error);
-        return;
+        if (error) {
+            console.error("Profile error:", error);
+            return;
+        }
+
+        userPlan = data.plan || "free";
+        updatePlanUI();
+
+    } catch (err) {
+        console.error("Profile load failed:", err);
     }
-
-    userPlan = data.plan || "free";
-    updatePlanUI();
 }
 
 
@@ -128,7 +129,7 @@ function updatePlanUI() {
 }
 
 
-/* ================= DATA (TEMPORARY LOCAL STATE) ================= */
+/* ================= DATA (TEMP LOCAL STATE) ================= */
 
 function addData() {
 
@@ -252,3 +253,10 @@ function formatCurrency(val){
         maximumFractionDigits:2
     });
 }
+
+
+/* ================= MAKE FUNCTIONS GLOBAL ================= */
+
+window.login = login;
+window.logout = logout;
+window.addData = addData;
