@@ -4,26 +4,21 @@
     <meta charset="UTF-8">
     <title>ImpactGrid Analytics | Enterprise Intelligence Platform</title>
 
-    <!-- SEO / Meta -->
+    <!-- Meta -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="ImpactGrid Analytics - Enterprise Intelligence Platform for SMEs. KPI tracking, forecasting, and performance diagnostics.">
     <meta name="theme-color" content="#0f172a">
 
-    <!-- Preconnect -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <!-- Styles -->
     <link rel="stylesheet" href="./style.css">
 
-    <!-- Chart.js -->
+    <!-- Chart.js (Must load before script.js) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Supabase (MUST load before script.js) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 </head>
 
@@ -34,58 +29,41 @@
 
     <div class="auth-container">
 
-        <!-- LEFT SIDE -->
         <div class="auth-left">
             <h1>ImpactGrid Analytics</h1>
-
             <p class="tagline">
                 Enterprise Intelligence Platform for Growth-Focused SMEs
             </p>
 
             <ul class="auth-benefits">
-                <li>✔ Secure cloud-based data storage</li>
-                <li>✔ Real-time KPI performance tracking</li>
-                <li>✔ Revenue & profit intelligence</li>
-                <li>✔ Forecasting & multi-metric modeling</li>
-                <li>✔ Executive-grade reporting tools</li>
+                <li>✔ Real-time KPI Intelligence</li>
+                <li>✔ Revenue & Profit Analytics</li>
+                <li>✔ Forecast Modeling</li>
+                <li>✔ Executive Performance Diagnostics</li>
             </ul>
-
-            <div class="auth-note">
-                <strong>Login Requirements</strong><br>
-                Use your registered email and password.<br>
-                Sessions secured via encrypted infrastructure.
-            </div>
         </div>
 
-        <!-- RIGHT SIDE -->
         <div class="auth-card">
+            <h2>Access Platform</h2>
 
-            <h2>Sign In</h2>
-
-            <!-- FORM prevents refresh issues -->
             <form onsubmit="event.preventDefault(); login();">
 
+                <label><strong>Email Address</strong></label>
                 <input type="email"
                        id="username"
-                       placeholder="Registered Email"
-                       autocomplete="email"
+                       placeholder="Enter your email"
                        required>
 
+                <label><strong>Password</strong></label>
                 <input type="password"
                        id="password"
-                       placeholder="Password"
-                       autocomplete="current-password"
+                       placeholder="Enter your password"
                        required>
 
                 <button type="submit" class="btn-primary">
-                    Access Platform
+                    Enter Dashboard
                 </button>
-
             </form>
-
-            <p class="auth-footer">
-                If you don’t have access, contact the administrator.
-            </p>
 
         </div>
 
@@ -97,6 +75,7 @@
 <!-- ================= MAIN APP ================= -->
 <div id="app" class="app-layout hidden">
 
+    <!-- Sidebar Overlay -->
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- SIDEBAR -->
@@ -118,8 +97,7 @@
         </nav>
 
         <div class="plan-indicator">
-            Current Plan:
-            <span id="planBadge">FREE</span>
+            Current Plan: <span id="planBadge">FREE</span>
         </div>
 
     </aside>
@@ -135,22 +113,51 @@
                     ☰
                 </button>
                 <div>
-                    <h1>Enterprise Intelligence Platform</h1>
-                    <p>Structured Forecasting • Strategic Modeling • Performance Diagnostics</p>
+                    <h1>Enterprise Intelligence Dashboard</h1>
+                    <p>Structured Forecasting • Strategic Modeling • KPI Diagnostics</p>
                 </div>
             </div>
         </header>
 
-        <!-- DASHBOARD -->
+        <!-- ================= DASHBOARD ================= -->
         <section id="dashboard" class="page-section active-section">
 
             <section class="card elevated">
                 <h2>Business Data Input</h2>
+
                 <div class="grid">
-                    <input type="month" id="month">
-                    <input type="number" id="revenue" placeholder="Revenue">
-                    <input type="number" id="expenses" placeholder="Expenses">
-                    <button class="btn-primary" onclick="addData()">Add Data</button>
+
+                    <div>
+                        <label><strong>Business Start Date</strong></label>
+                        <input type="date" id="startDate">
+                    </div>
+
+                    <div>
+                        <label><strong>Current Date</strong></label>
+                        <input type="date" id="currentDate">
+                    </div>
+
+                    <div>
+                        <label><strong>Reporting Month</strong></label>
+                        <input type="month" id="month">
+                    </div>
+
+                    <div>
+                        <label><strong>Total Revenue (£)</strong></label>
+                        <input type="number" id="revenue" placeholder="Enter revenue">
+                    </div>
+
+                    <div>
+                        <label><strong>Total Expenses (£)</strong></label>
+                        <input type="number" id="expenses" placeholder="Enter expenses">
+                    </div>
+
+                    <div class="full-width">
+                        <button class="btn-primary" onclick="addData()">
+                            Add Business Data
+                        </button>
+                    </div>
+
                 </div>
             </section>
 
@@ -170,7 +177,7 @@
 
         </section>
 
-        <!-- FORECAST -->
+        <!-- ================= FORECAST ================= -->
         <section id="forecast" class="page-section">
             <section class="card elevated">
                 <h2>Revenue Forecast Engine</h2>
@@ -180,7 +187,7 @@
             </section>
         </section>
 
-        <!-- COMPARISON -->
+        <!-- ================= COMPARISON ================= -->
         <section id="comparison" class="page-section">
             <section class="card elevated">
                 <h2>Multi-Metric Intelligence Matrix</h2>
@@ -190,7 +197,7 @@
             </section>
         </section>
 
-        <!-- PRICING -->
+        <!-- ================= PRICING ================= -->
         <section id="pricing" class="page-section">
             <section class="card elevated">
                 <h2>Platform Plans</h2>
@@ -203,7 +210,7 @@
         </section>
 
         <footer class="dashboard-footer">
-            © 2026 ImpactGrid Analytics.
+            © 2026 ImpactGrid Analytics
         </footer>
 
     </main>
@@ -213,6 +220,35 @@
 
 <!-- ================= CORE SCRIPT ================= -->
 <script src="./script.js"></script>
+
+<!-- ================= NAVIGATION SCRIPT ================= -->
+<script>
+function showSection(sectionId, event) {
+    document.querySelectorAll(".page-section").forEach(sec => {
+        sec.classList.remove("active-section");
+    });
+
+    document.getElementById(sectionId).classList.add("active-section");
+
+    document.querySelectorAll(".sidebar nav ul li").forEach(li => {
+        li.classList.remove("active");
+    });
+
+    if (event) event.target.classList.add("active");
+
+    closeSidebar();
+}
+
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("open");
+    document.getElementById("sidebarOverlay").classList.toggle("active");
+}
+
+function closeSidebar() {
+    document.getElementById("sidebar").classList.remove("open");
+    document.getElementById("sidebarOverlay").classList.remove("active");
+}
+</script>
 
 </body>
 </html>
