@@ -1,4 +1,6 @@
-/* ================= GLOBAL RESET ================= */
+/* =========================================================
+   GLOBAL RESET
+========================================================= */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -11,18 +13,23 @@ html, body {
 
 body {
     font-family: 'Inter', sans-serif;
-    background: radial-gradient(circle at 20% 20%, #1e293b, #020617 65%);
+    background:
+        radial-gradient(circle at 15% 20%, #1e293b, transparent 40%),
+        radial-gradient(circle at 85% 80%, #1e3a8a, transparent 40%),
+        #020617;
     color: #e2e8f0;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
-    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .hidden {
     display: none !important;
 }
 
-/* ================= AUTH SCREEN ================= */
+
+/* =========================================================
+   AUTH SCREEN
+========================================================= */
 .auth-screen {
     min-height: 100vh;
     display: flex;
@@ -40,7 +47,7 @@ body {
     background: rgba(255,255,255,0.04);
     backdrop-filter: blur(30px);
     border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+    box-shadow: 0 40px 120px rgba(0,0,0,0.65);
 }
 
 .auth-left {
@@ -50,7 +57,7 @@ body {
 }
 
 .auth-left h1 {
-    font-size: 34px;
+    font-size: 36px;
     margin-bottom: 18px;
     letter-spacing: -0.5px;
 }
@@ -117,18 +124,25 @@ body {
     color: #64748b;
 }
 
-/* ================= APP LAYOUT ================= */
+
+/* =========================================================
+   APP LAYOUT
+========================================================= */
 .app-layout {
     display: flex;
     min-height: 100vh;
 }
 
-/* ================= SIDEBAR ================= */
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
 .sidebar {
     width: 260px;
     background: linear-gradient(180deg, #0b1220, #0f172a);
     padding: 32px 24px;
     border-right: 1px solid rgba(255,255,255,0.05);
+    transition: transform 0.3s ease;
 }
 
 .logo-container {
@@ -168,14 +182,36 @@ body {
     box-shadow: 0 10px 25px rgba(37,99,235,0.35);
 }
 
-/* ================= MAIN CONTENT ================= */
+.plan-indicator {
+    margin-top: 40px;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+#planBadge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
 .main-content {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
-/* ================= HEADER ================= */
+
+/* =========================================================
+   HEADER
+========================================================= */
 .dashboard-header {
     padding: 40px 6%;
     border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -192,7 +228,10 @@ body {
     font-size: 14px;
 }
 
-/* ================= BUTTONS ================= */
+
+/* =========================================================
+   BUTTONS
+========================================================= */
 .btn-primary {
     padding: 14px 24px;
     background: linear-gradient(135deg, #3b82f6, #2563eb);
@@ -218,23 +257,29 @@ body {
     cursor: pointer;
 }
 
-/* ================= CARD ================= */
+
+/* =========================================================
+   CARD
+========================================================= */
 .card {
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(20px);
     padding: 36px;
     border-radius: 26px;
-    margin-bottom: 40px;
+    margin: 40px 6%;
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow: 0 35px 80px rgba(0,0,0,0.5);
     transition: 0.3s ease;
 }
 
 .card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-4px);
 }
 
-/* ================= GRID ================= */
+
+/* =========================================================
+   GRID INPUT
+========================================================= */
 .grid {
     display: grid;
     gap: 16px;
@@ -249,7 +294,10 @@ body {
     color: white;
 }
 
-/* ================= KPI ================= */
+
+/* =========================================================
+   KPI
+========================================================= */
 .kpi-grid {
     display: grid;
     gap: 26px;
@@ -261,6 +309,11 @@ body {
     padding: 30px;
     border-radius: 22px;
     text-align: center;
+    transition: 0.3s ease;
+}
+
+.kpi:hover {
+    transform: translateY(-5px);
 }
 
 .kpi h3 {
@@ -271,12 +324,17 @@ body {
 }
 
 .kpi p {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 700;
-    color: #3b82f6;
+    background: linear-gradient(135deg, #60a5fa, #2563eb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-/* ================= CHARTS ================= */
+
+/* =========================================================
+   CHARTS
+========================================================= */
 .charts-grid {
     display: grid;
     gap: 34px;
@@ -290,7 +348,39 @@ body {
     border-radius: 24px;
 }
 
-/* ================= FOOTER ================= */
+
+/* =========================================================
+   PRICING
+========================================================= */
+.pricing-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.pricing-card {
+    padding: 30px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.05);
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: 0.3s ease;
+}
+
+.pricing-card:hover {
+    transform: translateY(-6px);
+    border-color: #3b82f6;
+}
+
+.pricing-card.current-plan {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
 .dashboard-footer {
     text-align: center;
     padding: 40px;
@@ -298,7 +388,10 @@ body {
     font-size: 13px;
 }
 
-/* ================= MOBILE ================= */
+
+/* =========================================================
+   MOBILE
+========================================================= */
 @media (max-width: 900px) {
 
     .auth-container {
@@ -309,11 +402,27 @@ body {
         display: none;
     }
 
+    .sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        height: 100%;
+        z-index: 1000;
+    }
+
+    .sidebar.active {
+        transform: translateX(260px);
+    }
+
     .charts-grid {
         grid-template-columns: 1fr;
     }
 
     .chart-card {
         height: 340px;
+    }
+
+    .card {
+        margin: 30px 20px;
     }
 }
