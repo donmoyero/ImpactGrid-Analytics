@@ -4,6 +4,8 @@ let businessData = [];
 let revenueChart = null;
 let profitChart = null;
 let expenseChart = null;
+let forecastChart = null;
+let comparisonChart = null;
 
 /* ================= INIT ================= */
 
@@ -11,22 +13,14 @@ document.addEventListener("DOMContentLoaded", () => {
     bindGlobalFunctions();
 });
 
-/* ================= SIMPLE LOGIN (FRONTEND MODE) ================= */
+/* ================= LOGIN ================= */
 
 function login() {
-    const emailInput = document.getElementById("username");
-    const passwordInput = document.getElementById("password");
-
-    if (!emailInput || !passwordInput) {
-        console.error("Login inputs not found in HTML.");
-        return;
-    }
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
+    const email = document.getElementById("username")?.value.trim();
+    const password = document.getElementById("password")?.value.trim();
 
     if (!email || !password) {
-        alert("Please enter both email and password.");
+        alert("Please enter email and password.");
         return;
     }
 
@@ -37,39 +31,20 @@ function logout() {
     location.reload();
 }
 
-/* ================= SHOW APP ================= */
-
 function showApp() {
-    const authScreen = document.getElementById("authScreen");
-    const app = document.getElementById("app");
-
-    if (!authScreen || !app) {
-        console.error("App containers not found.");
-        return;
-    }
-
-    authScreen.style.display = "none";
-    app.classList.remove("hidden");
+    document.getElementById("authScreen").style.display = "none";
+    document.getElementById("app").classList.remove("hidden");
 }
 
-/* ================= ADD BUSINESS DATA ================= */
+/* ================= ADD DATA ================= */
 
 function addData() {
-    const monthInput = document.getElementById("month");
-    const revenueInput = document.getElementById("revenue");
-    const expensesInput = document.getElementById("expenses");
-
-    if (!monthInput || !revenueInput || !expensesInput) {
-        console.error("Data input fields missing.");
-        return;
-    }
-
-    const month = monthInput.value;
-    const revenue = parseFloat(revenueInput.value);
-    const expenses = parseFloat(expensesInput.value);
+    const month = document.getElementById("month")?.value;
+    const revenue = parseFloat(document.getElementById("revenue")?.value);
+    const expenses = parseFloat(document.getElementById("expenses")?.value);
 
     if (!month || isNaN(revenue) || isNaN(expenses)) {
-        alert("Please complete all required fields correctly.");
+        alert("Fill required fields correctly.");
         return;
     }
 
@@ -77,38 +52,30 @@ function addData() {
 
     businessData.push({ month, revenue, expenses, profit });
 
-    clearInputs();
     updateAll();
 }
 
-/* ================= CLEAR INPUTS ================= */
-
-function clearInputs() {
-    document.getElementById("month").value = "";
-    document.getElementById("revenue").value = "";
-    document.getElementById("expenses").value = "";
-}
-
-/* ================= UPDATE DASHBOARD ================= */
+/* ================= UPDATE ALL ================= */
 
 function updateAll() {
     if (!businessData.length) return;
 
     renderKPIs();
     renderCoreCharts();
+    renderForecast();
+    renderComparison();
 }
 
-/* ================= KPI RENDER ================= */
+/* ================= KPI ================= */
 
 function renderKPIs() {
     const container = document.getElementById("kpiContainer");
-    if (!container) return;
 
     const totalRevenue = sum("revenue");
     const totalProfit = sum("profit");
     const margin = totalRevenue
         ? ((totalProfit / totalRevenue) * 100).toFixed(1)
-        : "0.0";
+        : 0;
 
     container.innerHTML = `
         <div class="kpi">
@@ -130,42 +97,93 @@ function renderKPIs() {
 
 function renderCoreCharts() {
 
-    if (typeof Chart === "undefined") {
-        console.error("Chart.js is not loaded.");
-        return;
-    }
-
     revenueChart?.destroy();
     profitChart?.destroy();
     expenseChart?.destroy();
 
     const labels = businessData.map(d => d.month);
 
-    revenueChart = createChart(
-        "revenueChart",
-        "line",
-        labels,
-        map("revenue"),
-        "#4CAF50",
-        "Revenue"
-    );
+    revenueChart = createChart("revenueChart", "line", labels, map("revenue"), "#4CAF50", "Revenue");
+    profitChart = createChart("profitChart", "line", labels, map("profit"), "#2196F3", "Profit");
+    expenseChart = createChart("expenseChart", "bar", labels, map("expenses"), "#FF5252", "Expenses");
+}
 
-    profitChart = createChart(
-        "profitChart",
-        "line",
-        labels,
-        map("profit"),
-        "#2196F3",
-        "Profit"
-    );
+/* ================= FORECAST ENGINE ================= */
 
-    expenseChart = createChart(
-        "expenseChart",
-        "bar",
-        labels,
-        map("expenses"),
-        "#FF5252",
-        "Expenses"
+function renderForecast() {
+
+    if (businessData.length < 2) return;
+
+    forecastChart?.destroy();
+
+    const lastRevenue = businessData[businessData.length - 1].revenue;
+    const prevRevenue = businessData[businessData.length - 2].revenue;
+
+    const growthRate = (lastRevenue - prevRevenue) / prevRevenue;
+
+    let projected = [];
+    let labels = [];
+
+    let current = lastRevenue;
+
+    for (let i = 1; i <= 6; i++) {
+        current = current * (1 + growthRate);
+        projected.push(Math.round(current));
+        labels.push("Month +" + i);
+    }
+
+    forecastChart = new Chart(
+        document.getElementById("forecastChart").getContext("2d"),
+        {
+            type: "line",
+            data: {
+                labels,
+                datasets: [{
+                    label: "Projected Revenue",
+                    data: projected,
+                    borderColor: "#f59e0b",
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        }
+    );
+}
+
+/* ================= MULTI METRIC MATRIX ================= */
+
+function renderComparison() {
+
+    comparisonChart?.destroy();
+
+    const totalRevenue = sum("revenue");
+    const totalExpenses = sum("expenses");
+    const totalProfit = sum("profit");
+
+    comparisonChart = new Chart(
+        document.getElementById("comparisonChart").getContext("2d"),
+        {
+            type: "bar",
+            data: {
+                labels: ["Revenue", "Expenses", "Profit"],
+                datasets: [{
+                    label: "Business Metrics",
+                    data: [totalRevenue, totalExpenses, totalProfit],
+                    backgroundColor: [
+                        "#4CAF50",
+                        "#FF5252",
+                        "#2196F3"
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        }
     );
 }
 
@@ -190,33 +208,25 @@ function createChart(id, type, labels, data, color, label) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: true }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
+            maintainAspectRatio: false
         }
     });
 }
 
 /* ================= HELPERS ================= */
 
-function sum(key) {
-    return businessData.reduce((acc, item) => acc + (item[key] || 0), 0);
+function sum(key){
+    return businessData.reduce((a,b)=>a+b[key],0);
 }
 
-function map(key) {
-    return businessData.map(d => d[key] || 0);
+function map(key){
+    return businessData.map(d=>d[key]);
 }
 
-function formatCurrency(val) {
-    return "£" + Number(val).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+function formatCurrency(val){
+    return "£"+Number(val).toLocaleString(undefined,{
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
     });
 }
 
