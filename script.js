@@ -1,10 +1,17 @@
 /* ================= SUPABASE SETUP ================= */
 
-// 🔁 Replace with your real anon public key
+// ✅ Keep URL exactly like this
 const SUPABASE_URL = "https://bikpmjstyikjyrtsdtew.supabase.co";
-const SUPABASE_ANON_KEY = "your_real_publishable_key_here";
 
-const supabase = window.supabase.createClient(https://bikpmjstyikjyrtsdtew.supabase.co, sb_publishable_DWHc6BmV1pR8envWo8ql3g_Qc5dhKhH);
+// 🔁 PASTE YOUR REAL PUBLISHABLE KEY BETWEEN THE QUOTES
+const SUPABASE_ANON_KEY = "PASTE_YOUR_REAL_PUBLISHABLE_KEY_HERE";
+
+// ✅ Correct client initialization
+const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
 
 /* ================= GLOBAL STATE ================= */
 
@@ -12,8 +19,6 @@ let businessData = [];
 let revenueChart = null;
 let profitChart = null;
 let expenseChart = null;
-let forecastChart = null;
-let comparisonChart = null;
 
 let userPlan = "free";
 let currentUser = null;
@@ -23,15 +28,18 @@ let currentUser = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-    loadTheme();
     bindHeaderButtons();
 
-    const { data: { session } } = await supabase.auth.getSession();
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
 
-    if (session) {
-        currentUser = session.user;
-        await loadUserProfile();
-        showApp();
+        if (session) {
+            currentUser = session.user;
+            await loadUserProfile();
+            showApp();
+        }
+    } catch (err) {
+        console.error("Session error:", err);
     }
 });
 
@@ -48,20 +56,26 @@ async function login() {
         return;
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-    });
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
 
-    if (error) {
-        alert(error.message);
-        return;
+        if (error) {
+            alert(error.message);
+            return;
+        }
+
+        currentUser = data.user;
+
+        await loadUserProfile();
+        showApp();
+
+    } catch (err) {
+        console.error("Login error:", err);
+        alert("Login failed. Check console.");
     }
-
-    currentUser = data.user;
-
-    await loadUserProfile();
-    showApp();
 }
 
 async function logout() {
@@ -81,7 +95,7 @@ async function loadUserProfile() {
         .single();
 
     if (error) {
-        console.error(error);
+        console.error("Profile error:", error);
         return;
     }
 
@@ -93,11 +107,8 @@ async function loadUserProfile() {
 /* ================= SHOW APP ================= */
 
 function showApp() {
-    const auth = document.getElementById("authScreen");
-    const app = document.getElementById("app");
-
-    if (auth) auth.style.display = "none";
-    if (app) app.classList.remove("hidden");
+    document.getElementById("authScreen")?.style.setProperty("display", "none");
+    document.getElementById("app")?.classList.remove("hidden");
 }
 
 
@@ -117,49 +128,7 @@ function updatePlanUI() {
 }
 
 
-/* ================= SIDEBAR ================= */
-
-function toggleSidebar() {
-    document.getElementById("sidebar")?.classList.toggle("active");
-    document.getElementById("sidebarOverlay")?.classList.toggle("active");
-}
-
-function closeSidebar() {
-    document.getElementById("sidebar")?.classList.remove("active");
-    document.getElementById("sidebarOverlay")?.classList.remove("active");
-}
-
-
-/* ================= SECTION NAV ================= */
-
-function showSection(id, evt) {
-
-    if ((id === "forecast" || id === "comparison") && userPlan === "free") {
-        alert("Upgrade required to access this feature.");
-        activateSection("pricing");
-        return;
-    }
-
-    activateSection(id, evt);
-}
-
-function activateSection(id, evt) {
-
-    document.querySelectorAll(".page-section")
-        .forEach(s => s.classList.remove("active-section"));
-
-    document.getElementById(id)?.classList.add("active-section");
-
-    document.querySelectorAll(".sidebar li")
-        .forEach(li => li.classList.remove("active"));
-
-    if (evt?.target) evt.target.classList.add("active");
-
-    closeSidebar();
-}
-
-
-/* ================= DATA (Still Local For Now) ================= */
+/* ================= DATA (TEMPORARY LOCAL STATE) ================= */
 
 function addData() {
 
@@ -230,7 +199,9 @@ function renderCoreCharts() {
 
     if (typeof Chart === "undefined") return;
 
-    destroyCharts();
+    revenueChart?.destroy();
+    profitChart?.destroy();
+    expenseChart?.destroy();
 
     const labels = businessData.map(d => d.month);
 
@@ -262,12 +233,6 @@ function createChart(id, type, labels, data, color, label) {
             maintainAspectRatio: false
         }
     });
-}
-
-function destroyCharts(){
-    revenueChart?.destroy();
-    profitChart?.destroy();
-    expenseChart?.destroy();
 }
 
 
