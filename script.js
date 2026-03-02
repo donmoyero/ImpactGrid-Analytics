@@ -1,3 +1,12 @@
+/* ================= SUPABASE SETUP ================= */
+
+// 🔁 Replace with your real anon public key
+const SUPABASE_URL = "https://bikpmjstyikjyrtsdtew.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_PUBLIC_KEY_HERE";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
 /* ================= GLOBAL STATE ================= */
 
 let businessData = [];
@@ -7,19 +16,80 @@ let expenseChart = null;
 let forecastChart = null;
 let comparisonChart = null;
 
-let userPlan = localStorage.getItem("impactPlan") || "free";
+let userPlan = "free";
+let currentUser = null;
+
 
 /* ================= INIT ================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
-    checkStripeReturn();
-    loadFromStorage();
-    autoLogin();
     loadTheme();
-    updatePlanUI();
     bindHeaderButtons();
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+        currentUser = session.user;
+        await loadUserProfile();
+        showApp();
+    }
 });
+
+
+/* ================= AUTH ================= */
+
+async function login() {
+
+    const email = document.getElementById("username")?.value?.trim();
+    const password = document.getElementById("password")?.value?.trim();
+
+    if (!email || !password) {
+        alert("Enter email and password");
+        return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    });
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    currentUser = data.user;
+
+    await loadUserProfile();
+    showApp();
+}
+
+async function logout() {
+    await supabase.auth.signOut();
+    location.reload();
+}
+
+
+/* ================= PROFILE ================= */
+
+async function loadUserProfile() {
+
+    const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", currentUser.id)
+        .single();
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    userPlan = data.plan || "free";
+    updatePlanUI();
+}
+
 
 /* ================= SHOW APP ================= */
 
@@ -31,77 +101,8 @@ function showApp() {
     if (app) app.classList.remove("hidden");
 }
 
-/* ================= HEADER BUTTONS ================= */
 
-function bindHeaderButtons() {
-
-    const themeBtn = document.getElementById("themeBtn");
-    const pdfBtn = document.getElementById("pdfBtn");
-
-    themeBtn?.addEventListener("click", toggleTheme);
-    pdfBtn?.addEventListener("click", exportExecutivePDF);
-}
-
-/* ================= LOGIN SYSTEM ================= */
-
-function login() {
-
-    const user = document.getElementById("username")?.value?.trim();
-    const pass = document.getElementById("password")?.value?.trim();
-
-    if (!user || !pass) {
-        alert("Enter credentials");
-        return;
-    }
-
-    localStorage.setItem("impactUser", user);
-
-    showApp();
-    updatePlanUI();
-}
-
-function autoLogin() {
-
-    const savedUser = localStorage.getItem("impactUser");
-    if (!savedUser) return;
-
-    showApp();
-    updatePlanUI();
-}
-
-function logout() {
-    localStorage.removeItem("impactUser");
-    location.reload();
-}
-
-/* ================= STRIPE SUCCESS HANDLER ================= */
-
-function checkStripeReturn() {
-
-    const params = new URLSearchParams(window.location.search);
-    const plan = params.get("plan");
-
-    if (plan === "growth" || plan === "premium") {
-
-        userPlan = plan;
-        localStorage.setItem("impactPlan", plan);
-
-        alert("Subscription activated: " + plan.toUpperCase());
-
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-}
-
-/* ================= PLAN SYSTEM ================= */
-
-function setPlan(plan) {
-
-    userPlan = plan;
-    localStorage.setItem("impactPlan", plan);
-
-    updatePlanUI();
-    alert("Your plan is now: " + plan.toUpperCase());
-}
+/* ================= PLAN UI ================= */
 
 function updatePlanUI() {
 
@@ -111,7 +112,11 @@ function updatePlanUI() {
     if (userPlan === "free") pricingCards[0]?.classList.add("current-plan");
     if (userPlan === "growth") pricingCards[1]?.classList.add("current-plan");
     if (userPlan === "premium") pricingCards[2]?.classList.add("current-plan");
+
+    const badge = document.getElementById("planBadge");
+    if (badge) badge.textContent = userPlan.toUpperCase();
 }
+
 
 /* ================= SIDEBAR ================= */
 
@@ -125,6 +130,7 @@ function closeSidebar() {
     document.getElementById("sidebarOverlay")?.classList.remove("active");
 }
 
+
 /* ================= SECTION NAV ================= */
 
 function showSection(id, evt) {
@@ -136,9 +142,6 @@ function showSection(id, evt) {
     }
 
     activateSection(id, evt);
-
-    if (id === "forecast") renderForecast?.();
-    if (id === "comparison") renderComparison?.();
 }
 
 function activateSection(id, evt) {
@@ -156,7 +159,8 @@ function activateSection(id, evt) {
     closeSidebar();
 }
 
-/* ================= DATA ================= */
+
+/* ================= DATA (Still Local For Now) ================= */
 
 function addData() {
 
@@ -178,30 +182,9 @@ function addData() {
 
     businessData.push({ month, revenue, expenses, profit });
 
-    saveToStorage();
     updateAll();
 }
 
-/* ================= STORAGE ================= */
-
-function saveToStorage() {
-    localStorage.setItem("impactGridData", JSON.stringify(businessData));
-}
-
-function loadFromStorage() {
-    const saved = localStorage.getItem("impactGridData");
-    if (saved) {
-        businessData = JSON.parse(saved);
-        updateAll();
-    }
-}
-
-function clearAllData() {
-    if (confirm("Reset all data?")) {
-        localStorage.removeItem("impactGridData");
-        location.reload();
-    }
-}
 
 /* ================= MASTER UPDATE ================= */
 
@@ -209,8 +192,8 @@ function updateAll() {
     if (!businessData.length) return;
     renderKPIs();
     renderCoreCharts();
-    generateReport?.();
 }
+
 
 /* ================= KPI ================= */
 
@@ -240,6 +223,7 @@ function renderKPIs() {
         </div>
     `;
 }
+
 
 /* ================= CHARTS ================= */
 
@@ -286,6 +270,7 @@ function destroyCharts(){
     profitChart?.destroy();
     expenseChart?.destroy();
 }
+
 
 /* ================= HELPERS ================= */
 
