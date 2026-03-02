@@ -20,7 +20,7 @@ function login() {
     const password = document.getElementById("password")?.value.trim();
 
     if (!email || !password) {
-        alert("Please enter email and password.");
+        alert("Enter email and password.");
         return;
     }
 
@@ -45,34 +45,18 @@ function addData() {
     const expenses = parseFloat(document.getElementById("expenses")?.value);
 
     if (!monthValue || isNaN(revenue) || isNaN(expenses)) {
-        alert("Please enter valid month, revenue and expenses.");
+        alert("Enter valid data.");
         return;
     }
 
     const date = new Date(monthValue + "-01");
-
-    if (revenue < 0 || expenses < 0) {
-        alert("Revenue and expenses must be positive values.");
-        return;
-    }
-
     const profit = revenue - expenses;
 
-    businessData.push({
-        date,
-        revenue,
-        expenses,
-        profit
-    });
+    businessData.push({ date, revenue, expenses, profit });
 
-    sortDataChronologically();
+    businessData.sort((a,b)=>a.date-b.date);
+
     updateAll();
-}
-
-/* ================= SORT DATA ================= */
-
-function sortDataChronologically() {
-    businessData.sort((a, b) => a.date - b.date);
 }
 
 /* ================= UPDATE ALL ================= */
@@ -81,6 +65,7 @@ function updateAll() {
     if (!businessData.length) return;
 
     renderKPIs();
+    renderExecutiveSummary();
     renderCoreCharts();
     renderForecast();
     renderComparison();
@@ -89,16 +74,14 @@ function updateAll() {
 /* ================= KPI ================= */
 
 function renderKPIs() {
-
     const container = document.getElementById("kpiContainer");
-    if (!container) return;
 
     const totalRevenue = sum("revenue");
     const totalProfit = sum("profit");
 
     const margin = totalRevenue > 0
         ? ((totalProfit / totalRevenue) * 100).toFixed(2)
-        : "0.00";
+        : 0;
 
     container.innerHTML = `
         <div class="kpi">
@@ -116,6 +99,97 @@ function renderKPIs() {
     `;
 }
 
+/* ================= EXECUTIVE SUMMARY ================= */
+
+function renderExecutiveSummary() {
+
+    const container = document.getElementById("executiveSummary");
+    if (!container || businessData.length < 2) return;
+
+    const monthlyGrowth = calculateMonthlyGrowth();
+    const rollingAvg = calculateRollingAverage(3);
+    const volatility = calculateVolatility();
+    const burnRate = calculateBurnRate();
+    const runway = calculateRunway();
+
+    container.innerHTML = `
+        <div class="kpi">
+            <h3>Avg Monthly Growth</h3>
+            <p>${monthlyGrowth.toFixed(2)}%</p>
+        </div>
+        <div class="kpi">
+            <h3>3M Rolling Avg Revenue</h3>
+            <p>${formatCurrency(rollingAvg)}</p>
+        </div>
+        <div class="kpi">
+            <h3>Revenue Volatility</h3>
+            <p>${volatility.toFixed(2)}%</p>
+        </div>
+        <div class="kpi">
+            <h3>Burn Rate</h3>
+            <p>${formatCurrency(burnRate)}</p>
+        </div>
+        <div class="kpi">
+            <h3>Runway (Months)</h3>
+            <p>${runway.toFixed(1)}</p>
+        </div>
+    `;
+}
+
+/* ================= ANALYTICS ================= */
+
+function calculateMonthlyGrowth() {
+    let growthRates = [];
+
+    for (let i=1; i<businessData.length; i++) {
+        const prev = businessData[i-1].revenue;
+        const current = businessData[i].revenue;
+
+        if (prev > 0) {
+            growthRates.push((current - prev)/prev);
+        }
+    }
+
+    const avg = growthRates.reduce((a,b)=>a+b,0)/growthRates.length;
+    return avg*100;
+}
+
+function calculateRollingAverage(period) {
+    if (businessData.length < period) return 0;
+
+    const recent = businessData.slice(-period);
+    const total = recent.reduce((a,b)=>a+b.revenue,0);
+    return total/period;
+}
+
+function calculateVolatility() {
+    const revenues = businessData.map(d=>d.revenue);
+    const mean = revenues.reduce((a,b)=>a+b,0)/revenues.length;
+
+    const variance = revenues.reduce((a,b)=>a+Math.pow(b-mean,2),0)/revenues.length;
+    const stdDev = Math.sqrt(variance);
+
+    return (stdDev/mean)*100;
+}
+
+function calculateBurnRate() {
+    const losses = businessData
+        .filter(d=>d.profit < 0)
+        .map(d=>Math.abs(d.profit));
+
+    if (!losses.length) return 0;
+
+    return losses.reduce((a,b)=>a+b,0)/losses.length;
+}
+
+function calculateRunway() {
+    const burn = calculateBurnRate();
+    if (burn === 0) return Infinity;
+
+    const lastRevenue = businessData[businessData.length-1].revenue;
+    return lastRevenue/burn;
+}
+
 /* ================= CORE CHARTS ================= */
 
 function renderCoreCharts() {
@@ -128,35 +202,12 @@ function renderCoreCharts() {
         d.date.toISOString().slice(0,7)
     );
 
-    revenueChart = createChart(
-        "revenueChart",
-        "line",
-        labels,
-        businessData.map(d => d.revenue),
-        "#4CAF50",
-        "Revenue"
-    );
-
-    profitChart = createChart(
-        "profitChart",
-        "line",
-        labels,
-        businessData.map(d => d.profit),
-        "#2196F3",
-        "Profit"
-    );
-
-    expenseChart = createChart(
-        "expenseChart",
-        "bar",
-        labels,
-        businessData.map(d => d.expenses),
-        "#FF5252",
-        "Expenses"
-    );
+    revenueChart = createChart("revenueChart","line",labels,businessData.map(d=>d.revenue),"#4CAF50","Revenue");
+    profitChart = createChart("profitChart","line",labels,businessData.map(d=>d.profit),"#2196F3","Profit");
+    expenseChart = createChart("expenseChart","bar",labels,businessData.map(d=>d.expenses),"#FF5252","Expenses");
 }
 
-/* ================= FORECAST (CAGR MODEL) ================= */
+/* ================= FORECAST ================= */
 
 function renderForecast() {
 
@@ -165,25 +216,24 @@ function renderForecast() {
     forecastChart?.destroy();
 
     const first = businessData[0];
-    const last = businessData[businessData.length - 1];
+    const last = businessData[businessData.length-1];
 
     const monthsDiff =
-        (last.date.getFullYear() - first.date.getFullYear()) * 12 +
-        (last.date.getMonth() - first.date.getMonth());
+        (last.date.getFullYear()-first.date.getFullYear())*12+
+        (last.date.getMonth()-first.date.getMonth());
 
-    if (monthsDiff <= 0 || first.revenue <= 0) return;
+    if (monthsDiff<=0 || first.revenue<=0) return;
 
-    const cagr = Math.pow(last.revenue / first.revenue, 1 / monthsDiff) - 1;
+    const cagr = Math.pow(last.revenue/first.revenue,1/monthsDiff)-1;
 
-    let projections = [];
-    let labels = [];
+    let projections=[];
+    let labels=[];
+    let projectedRevenue=last.revenue;
+    let projectedDate=new Date(last.date);
 
-    let projectedRevenue = last.revenue;
-    let projectedDate = new Date(last.date);
-
-    for (let i = 1; i <= 6; i++) {
-        projectedRevenue = projectedRevenue * (1 + cagr);
-        projectedDate.setMonth(projectedDate.getMonth() + 1);
+    for(let i=1;i<=6;i++){
+        projectedRevenue*=1+cagr;
+        projectedDate.setMonth(projectedDate.getMonth()+1);
 
         projections.push(Math.round(projectedRevenue));
         labels.push(projectedDate.toISOString().slice(0,7));
@@ -192,86 +242,71 @@ function renderForecast() {
     forecastChart = new Chart(
         document.getElementById("forecastChart").getContext("2d"),
         {
-            type: "line",
-            data: {
+            type:"line",
+            data:{
                 labels,
-                datasets: [{
-                    label: "Projected Revenue (CAGR)",
-                    data: projections,
-                    borderColor: "#f59e0b",
-                    tension: 0.4
+                datasets:[{
+                    label:"Projected Revenue (CAGR)",
+                    data:projections,
+                    borderColor:"#f59e0b",
+                    tension:0.4
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
+            options:{ responsive:true, maintainAspectRatio:false }
         }
     );
 }
 
-/* ================= MULTI METRIC ================= */
+/* ================= COMPARISON ================= */
 
 function renderComparison() {
 
     comparisonChart?.destroy();
 
-    const totalRevenue = sum("revenue");
-    const totalExpenses = sum("expenses");
-    const totalProfit = sum("profit");
-
     comparisonChart = new Chart(
         document.getElementById("comparisonChart").getContext("2d"),
         {
-            type: "bar",
-            data: {
-                labels: ["Revenue", "Expenses", "Profit"],
-                datasets: [{
-                    label: "Cumulative Performance",
-                    data: [totalRevenue, totalExpenses, totalProfit],
-                    backgroundColor: [
-                        "#4CAF50",
-                        "#FF5252",
-                        "#2196F3"
-                    ]
+            type:"bar",
+            data:{
+                labels:["Revenue","Expenses","Profit"],
+                datasets:[{
+                    label:"Cumulative Performance",
+                    data:[
+                        sum("revenue"),
+                        sum("expenses"),
+                        sum("profit")
+                    ],
+                    backgroundColor:["#4CAF50","#FF5252","#2196F3"]
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
+            options:{ responsive:true, maintainAspectRatio:false }
         }
     );
 }
 
 /* ================= CHART FACTORY ================= */
 
-function createChart(id, type, labels, data, color, label) {
+function createChart(id,type,labels,data,color,label){
+    const canvas=document.getElementById(id);
+    if(!canvas) return null;
 
-    const canvas = document.getElementById(id);
-    if (!canvas) return null;
-
-    return new Chart(canvas.getContext("2d"), {
+    return new Chart(canvas.getContext("2d"),{
         type,
-        data: {
+        data:{
             labels,
-            datasets: [{
+            datasets:[{
                 label,
                 data,
-                borderColor: color,
-                backgroundColor: type === "bar" ? color : "transparent",
-                tension: 0.4,
-                fill: false
+                borderColor:color,
+                backgroundColor:type==="bar"?color:"transparent",
+                tension:0.4,
+                fill:false
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
+        options:{
+            responsive:true,
+            maintainAspectRatio:false,
+            scales:{ y:{ beginAtZero:true } }
         }
     });
 }
@@ -279,11 +314,11 @@ function createChart(id, type, labels, data, color, label) {
 /* ================= HELPERS ================= */
 
 function sum(key){
-    return businessData.reduce((a,b)=>a+(b[key] || 0),0);
+    return businessData.reduce((a,b)=>a+(b[key]||0),0);
 }
 
 function formatCurrency(val){
-    return "£" + Number(val).toLocaleString(undefined,{
+    return "£"+Number(val).toLocaleString(undefined,{
         minimumFractionDigits:2,
         maximumFractionDigits:2
     });
@@ -291,8 +326,8 @@ function formatCurrency(val){
 
 /* ================= GLOBAL BIND ================= */
 
-function bindGlobalFunctions() {
-    window.login = login;
-    window.logout = logout;
-    window.addData = addData;
+function bindGlobalFunctions(){
+    window.login=login;
+    window.logout=logout;
+    window.addData=addData;
 }
