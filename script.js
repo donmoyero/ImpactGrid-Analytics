@@ -49,6 +49,11 @@ function addData() {
         return;
     }
 
+    if (revenue < 0 || expenses < 0) {
+        alert("Values must be positive.");
+        return;
+    }
+
     const date = new Date(monthValue + "-01");
     const profit = revenue - expenses;
 
@@ -74,8 +79,8 @@ function updateAll() {
 /* ================= KPI ================= */
 
 function renderKPIs() {
-    const container = document.getElementById("kpiContainer");
 
+    const container = document.getElementById("kpiContainer");
     const totalRevenue = sum("revenue");
     const totalProfit = sum("profit");
 
@@ -111,6 +116,8 @@ function renderExecutiveSummary() {
     const volatility = calculateVolatility();
     const burnRate = calculateBurnRate();
     const runway = calculateRunway();
+    const efficiency = calculateExpenseEfficiency();
+    const healthScore = calculateHealthScore(volatility, monthlyGrowth, getMargin());
 
     container.innerHTML = `
         <div class="kpi">
@@ -118,7 +125,7 @@ function renderExecutiveSummary() {
             <p>${monthlyGrowth.toFixed(2)}%</p>
         </div>
         <div class="kpi">
-            <h3>3M Rolling Avg Revenue</h3>
+            <h3>3M Rolling Avg</h3>
             <p>${formatCurrency(rollingAvg)}</p>
         </div>
         <div class="kpi">
@@ -131,7 +138,11 @@ function renderExecutiveSummary() {
         </div>
         <div class="kpi">
             <h3>Runway (Months)</h3>
-            <p>${runway.toFixed(1)}</p>
+            <p>${runway === Infinity ? "Stable" : runway.toFixed(1)}</p>
+        </div>
+        <div class="kpi">
+            <h3>Business Health Score</h3>
+            <p>${healthScore.toFixed(0)}/100</p>
         </div>
     `;
 }
@@ -140,54 +151,72 @@ function renderExecutiveSummary() {
 
 function calculateMonthlyGrowth() {
     let growthRates = [];
-
     for (let i=1; i<businessData.length; i++) {
         const prev = businessData[i-1].revenue;
         const current = businessData[i].revenue;
-
-        if (prev > 0) {
-            growthRates.push((current - prev)/prev);
-        }
+        if (prev > 0) growthRates.push((current-prev)/prev);
     }
+    if (!growthRates.length) return 0;
+    return (growthRates.reduce((a,b)=>a+b,0)/growthRates.length)*100;
+}
 
-    const avg = growthRates.reduce((a,b)=>a+b,0)/growthRates.length;
-    return avg*100;
+function calculateExpenseGrowth() {
+    let growthRates = [];
+    for (let i=1; i<businessData.length; i++) {
+        const prev = businessData[i-1].expenses;
+        const current = businessData[i].expenses;
+        if (prev > 0) growthRates.push((current-prev)/prev);
+    }
+    if (!growthRates.length) return 0;
+    return (growthRates.reduce((a,b)=>a+b,0)/growthRates.length)*100;
 }
 
 function calculateRollingAverage(period) {
     if (businessData.length < period) return 0;
-
     const recent = businessData.slice(-period);
-    const total = recent.reduce((a,b)=>a+b.revenue,0);
-    return total/period;
+    return recent.reduce((a,b)=>a+b.revenue,0)/period;
 }
 
 function calculateVolatility() {
     const revenues = businessData.map(d=>d.revenue);
     const mean = revenues.reduce((a,b)=>a+b,0)/revenues.length;
-
+    if (mean === 0) return 0;
     const variance = revenues.reduce((a,b)=>a+Math.pow(b-mean,2),0)/revenues.length;
-    const stdDev = Math.sqrt(variance);
-
-    return (stdDev/mean)*100;
+    return (Math.sqrt(variance)/mean)*100;
 }
 
 function calculateBurnRate() {
-    const losses = businessData
-        .filter(d=>d.profit < 0)
-        .map(d=>Math.abs(d.profit));
-
+    const losses = businessData.filter(d=>d.profit<0).map(d=>Math.abs(d.profit));
     if (!losses.length) return 0;
-
     return losses.reduce((a,b)=>a+b,0)/losses.length;
 }
 
 function calculateRunway() {
     const burn = calculateBurnRate();
     if (burn === 0) return Infinity;
-
     const lastRevenue = businessData[businessData.length-1].revenue;
     return lastRevenue/burn;
+}
+
+function calculateExpenseEfficiency() {
+    const revGrowth = calculateMonthlyGrowth();
+    const expGrowth = calculateExpenseGrowth();
+    if (expGrowth === 0) return 100;
+    const ratio = revGrowth/expGrowth;
+    return Math.max(0, Math.min(ratio*100,100));
+}
+
+function calculateHealthScore(volatility,growth,margin) {
+    const stability = 100-volatility;
+    const growthScore = Math.min(growth*5,100);
+    const marginScore = Math.min(margin*3,100);
+    return (stability+growthScore+marginScore)/3;
+}
+
+function getMargin() {
+    const totalRevenue=sum("revenue");
+    const totalProfit=sum("profit");
+    return totalRevenue>0 ? (totalProfit/totalRevenue)*100 : 0;
 }
 
 /* ================= CORE CHARTS ================= */
@@ -198,16 +227,14 @@ function renderCoreCharts() {
     profitChart?.destroy();
     expenseChart?.destroy();
 
-    const labels = businessData.map(d =>
-        d.date.toISOString().slice(0,7)
-    );
+    const labels = businessData.map(d=>d.date.toISOString().slice(0,7));
 
     revenueChart = createChart("revenueChart","line",labels,businessData.map(d=>d.revenue),"#4CAF50","Revenue");
     profitChart = createChart("profitChart","line",labels,businessData.map(d=>d.profit),"#2196F3","Profit");
     expenseChart = createChart("expenseChart","bar",labels,businessData.map(d=>d.expenses),"#FF5252","Expenses");
 }
 
-/* ================= FORECAST ================= */
+/* ================= FORECAST WITH SCENARIOS ================= */
 
 function renderForecast() {
 
@@ -226,60 +253,77 @@ function renderForecast() {
 
     const cagr = Math.pow(last.revenue/first.revenue,1/monthsDiff)-1;
 
-    let projections=[];
-    let labels=[];
-    let projectedRevenue=last.revenue;
-    let projectedDate=new Date(last.date);
+    let base=[], optimistic=[], stress=[], labels=[];
+    let baseVal=last.revenue;
+    let optVal=last.revenue;
+    let stressVal=last.revenue;
+    let futureDate=new Date(last.date);
 
     for(let i=1;i<=6;i++){
-        projectedRevenue*=1+cagr;
-        projectedDate.setMonth(projectedDate.getMonth()+1);
+        futureDate.setMonth(futureDate.getMonth()+1);
+        labels.push(futureDate.toISOString().slice(0,7));
 
-        projections.push(Math.round(projectedRevenue));
-        labels.push(projectedDate.toISOString().slice(0,7));
+        baseVal*=1+cagr;
+        optVal*=1+(cagr+0.05);
+        stressVal*=1+(cagr-0.15);
+
+        base.push(Math.round(baseVal));
+        optimistic.push(Math.round(optVal));
+        stress.push(Math.round(stressVal));
     }
 
-    forecastChart = new Chart(
+    forecastChart=new Chart(
         document.getElementById("forecastChart").getContext("2d"),
         {
             type:"line",
             data:{
                 labels,
-                datasets:[{
-                    label:"Projected Revenue (CAGR)",
-                    data:projections,
-                    borderColor:"#f59e0b",
-                    tension:0.4
-                }]
+                datasets:[
+                    {label:"Base",data:base,borderColor:"#f59e0b",tension:0.4},
+                    {label:"Optimistic",data:optimistic,borderColor:"#22c55e",tension:0.4},
+                    {label:"Stress",data:stress,borderColor:"#ef4444",tension:0.4}
+                ]
             },
-            options:{ responsive:true, maintainAspectRatio:false }
+            options:{responsive:true,maintainAspectRatio:false}
         }
     );
 }
 
-/* ================= COMPARISON ================= */
+/* ================= ADVANCED PERFORMANCE MATRIX ================= */
 
 function renderComparison() {
 
     comparisonChart?.destroy();
 
-    comparisonChart = new Chart(
+    if (businessData.length < 3) return;
+
+    const volatility=calculateVolatility();
+    const growth=calculateMonthlyGrowth();
+    const efficiency=calculateExpenseEfficiency();
+    const health=calculateHealthScore(volatility,growth,getMargin());
+
+    comparisonChart=new Chart(
         document.getElementById("comparisonChart").getContext("2d"),
         {
             type:"bar",
             data:{
-                labels:["Revenue","Expenses","Profit"],
+                labels:["Stability","Efficiency","Growth","Health Score"],
                 datasets:[{
-                    label:"Cumulative Performance",
+                    label:"Performance Index (0-100)",
                     data:[
-                        sum("revenue"),
-                        sum("expenses"),
-                        sum("profit")
+                        100-volatility,
+                        efficiency,
+                        Math.min(growth*5,100),
+                        health
                     ],
-                    backgroundColor:["#4CAF50","#FF5252","#2196F3"]
+                    backgroundColor:["#22c55e","#3b82f6","#f59e0b","#8b5cf6"]
                 }]
             },
-            options:{ responsive:true, maintainAspectRatio:false }
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                scales:{y:{beginAtZero:true,max:100}}
+            }
         }
     );
 }
@@ -306,7 +350,7 @@ function createChart(id,type,labels,data,color,label){
         options:{
             responsive:true,
             maintainAspectRatio:false,
-            scales:{ y:{ beginAtZero:true } }
+            scales:{y:{beginAtZero:true}}
         }
     });
 }
