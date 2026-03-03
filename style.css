@@ -33,7 +33,7 @@ body {
 }
 
 /* =========================================================
-   SIDEBAR (Institutional Neutral)
+   SIDEBAR
 ========================================================= */
 .sidebar {
     width: 240px;
@@ -50,7 +50,9 @@ body {
     display: block;
 }
 
-.sidebar ul { list-style: none; }
+.sidebar ul {
+    list-style: none;
+}
 
 .sidebar li {
     padding: 12px 14px;
@@ -59,7 +61,7 @@ body {
     cursor: pointer;
     font-size: 13px;
     color: #94a3b8;
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .sidebar li:hover {
@@ -95,7 +97,7 @@ body {
 }
 
 /* =========================================================
-   CARD SYSTEM (Report Blocks)
+   CARD SYSTEM
 ========================================================= */
 .card {
     background: #111827;
@@ -150,7 +152,8 @@ body {
     display: block;
 }
 
-.grid input {
+.grid input,
+.grid select {
     width: 100%;
     padding: 12px;
     border-radius: 6px;
@@ -160,7 +163,8 @@ body {
     font-size: 13px;
 }
 
-.grid input:focus {
+.grid input:focus,
+.grid select:focus {
     outline: none;
     border-color: #3b82f6;
 }
@@ -177,6 +181,7 @@ body {
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+    transition: background 0.2s ease;
 }
 
 .btn-primary:hover {
@@ -184,7 +189,7 @@ body {
 }
 
 /* =========================================================
-   EXECUTIVE SUMMARY TEXT
+   EXECUTIVE SUMMARY
 ========================================================= */
 #financialPositionSummary p {
     margin-bottom: 6px;
@@ -215,7 +220,7 @@ body {
 }
 
 /* =========================================================
-   FORECAST BLOCKS
+   FORECAST
 ========================================================= */
 .forecast-block {
     margin-bottom: 50px;
@@ -248,25 +253,13 @@ body {
 }
 
 /* =========================================================
-   RISK ASSESSMENT
+   RISK
 ========================================================= */
 #stabilityRisk,
 #marginRisk,
 #liquidityRisk {
     font-size: 15px;
     font-weight: 600;
-}
-
-#stabilityRisk {
-    color: #38bdf8;
-}
-
-#marginRisk {
-    color: #f97316;
-}
-
-#liquidityRisk {
-    color: #22c55e;
 }
 
 /* =========================================================
@@ -315,4 +308,3 @@ body {
         padding: 30px 20px;
     }
 }
-
