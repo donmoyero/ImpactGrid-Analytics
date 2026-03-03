@@ -1,6 +1,7 @@
 /* ================= GLOBAL STATE ================= */
 
 let businessData = [];
+let currentCurrency = "GBP";
 
 let revenueChart = null;
 let profitChart = null;
@@ -8,12 +9,27 @@ let expenseChart = null;
 
 let forecastCharts = {};
 let performanceBarChart = null;
+let distributionPieChart = null;
 
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
     bindGlobalFunctions();
 });
+
+/* ================= CURRENCY ================= */
+
+function setCurrency(currency){
+    currentCurrency = currency;
+    updateAll();
+}
+
+function formatCurrency(val){
+    return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: currentCurrency
+    }).format(val);
+}
 
 /* ================= ADD DATA ================= */
 
@@ -78,21 +94,18 @@ function resetAdvancedSections() {
     setText("stabilityFocus", "");
     setText("stabilityOutlook", "");
     setText("insightEngine", "");
+    setText("businessHealthIndex", "");
+    setText("stabilityRisk", "");
+    setText("marginRisk", "");
+    setText("liquidityRisk", "");
 
-    if (performanceBarChart) {
-        performanceBarChart.destroy();
-        performanceBarChart = null;
-    }
+    performanceBarChart?.destroy();
+    distributionPieChart?.destroy();
 
     Object.keys(forecastCharts).forEach(key => {
         forecastCharts[key]?.destroy();
         delete forecastCharts[key];
     });
-
-    setText("businessHealthIndex", "");
-    setText("stabilityRisk", "");
-    setText("marginRisk", "");
-    setText("liquidityRisk", "");
 }
 
 /* ================= EXECUTIVE SUMMARY ================= */
@@ -102,8 +115,6 @@ function renderExecutiveSummary() {
     const container = document.getElementById("financialPositionSummary");
     const classificationEl = document.getElementById("financialClassification");
     const commentaryEl = document.getElementById("executiveCommentary");
-
-    if (!container) return;
 
     const totalRevenue = sum("revenue");
     const totalProfit = sum("profit");
@@ -119,18 +130,14 @@ function renderExecutiveSummary() {
         <p>Revenue Volatility: ${volatility.toFixed(2)}%</p>
     `;
 
-    if (classificationEl) {
-        let status = "Stable Operating Position";
-        if (volatility > 35) status = "Volatility Risk Exposure";
-        else if (margin < 10) status = "Margin Compression Risk";
-        else if (growth > 15) status = "Accelerated Growth Phase";
-        classificationEl.innerHTML = status;
-    }
+    let status = "Stable Operating Position";
+    if (volatility > 35) status = "Volatility Risk Exposure";
+    else if (margin < 10) status = "Margin Compression Risk";
+    else if (growth > 15) status = "Accelerated Growth Phase";
 
-    if (commentaryEl) {
-        commentaryEl.innerHTML =
-            "Financial structure evaluated across growth, margin and volatility dynamics.";
-    }
+    classificationEl.innerHTML = status;
+    commentaryEl.innerHTML =
+        "Financial structure evaluated across growth, margin and volatility dynamics.";
 }
 
 /* ================= LIFECYCLE ================= */
@@ -138,7 +145,6 @@ function renderExecutiveSummary() {
 function renderLifecycle() {
 
     const container = document.getElementById("lifecycleClassification");
-    if (!container) return;
 
     if (businessData.length < 3) {
         container.innerHTML = "Enter at least 3 months for lifecycle analysis.";
@@ -197,34 +203,9 @@ function renderFinancialStabilityAssessment() {
     setText("interactionSensitivityOutput", volatility.toFixed(2));
     setText("stabilityIndexOutput", `<strong>${stabilityIndex} / 100</strong>`);
 
-    let interpretation = "";
-    let focus = "";
-    let outlook = "";
-
-    if (regime === "Structural Fragility") {
-        interpretation = "High interaction between volatility and weak margin.";
-        focus = "Reinforce margin resilience.";
-        outlook = "Elevated short-term instability.";
-    }
-    else if (regime === "Financial Stress") {
-        interpretation = "Revenue sensitivity impacting structural stability.";
-        focus = "Improve revenue stability.";
-        outlook = "Moderate instability.";
-    }
-    else if (regime === "Controlled Expansion") {
-        interpretation = "Growth supported by margin strength.";
-        focus = "Maintain margin discipline.";
-        outlook = "Positive short-term outlook.";
-    }
-    else {
-        interpretation = "Low structural sensitivity.";
-        focus = "Maintain operational consistency.";
-        outlook = "Stable environment.";
-    }
-
-    setText("stabilityInterpretation", interpretation);
-    setText("stabilityFocus", focus);
-    setText("stabilityOutlook", outlook);
+    setText("stabilityInterpretation", "Structural stability evaluated against volatility and margin interaction.");
+    setText("stabilityFocus", "Maintain margin discipline and revenue consistency.");
+    setText("stabilityOutlook", "Forward outlook based on recent structural behaviour.");
 }
 
 /* ================= FORECAST ================= */
@@ -280,11 +261,6 @@ function generateProjection(id, months, cagr) {
 
 function renderPerformanceMatrix() {
 
-    const canvas = document.getElementById("performanceBarChart");
-    if (!canvas) return;
-
-    performanceBarChart?.destroy();
-
     const volatility = calculateVolatility();
     const growth = calculateMonthlyGrowth();
     const margin = getMargin();
@@ -293,14 +269,31 @@ function renderPerformanceMatrix() {
     const growthScore = Math.min(Math.abs(growth)*5,100);
     const profitabilityScore = Math.min(margin*3,100);
 
-    performanceBarChart = new Chart(canvas.getContext("2d"),{
-        type:"bar",
-        data:{
-            labels:["Stability","Growth","Profitability"],
-            datasets:[{ data:[stabilityScore,growthScore,profitabilityScore] }]
-        },
-        options:{ scales:{ y:{ beginAtZero:true,max:100 } } }
-    });
+    performanceBarChart?.destroy();
+    distributionPieChart?.destroy();
+
+    performanceBarChart = new Chart(
+        document.getElementById("performanceBarChart"),
+        {
+            type:"bar",
+            data:{
+                labels:["Stability","Growth","Profitability"],
+                datasets:[{ data:[stabilityScore,growthScore,profitabilityScore] }]
+            },
+            options:{ scales:{ y:{ beginAtZero:true,max:100 } } }
+        }
+    );
+
+    distributionPieChart = new Chart(
+        document.getElementById("distributionPieChart"),
+        {
+            type:"pie",
+            data:{
+                labels:["Stability","Growth","Profitability"],
+                datasets:[{ data:[stabilityScore,growthScore,profitabilityScore] }]
+            }
+        }
+    );
 
     setText("businessHealthIndex",
         `Composite Index: ${Math.round((stabilityScore+growthScore+profitabilityScore)/3)} / 100`
@@ -329,19 +322,15 @@ function renderCoreCharts() {
 
     const labels = businessData.map(d => d.date.toISOString().slice(0,7));
 
-    revenueChart = createChart("revenueChart","line",labels,businessData.map(d=>d.revenue));
-    profitChart = createChart("profitChart","line",labels,businessData.map(d=>d.profit));
-    expenseChart = createChart("expenseChart","bar",labels,businessData.map(d=>d.expenses));
+    revenueChart = createChart("revenueChart","line",labels,businessData.map(d=>d.revenue),"Revenue");
+    profitChart = createChart("profitChart","line",labels,businessData.map(d=>d.profit),"Profit");
+    expenseChart = createChart("expenseChart","bar",labels,businessData.map(d=>d.expenses),"Expenses");
 }
 
-function createChart(id,type,labels,data){
-
-    const canvas = document.getElementById(id);
-    if (!canvas) return null;
-
-    return new Chart(canvas.getContext("2d"),{
+function createChart(id,type,labels,data,label){
+    return new Chart(document.getElementById(id),{
         type,
-        data:{ labels, datasets:[{ data }] },
+        data:{ labels, datasets:[{ label, data }] },
         options:{ responsive:true, maintainAspectRatio:false }
     });
 }
@@ -378,21 +367,13 @@ function sum(key){
     return businessData.reduce((a,b)=>a+(b[key]||0),0);
 }
 
-function formatCurrency(val){
-    return "£"+Number(val).toLocaleString(undefined,{
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-    });
-}
-
 /* ================= NAVIGATION ================= */
 
 function showSection(sectionId, event) {
     document.querySelectorAll(".page-section").forEach(sec =>
         sec.classList.remove("active-section")
     );
-    const target = document.getElementById(sectionId);
-    if (target) target.classList.add("active-section");
+    document.getElementById(sectionId)?.classList.add("active-section");
 
     document.querySelectorAll(".sidebar li").forEach(li =>
         li.classList.remove("active")
@@ -405,8 +386,11 @@ function logout() {
     location.reload();
 }
 
+/* ================= GLOBAL BINDING ================= */
+
 function bindGlobalFunctions(){
     window.addData = addData;
     window.showSection = showSection;
     window.logout = logout;
+    window.setCurrency = setCurrency;
 }
