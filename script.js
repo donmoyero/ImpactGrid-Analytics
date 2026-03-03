@@ -56,13 +56,43 @@ function updateAll() {
     renderLifecycle();
     renderCoreCharts();
 
-    if (businessData.length >= 2) {
+    if (businessData.length >= 3) {
         renderFinancialStabilityAssessment();
         renderInsights();
         renderForecasts();
         renderPerformanceMatrix();
         renderRiskAssessment();
+    } else {
+        resetAdvancedSections();
     }
+}
+
+/* ================= RESET IF UNDER 3 MONTHS ================= */
+
+function resetAdvancedSections() {
+
+    setText("stabilityRegimeOutput", "Awaiting sufficient data...");
+    setText("interactionSensitivityOutput", "—");
+    setText("stabilityIndexOutput", "—");
+    setText("stabilityInterpretation", "");
+    setText("stabilityFocus", "");
+    setText("stabilityOutlook", "");
+    setText("insightEngine", "");
+
+    if (performanceBarChart) {
+        performanceBarChart.destroy();
+        performanceBarChart = null;
+    }
+
+    Object.keys(forecastCharts).forEach(key => {
+        forecastCharts[key]?.destroy();
+        delete forecastCharts[key];
+    });
+
+    setText("businessHealthIndex", "");
+    setText("stabilityRisk", "");
+    setText("marginRisk", "");
+    setText("liquidityRisk", "");
 }
 
 /* ================= EXECUTIVE SUMMARY ================= */
@@ -110,8 +140,8 @@ function renderLifecycle() {
     const container = document.getElementById("lifecycleClassification");
     if (!container) return;
 
-    if (businessData.length < 2) {
-        container.innerHTML = "Enter at least 2 months for lifecycle analysis.";
+    if (businessData.length < 3) {
+        container.innerHTML = "Enter at least 3 months for lifecycle analysis.";
         return;
     }
 
@@ -130,9 +160,6 @@ function renderLifecycle() {
 
 function renderInsights() {
 
-    const container = document.getElementById("insightEngine");
-    if (!container) return;
-
     const volatility = calculateVolatility();
     const margin = getMargin();
     const growth = calculateMonthlyGrowth();
@@ -146,7 +173,7 @@ function renderInsights() {
     else if (growth > 15)
         insight = "Strong expansion phase detected.";
 
-    container.innerHTML = insight;
+    setText("insightEngine", insight);
 }
 
 /* ================= STABILITY ENGINE ================= */
