@@ -7,14 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="ImpactGrid - Institutional Financial Intelligence & Risk Diagnostics for SMEs.">
 
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Styles -->
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Chart.js -->
+    <link rel="stylesheet" href="./style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -22,174 +18,259 @@
 
 <div id="app" class="app-layout">
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="logo-container">
-            <span class="logo-text">ImpactGrid</span>
+<aside class="sidebar">
+    <div class="logo-container">
+        <span class="logo-text">ImpactGrid</span>
+    </div>
+
+    <nav>
+        <ul>
+            <li onclick="showSection('dashboard', event)" class="active">Financial Overview</li>
+            <li onclick="showSection('forecast', event)">Forecast Horizons</li>
+            <li onclick="showSection('matrix', event)">Performance Matrix</li>
+            <li onclick="showSection('risk', event)">Risk Assessment</li>
+            <li onclick="logout()">Logout</li>
+        </ul>
+    </nav>
+</aside>
+
+<main class="main-content">
+
+<header class="dashboard-header">
+    <h1>SME Financial Reporting & Risk Interpretation Engine</h1>
+</header>
+
+<!-- ================= FINANCIAL OVERVIEW ================= -->
+<section id="dashboard" class="page-section active-section">
+
+    <!-- Business Profile -->
+    <section class="card elevated">
+        <h2>Business Profile & Reporting Context</h2>
+
+        <div class="grid">
+
+            <div>
+                <label>Business Start Date</label>
+                <input type="date" id="businessStartDate">
+            </div>
+
+            <div>
+                <label>Current Reporting Date</label>
+                <input type="date" id="reportingDate">
+            </div>
+
+            <div>
+                <label>Primary Business Type</label>
+                <select id="businessType">
+                    <option value="cafe">Café / Hospitality</option>
+                    <option value="retail">Retail Store</option>
+                    <option value="ecommerce">E-commerce</option>
+                    <option value="consulting">Consulting / Professional Services</option>
+                    <option value="trade">Trade / Contractor</option>
+                    <option value="service">Service-Based SME</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Average Monthly Revenue Range</label>
+                <select id="revenueRange">
+                    <option value="micro">Under £2,000</option>
+                    <option value="small">£2,000 – £20,000</option>
+                    <option value="growing">£20,000 – £100,000</option>
+                    <option value="established">Over £100,000</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Chart Display Mode</label>
+                <select id="displayMode">
+                    <option value="absolute">Absolute (£)</option>
+                    <option value="relative">Relative Growth (%)</option>
+                </select>
+            </div>
+
         </div>
 
-        <nav>
-            <ul>
-                <li onclick="showSection('dashboard', event)" class="active">Financial Overview</li>
-                <li onclick="showSection('forecast', event)">Forecast Horizons</li>
-                <li onclick="showSection('matrix', event)">Performance Matrix</li>
-                <li onclick="showSection('risk', event)">Risk Assessment</li>
-                <li onclick="logout()">Logout</li>
-            </ul>
-        </nav>
-    </aside>
+        <div id="lifecycleClassification" style="margin-top:20px;"></div>
+    </section>
 
-    <!-- Main Content -->
-    <main class="main-content">
+    <!-- Monthly Data Input -->
+    <section class="card elevated">
+        <h2>Monthly Financial Data Entry</h2>
 
-        <header class="dashboard-header">
-            <h1>SME Financial Reporting & Risk Interpretation Engine</h1>
-        </header>
+        <div class="grid">
+            <div>
+                <label>Reporting Month</label>
+                <input type="month" id="month">
+            </div>
 
-        <!-- ================= FINANCIAL OVERVIEW ================= -->
-        <section id="dashboard" class="page-section active-section">
+            <div>
+                <label>Total Revenue (£)</label>
+                <input type="number" id="revenue">
+            </div>
 
-            <!-- Business Profile -->
-            <section class="card elevated">
-                <h2>Business Profile & Reporting Context</h2>
+            <div>
+                <label>Total Expenses (£)</label>
+                <input type="number" id="expenses">
+            </div>
 
-                <div class="grid">
+            <div>
+                <button class="btn-primary" onclick="addData()">Add Data</button>
+            </div>
+        </div>
+    </section>
 
-                    <div>
-                        <label>Business Start Date</label>
-                        <input type="date" id="businessStartDate">
-                    </div>
+    <!-- Executive Financial Summary -->
+    <section class="card elevated">
+        <h2>Executive Financial Summary</h2>
 
-                    <div>
-                        <label>Current Reporting Date</label>
-                        <input type="date" id="reportingDate">
-                    </div>
+        <div id="financialPositionSummary"></div>
 
-                    <div>
-                        <label>Primary Business Type</label>
-                        <select id="businessType">
-                            <option value="cafe">Café / Hospitality</option>
-                            <option value="retail">Retail Store</option>
-                            <option value="ecommerce">E-commerce</option>
-                            <option value="consulting">Consulting / Professional Services</option>
-                            <option value="trade">Trade / Contractor</option>
-                            <option value="service">Service-Based SME</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
+        <div class="structured-block">
+            <h3>Financial Status Classification</h3>
+            <div id="financialClassification"></div>
+        </div>
 
-                    <div>
-                        <label>Average Monthly Revenue Range</label>
-                        <select id="revenueRange">
-                            <option value="micro">Under £2,000</option>
-                            <option value="small">£2,000 – £20,000</option>
-                            <option value="growing">£20,000 – £100,000</option>
-                            <option value="established">Over £100,000</option>
-                        </select>
-                    </div>
+        <div class="structured-block">
+            <h3>Structured Commentary</h3>
+            <div id="executiveCommentary"></div>
+        </div>
+    </section>
 
-                    <div>
-                        <label>Chart Display Mode</label>
-                        <select id="displayMode">
-                            <option value="absolute">Absolute (£)</option>
-                            <option value="relative">Relative Growth (%)</option>
-                        </select>
-                    </div>
+    <!-- Business Intelligence Insights -->
+    <section class="card elevated">
+        <h2>Business Intelligence Interpretation</h2>
+        <div id="insightEngine"></div>
+    </section>
 
-                </div>
+    <!-- Charts -->
+    <section class="card elevated">
+        <h2>Operational Performance Charts</h2>
 
-                <div id="lifecycleClassification" style="margin-top:20px;"></div>
-            </section>
+        <div class="chart-card">
+            <h3>Revenue Trend</h3>
+            <canvas id="revenueChart"></canvas>
+            <div class="chart-explanation" id="revenueExplanation"></div>
+        </div>
 
-            <!-- Monthly Data Input -->
-            <section class="card elevated">
-                <h2>Monthly Financial Data Entry</h2>
+        <div class="chart-card">
+            <h3>Profit Trend</h3>
+            <canvas id="profitChart"></canvas>
+            <div class="chart-explanation" id="profitExplanation"></div>
+        </div>
 
-                <div class="grid">
-                    <div>
-                        <label>Reporting Month</label>
-                        <input type="month" id="month">
-                    </div>
+        <div class="chart-card">
+            <h3>Expense Trend</h3>
+            <canvas id="expenseChart"></canvas>
+            <div class="chart-explanation" id="expenseExplanation"></div>
+        </div>
 
-                    <div>
-                        <label>Total Revenue (£)</label>
-                        <input type="number" id="revenue">
-                    </div>
+    </section>
 
-                    <div>
-                        <label>Total Expenses (£)</label>
-                        <input type="number" id="expenses">
-                    </div>
+</section>
 
-                    <div>
-                        <button class="btn-primary" onclick="addData()">Add Data</button>
-                    </div>
-                </div>
-            </section>
+<!-- ================= FORECAST HORIZONS ================= -->
+<section id="forecast" class="page-section">
 
-            <!-- Executive Summary -->
-            <section class="card elevated">
-                <h2>Executive Financial Summary</h2>
+    <section class="card elevated">
+        <h2>Forecast Horizons</h2>
 
-                <div id="financialPositionSummary"></div>
+        <div class="forecast-block">
+            <h3>6-Month Operational Projection</h3>
+            <canvas id="forecast6m"></canvas>
+            <div id="assumptions6m"></div>
+            <div id="interpretation6m"></div>
+        </div>
 
-                <div class="structured-block">
-                    <h3>Financial Status Classification</h3>
-                    <div id="financialClassification"></div>
-                </div>
+        <div class="forecast-block">
+            <h3>1-Year Planning Projection</h3>
+            <canvas id="forecast1y"></canvas>
+            <div id="assumptions1y"></div>
+            <div id="interpretation1y"></div>
+        </div>
 
-                <div class="structured-block">
-                    <h3>Structured Commentary</h3>
-                    <div id="executiveCommentary"></div>
-                </div>
-            </section>
+        <div class="forecast-block">
+            <h3>3-Year Strategic Projection</h3>
+            <canvas id="forecast3y"></canvas>
+            <div id="assumptions3y"></div>
+            <div id="interpretation3y"></div>
+        </div>
 
-            <!-- Business Intelligence -->
-            <section class="card elevated">
-                <h2>Business Intelligence Interpretation</h2>
-                <div id="insightEngine"></div>
-            </section>
+        <div class="forecast-block">
+            <h3>5-Year Vision Projection</h3>
+            <canvas id="forecast5y"></canvas>
+            <div id="assumptions5y"></div>
+            <div id="interpretation5y"></div>
+        </div>
 
-            <!-- Charts -->
-            <section class="card elevated">
-                <h2>Operational Performance Charts</h2>
+    </section>
 
-                <div class="chart-card">
-                    <h3>Revenue Trend</h3>
-                    <canvas id="revenueChart"></canvas>
-                    <div class="chart-explanation" id="revenueExplanation"></div>
-                </div>
+</section>
 
-                <div class="chart-card">
-                    <h3>Profit Trend</h3>
-                    <canvas id="profitChart"></canvas>
-                    <div class="chart-explanation" id="profitExplanation"></div>
-                </div>
+<!-- ================= PERFORMANCE MATRIX ================= -->
+<section id="matrix" class="page-section">
 
-                <div class="chart-card">
-                    <h3>Expense Trend</h3>
-                    <canvas id="expenseChart"></canvas>
-                    <div class="chart-explanation" id="expenseExplanation"></div>
-                </div>
+    <section class="card elevated">
+        <h2>Performance Matrix</h2>
 
-            </section>
+        <div class="chart-card">
+            <h3>Performance Scores (0–100)</h3>
+            <canvas id="performanceBarChart"></canvas>
+        </div>
 
-        </section>
+        <div class="chart-card">
+            <h3>Revenue Distribution</h3>
+            <canvas id="distributionPieChart"></canvas>
+        </div>
 
-        <!-- ================= OTHER SECTIONS (UNCHANGED STRUCTURE) ================= -->
-        <section id="forecast" class="page-section"></section>
-        <section id="matrix" class="page-section"></section>
-        <section id="risk" class="page-section"></section>
+        <div class="structured-block">
+            <h3>Composite Business Health Index</h3>
+            <div id="businessHealthIndex"></div>
+        </div>
 
-        <footer class="dashboard-footer">
-            © 2026 ImpactGrid
-        </footer>
+        <div class="structured-block">
+            <h3>Structured Interpretation</h3>
+            <div id="matrixInterpretation"></div>
+        </div>
 
-    </main>
+    </section>
+
+</section>
+
+<!-- ================= RISK ASSESSMENT ================= -->
+<section id="risk" class="page-section">
+
+    <section class="card elevated">
+        <h2>Operational Risk Assessment</h2>
+
+        <div class="structured-block">
+            <h3>Stability Risk</h3>
+            <div id="stabilityRisk"></div>
+        </div>
+
+        <div class="structured-block">
+            <h3>Margin Risk</h3>
+            <div id="marginRisk"></div>
+        </div>
+
+        <div class="structured-block">
+            <h3>Liquidity Exposure</h3>
+            <div id="liquidityRisk"></div>
+        </div>
+
+    </section>
+
+</section>
+
+<footer class="dashboard-footer">
+    © 2026 ImpactGrid
+</footer>
+
+</main>
 </div>
 
-<!-- Script (safe loading + cache busting) -->
-<script src="script.js?v=2" defer></script>
-
+<script src="./script.js"></script>
 </body>
 </html>
+
