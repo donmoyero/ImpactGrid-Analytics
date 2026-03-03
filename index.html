@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ImpactGrid | SME Financial Reporting & Risk Interpretation Engine</title>
+    <title>ImpactGrid | SME Financial Stability Modelling Engine</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ImpactGrid - Institutional Financial Intelligence & Risk Diagnostics for SMEs.">
+    <meta name="description" content="ImpactGrid - Regime-Dependent Financial Stability Modelling for SMEs.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -18,6 +18,7 @@
 
 <div id="app" class="app-layout">
 
+<!-- ================= SIDEBAR ================= -->
 <aside class="sidebar">
     <div class="logo-container">
         <span class="logo-text">ImpactGrid</span>
@@ -37,94 +38,69 @@
 <main class="main-content">
 
 <header class="dashboard-header">
-    <h1>SME Financial Reporting & Risk Interpretation Engine</h1>
+    <h1>SME Financial Stability Modelling Engine</h1>
+    <p class="engine-subtitle">
+        ImpactGrid Financial Stability Regime Model (IFSRM)
+    </p>
 </header>
 
-<!-- ================= FINANCIAL OVERVIEW ================= -->
+<!-- ================= DASHBOARD ================= -->
 <section id="dashboard" class="page-section active-section">
 
     <!-- Business Profile -->
-    <section class="card elevated">
+    <section class="card">
         <h2>Business Profile & Reporting Context</h2>
-
         <div class="grid">
-
             <div>
                 <label>Business Start Date</label>
                 <input type="date" id="businessStartDate">
             </div>
-
             <div>
                 <label>Current Reporting Date</label>
                 <input type="date" id="reportingDate">
             </div>
-
             <div>
                 <label>Primary Business Type</label>
                 <select id="businessType">
                     <option value="cafe">Café / Hospitality</option>
                     <option value="retail">Retail Store</option>
                     <option value="ecommerce">E-commerce</option>
-                    <option value="consulting">Consulting / Professional Services</option>
+                    <option value="consulting">Consulting</option>
                     <option value="trade">Trade / Contractor</option>
                     <option value="service">Service-Based SME</option>
                     <option value="other">Other</option>
                 </select>
             </div>
-
-            <div>
-                <label>Average Monthly Revenue Range</label>
-                <select id="revenueRange">
-                    <option value="micro">Under £2,000</option>
-                    <option value="small">£2,000 – £20,000</option>
-                    <option value="growing">£20,000 – £100,000</option>
-                    <option value="established">Over £100,000</option>
-                </select>
-            </div>
-
-            <div>
-                <label>Chart Display Mode</label>
-                <select id="displayMode">
-                    <option value="absolute">Absolute (£)</option>
-                    <option value="relative">Relative Growth (%)</option>
-                </select>
-            </div>
-
         </div>
-
         <div id="lifecycleClassification" style="margin-top:20px;"></div>
     </section>
 
     <!-- Monthly Data Input -->
-    <section class="card elevated">
+    <section class="card">
         <h2>Monthly Financial Data Entry</h2>
-
         <div class="grid">
             <div>
                 <label>Reporting Month</label>
                 <input type="month" id="month">
             </div>
-
             <div>
                 <label>Total Revenue (£)</label>
-                <input type="number" id="revenue">
+                <input type="number" id="revenue" min="0" step="0.01">
             </div>
-
             <div>
                 <label>Total Expenses (£)</label>
-                <input type="number" id="expenses">
+                <input type="number" id="expenses" min="0" step="0.01">
             </div>
-
             <div>
-                <button class="btn-primary" onclick="addData()">Add Data</button>
+                <!-- FIX: Explicit button type -->
+                <button type="button" class="btn-primary" onclick="addData()">Add Data</button>
             </div>
         </div>
     </section>
 
-    <!-- Executive Financial Summary -->
-    <section class="card elevated">
+    <!-- Executive Summary -->
+    <section class="card">
         <h2>Executive Financial Summary</h2>
-
         <div id="financialPositionSummary"></div>
 
         <div class="structured-block">
@@ -138,89 +114,106 @@
         </div>
     </section>
 
-    <!-- Business Intelligence Insights -->
-    <section class="card elevated">
+    <!-- Stability Engine -->
+    <section class="card stability-engine-card">
+        <h2>Financial Stability Behaviour Assessment</h2>
+
+        <div class="structured-block">
+            <h3>Stability Regime</h3>
+            <div id="stabilityRegimeOutput">Awaiting sufficient data...</div>
+        </div>
+
+        <div class="structured-block">
+            <h3>Interaction Sensitivity Score</h3>
+            <div id="interactionSensitivityOutput">—</div>
+        </div>
+
+        <div class="structured-block">
+            <h3>ImpactGrid Stability Index™ (0–100)</h3>
+            <div id="stabilityIndexOutput">—</div>
+        </div>
+
+        <div class="structured-block">
+            <h3>Structural Interpretation</h3>
+            <div id="stabilityInterpretation"></div>
+        </div>
+
+        <div class="structured-block">
+            <h3>Immediate Stability Focus</h3>
+            <div id="stabilityFocus"></div>
+        </div>
+
+        <div class="structured-block">
+            <h3>Short-Term Outlook</h3>
+            <div id="stabilityOutlook"></div>
+        </div>
+    </section>
+
+    <!-- Insights -->
+    <section class="card">
         <h2>Business Intelligence Interpretation</h2>
         <div id="insightEngine"></div>
     </section>
 
     <!-- Charts -->
-    <section class="card elevated">
+    <section class="card">
         <h2>Operational Performance Charts</h2>
 
         <div class="chart-card">
             <h3>Revenue Trend</h3>
             <canvas id="revenueChart"></canvas>
-            <div class="chart-explanation" id="revenueExplanation"></div>
         </div>
 
         <div class="chart-card">
             <h3>Profit Trend</h3>
             <canvas id="profitChart"></canvas>
-            <div class="chart-explanation" id="profitExplanation"></div>
         </div>
 
         <div class="chart-card">
             <h3>Expense Trend</h3>
             <canvas id="expenseChart"></canvas>
-            <div class="chart-explanation" id="expenseExplanation"></div>
         </div>
-
     </section>
 
 </section>
 
-<!-- ================= FORECAST HORIZONS ================= -->
+<!-- ================= FORECAST PAGE ================= -->
 <section id="forecast" class="page-section">
-
-    <section class="card elevated">
+    <section class="card">
         <h2>Forecast Horizons</h2>
 
         <div class="forecast-block">
-            <h3>6-Month Operational Projection</h3>
+            <h3>6-Month Projection</h3>
             <canvas id="forecast6m"></canvas>
-            <div id="assumptions6m"></div>
-            <div id="interpretation6m"></div>
         </div>
 
         <div class="forecast-block">
-            <h3>1-Year Planning Projection</h3>
+            <h3>1-Year Projection</h3>
             <canvas id="forecast1y"></canvas>
-            <div id="assumptions1y"></div>
-            <div id="interpretation1y"></div>
         </div>
 
         <div class="forecast-block">
-            <h3>3-Year Strategic Projection</h3>
+            <h3>3-Year Projection</h3>
             <canvas id="forecast3y"></canvas>
-            <div id="assumptions3y"></div>
-            <div id="interpretation3y"></div>
         </div>
 
         <div class="forecast-block">
-            <h3>5-Year Vision Projection</h3>
+            <h3>5-Year Projection</h3>
             <canvas id="forecast5y"></canvas>
-            <div id="assumptions5y"></div>
-            <div id="interpretation5y"></div>
         </div>
-
     </section>
-
 </section>
 
 <!-- ================= PERFORMANCE MATRIX ================= -->
 <section id="matrix" class="page-section">
-
-    <section class="card elevated">
+    <section class="card">
         <h2>Performance Matrix</h2>
 
         <div class="chart-card">
-            <h3>Performance Scores (0–100)</h3>
             <canvas id="performanceBarChart"></canvas>
         </div>
 
         <div class="chart-card">
-            <h3>Revenue Distribution</h3>
             <canvas id="distributionPieChart"></canvas>
         </div>
 
@@ -233,15 +226,12 @@
             <h3>Structured Interpretation</h3>
             <div id="matrixInterpretation"></div>
         </div>
-
     </section>
-
 </section>
 
-<!-- ================= RISK ASSESSMENT ================= -->
+<!-- ================= RISK PAGE ================= -->
 <section id="risk" class="page-section">
-
-    <section class="card elevated">
+    <section class="card">
         <h2>Operational Risk Assessment</h2>
 
         <div class="structured-block">
@@ -258,13 +248,11 @@
             <h3>Liquidity Exposure</h3>
             <div id="liquidityRisk"></div>
         </div>
-
     </section>
-
 </section>
 
 <footer class="dashboard-footer">
-    © 2026 ImpactGrid
+    © 2026 ImpactGrid Stability Engine
 </footer>
 
 </main>
@@ -273,4 +261,3 @@
 <script src="./script.js"></script>
 </body>
 </html>
-
