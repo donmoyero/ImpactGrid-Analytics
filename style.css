@@ -33,7 +33,7 @@ body {
 }
 
 /* =========================================================
-   SIDEBAR (Institutional Neutral)
+   SIDEBAR
 ========================================================= */
 .sidebar {
     width: 250px;
@@ -42,12 +42,26 @@ body {
     border-right: 1px solid #1e293b;
 }
 
+/* ================= LOGO ================= */
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 44px;
+}
+
+.logo-img {
+    max-width: 36px;
+    height: auto;
+    display: block;
+}
+
 .logo-text {
     font-size: 18px;
     font-weight: 600;
     letter-spacing: 0.8px;
-    margin-bottom: 44px;
-    display: block;
+    margin-bottom: 0;
 }
 
 .sidebar ul { list-style: none; }
@@ -71,6 +85,25 @@ body {
     background: #1e40af;
     color: #ffffff;
     font-weight: 600;
+}
+
+/* =========================================================
+   MOBILE TOGGLE BUTTON
+========================================================= */
+.mobile-toggle {
+    display: none;
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 1100;
+    background: #111827;
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    font-size: 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 /* =========================================================
@@ -111,11 +144,6 @@ body {
     border-radius: 10px;
     margin: 44px 6%;
     border: 1px solid #1f2937;
-    transition: border 0.2s ease, transform 0.2s ease;
-}
-
-.card:hover {
-    border-color: #2b3645;
 }
 
 .card h2 {
@@ -135,45 +163,6 @@ body {
 }
 
 /* =========================================================
-   STABILITY ENGINE (Innovation Identity)
-========================================================= */
-.stability-engine-card {
-    border: 1px solid #1e3a8a;
-    background: linear-gradient(
-        180deg,
-        rgba(30,58,138,0.18) 0%,
-        rgba(17,24,39,1) 65%
-    );
-}
-
-.model-description {
-    font-size: 13px;
-    color: #93c5fd;
-    margin-bottom: 24px;
-}
-
-/* Regime Highlight */
-#stabilityRegimeOutput strong {
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: 0.4px;
-}
-
-/* Stability Index Emphasis */
-#stabilityIndexOutput strong {
-    font-size: 24px;
-    font-weight: 700;
-    color: #38bdf8;
-}
-
-/* Interaction Sensitivity */
-#interactionSensitivityOutput {
-    font-size: 15px;
-    font-weight: 600;
-    color: #fbbf24;
-}
-
-/* =========================================================
    STRUCTURED BLOCKS
 ========================================================= */
 .structured-block {
@@ -182,12 +171,6 @@ body {
     border-top: 1px solid #1f2937;
     font-size: 14px;
     color: #cbd5e1;
-}
-
-/* Empty modelling state */
-.structured-block span {
-    color: #64748b;
-    font-style: italic;
 }
 
 /* =========================================================
@@ -217,14 +200,6 @@ body {
     background: #0b1220;
     color: #f8fafc;
     font-size: 13px;
-    transition: all 0.2s ease;
-}
-
-.grid input:focus,
-.grid select:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
 }
 
 /* =========================================================
@@ -239,99 +214,22 @@ body {
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-    background: #1d4ed8;
-    transform: translateY(-1px);
 }
 
 /* =========================================================
-   EXECUTIVE SUMMARY
+   CHART FIX (CRITICAL ADDITION)
 ========================================================= */
-#financialPositionSummary p {
-    margin-bottom: 8px;
-    font-size: 14px;
-}
 
-#financialClassification {
-    font-size: 16px;
-    font-weight: 600;
-    color: #facc15;
-}
-
-#executiveCommentary {
-    font-size: 14px;
-    color: #cbd5e1;
-}
-
-/* =========================================================
-   INSIGHT ENGINE
-========================================================= */
-#insightEngine p {
-    background: #0b1220;
-    padding: 15px 18px;
-    border-radius: 6px;
-    border-left: 4px solid #1e40af;
-    margin-bottom: 12px;
-    font-size: 13px;
-}
-
-/* =========================================================
-   FORECAST
-========================================================= */
+.chart-card,
 .forecast-block {
-    margin-bottom: 60px;
+    position: relative;
+    height: 320px;          /* FIX: controls chart growth */
+    margin-bottom: 30px;
 }
 
-.forecast-block canvas {
-    height: 300px !important;
-    margin-bottom: 20px;
-}
-
-/* =========================================================
-   PERFORMANCE MATRIX
-========================================================= */
-#businessHealthIndex {
-    font-size: 20px;
-    font-weight: 600;
-    color: #fbbf24;
-}
-
-#matrixInterpretation {
-    font-size: 14px;
-    margin-top: 10px;
-    color: #cbd5e1;
-}
-
-/* =========================================================
-   RISK
-========================================================= */
-#stabilityRisk,
-#marginRisk,
-#liquidityRisk {
-    font-size: 16px;
-    font-weight: 600;
-}
-
-/* =========================================================
-   CHARTS
-========================================================= */
-.chart-card {
-    margin-bottom: 48px;
-}
-
-.chart-card canvas {
-    height: 320px !important;
-}
-
-.chart-explanation {
-    font-size: 13px;
-    color: #94a3b8;
-    margin-top: 14px;
-    border-top: 1px solid #1f2937;
-    padding-top: 12px;
+canvas {
+    width: 100% !important; /* FIX: prevents stretching */
+    height: 100% !important;
 }
 
 /* =========================================================
@@ -349,8 +247,26 @@ body {
 ========================================================= */
 @media (max-width: 900px) {
 
+    .mobile-toggle {
+        display: block;
+    }
+
     .sidebar {
-        display: none;
+        position: fixed;
+        left: -260px;
+        top: 0;
+        height: 100%;
+        width: 250px;
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+
+    .sidebar.active-mobile {
+        left: 0;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
     }
 
     .card {
@@ -360,5 +276,10 @@ body {
 
     .dashboard-header {
         padding: 30px 20px;
+    }
+
+    .chart-card,
+    .forecast-block {
+        height: 260px; /* slightly smaller on mobile */
     }
 }
