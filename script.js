@@ -382,8 +382,27 @@ function showSection(sectionId, event) {
     if (event) event.target.classList.add("active");
 }
 
-function logout() {
-    location.reload();
+/* ================= LOGOUT ================= */
+
+async function logout() {
+
+    try {
+
+        if (window.supabase) {
+
+            const supabase = window.supabase.createClient(
+                "YOUR_SUPABASE_URL",
+                "YOUR_PUBLIC_ANON_KEY"
+            );
+
+            await supabase.auth.signOut();
+        }
+
+    } catch (err) {
+        console.error("Logout error:", err);
+    }
+
+    window.location.href = "login.html";
 }
 
 /* ================= GLOBAL BINDING ================= */
