@@ -1,30 +1,30 @@
 /* ================= SUPABASE CLIENT ================= */
 
 const supabase = window.supabase.createClient(
-    "https://vopehiqnduxobtaamrnh.supabase.co",
-    "sb_publishable_oPR-GdRq7Rz3RvBepMkVQw_b7R6ocA3"
+"YOUR_SUPABASE_URL",
+"YOUR_PUBLIC_ANON_KEY"
 );
 
 /* ================= AUTH GUARD ================= */
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function checkAuth() {
 
     try {
 
-        const { data, error } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
-            console.error("Session error:", error);
+            console.error("Auth error:", error);
             window.location.href = "login.html";
             return;
         }
 
-        if (!data.session) {
+        if (!session) {
             window.location.href = "login.html";
             return;
         }
 
-        console.log("User authenticated");
+        console.log("User authenticated:", session.user.email);
 
     } catch (err) {
 
@@ -33,4 +33,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     }
 
-});
+}
+
+checkAuth();
