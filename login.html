@@ -12,7 +12,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
+<!-- Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Supabase client -->
+<script src="supabase.js"></script>
 
 <style>
 
@@ -27,8 +31,6 @@ align-items:center;
 height:100vh;
 }
 
-/* Login container */
-
 .login-container{
 background:#111827;
 padding:40px;
@@ -36,8 +38,6 @@ border-radius:12px;
 width:360px;
 box-shadow:0 15px 40px rgba(0,0,0,0.4);
 }
-
-/* Logo */
 
 .logo{
 display:flex;
@@ -55,15 +55,11 @@ font-weight:700;
 font-size:20px;
 }
 
-/* Subtitle */
-
 .subtitle{
 font-size:13px;
 color:#94a3b8;
 margin-bottom:25px;
 }
-
-/* Inputs */
 
 input{
 width:100%;
@@ -80,8 +76,6 @@ input::placeholder{
 color:#94a3b8;
 }
 
-/* Button */
-
 button{
 width:100%;
 padding:12px;
@@ -91,14 +85,11 @@ background:#2563eb;
 color:white;
 font-weight:600;
 cursor:pointer;
-transition:background 0.2s;
 }
 
 button:hover{
 background:#1d4ed8;
 }
-
-/* Error */
 
 #errorMessage{
 margin-top:10px;
@@ -131,7 +122,6 @@ SME Financial Stability Platform
 </div>
 
 <input id="email" type="email" placeholder="Email">
-
 <input id="password" type="password" placeholder="Password">
 
 <button id="loginButton" onclick="login()">Sign In</button>
@@ -146,27 +136,18 @@ SME Financial Stability Platform
 
 <script>
 
-/* ================= SUPABASE CLIENT ================= */
+/* ================= USE GLOBAL SUPABASE CLIENT ================= */
 
 const supabase = window.supabaseClient;
-"https://vopehiqnduxobtaamrnh.supabase.co",
-"sb_publishable_oPR-GdRq7Rz3RvBepMkVQw_b7R6ocA3"
-);
 
-/* ================= AUTO REDIRECT ================= */
+/* ================= AUTO REDIRECT IF LOGGED IN ================= */
 
 async function checkSession(){
-
-try{
 
 const { data: { session } } = await supabase.auth.getSession();
 
 if(session){
 window.location.href = "index.html";
-}
-
-}catch(err){
-console.error("Session check failed",err);
 }
 
 }
@@ -179,6 +160,7 @@ async function login(){
 
 const email = document.getElementById("email").value;
 const password = document.getElementById("password").value;
+
 const errorBox = document.getElementById("errorMessage");
 const button = document.getElementById("loginButton");
 
@@ -186,7 +168,7 @@ errorBox.innerText = "";
 button.innerText = "Signing in...";
 button.disabled = true;
 
-const { data, error } = await supabase.auth.signInWithPassword({
+const { error } = await supabase.auth.signInWithPassword({
 email,
 password
 });
@@ -202,17 +184,13 @@ return;
 
 }
 
-/* wait for session to exist */
+/* redirect after login */
 
-const { data: { session } } = await supabase.auth.getSession();
-
-if(session){
 window.location.href = "index.html";
-}
 
 }
 
-/* ================= ENTER KEY LOGIN ================= */
+/* ENTER KEY SUPPORT */
 
 document.addEventListener("keydown", function(e){
 
