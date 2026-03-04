@@ -134,7 +134,7 @@ SME Financial Stability Platform
 
 <input id="password" type="password" placeholder="Password">
 
-<button onclick="login()">Sign In</button>
+<button id="loginButton" onclick="login()">Sign In</button>
 
 <div id="errorMessage"></div>
 
@@ -149,7 +149,7 @@ SME Financial Stability Platform
 /* ================= SUPABASE CLIENT ================= */
 
 const supabase = window.supabase.createClient(
-"YOUR_SUPABASE_URL",
+"https://YOUR_PROJECT_ID.supabase.co",
 "YOUR_PUBLIC_ANON_KEY"
 );
 
@@ -157,10 +157,16 @@ const supabase = window.supabase.createClient(
 
 async function checkSession(){
 
-const { data } = await supabase.auth.getSession();
+try{
 
-if(data.session){
+const { data: { session } } = await supabase.auth.getSession();
+
+if(session){
 window.location.href = "index.html";
+}
+
+}catch(err){
+console.error("Session check failed",err);
 }
 
 }
@@ -173,11 +179,14 @@ async function login(){
 
 const email = document.getElementById("email").value;
 const password = document.getElementById("password").value;
-
 const errorBox = document.getElementById("errorMessage");
-errorBox.innerText = "";
+const button = document.getElementById("loginButton");
 
-const { error } = await supabase.auth.signInWithPassword({
+errorBox.innerText = "";
+button.innerText = "Signing in...";
+button.disabled = true;
+
+const { data, error } = await supabase.auth.signInWithPassword({
 email,
 password
 });
@@ -185,13 +194,33 @@ password
 if(error){
 
 errorBox.innerText = error.message;
+
+button.innerText = "Sign In";
+button.disabled = false;
+
 return;
 
 }
 
+/* wait for session to exist */
+
+const { data: { session } } = await supabase.auth.getSession();
+
+if(session){
 window.location.href = "index.html";
+}
 
 }
+
+/* ================= ENTER KEY LOGIN ================= */
+
+document.addEventListener("keydown", function(e){
+
+if(e.key === "Enter"){
+login();
+}
+
+});
 
 </script>
 
