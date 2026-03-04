@@ -382,22 +382,14 @@ function showSection(sectionId, event) {
     if (event) event.target.classList.add("active");
 }
 
-/* ================= LOGOUT ================= */
+/* ================= LOGOUT (FIXED) ================= */
 
 async function logout() {
 
     try {
-
-        if (window.supabase) {
-
-            const supabase = window.supabase.createClient(
-                "YOUR_SUPABASE_URL",
-                "YOUR_PUBLIC_ANON_KEY"
-            );
-
-            await supabase.auth.signOut();
+        if (window.supabaseClient) {
+            await window.supabaseClient.auth.signOut();
         }
-
     } catch (err) {
         console.error("Logout error:", err);
     }
