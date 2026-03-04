@@ -1,37 +1,32 @@
-/* ================= SUPABASE CLIENT ================= */
+/* ================= USE GLOBAL SUPABASE CLIENT ================= */
 
-const supabase = window.supabase.createClient(
-"YOUR_SUPABASE_URL",
-"YOUR_PUBLIC_ANON_KEY"
-);
+const supabase = window.supabaseClient;
 
 /* ================= AUTH GUARD ================= */
 
 async function checkAuth() {
 
-    try {
+try {
 
-        const { data: { session }, error } = await supabase.auth.getSession();
+const { data: { session } } = await supabase.auth.getSession();
 
-        if (error) {
-            console.error("Auth error:", error);
-            window.location.href = "login.html";
-            return;
-        }
+/* If user is NOT logged in → go to login page */
 
-        if (!session) {
-            window.location.href = "login.html";
-            return;
-        }
+if (!session) {
+window.location.href = "login.html";
+return;
+}
 
-        console.log("User authenticated:", session.user.email);
+/* If logged in → allow dashboard */
 
-    } catch (err) {
+console.log("User authenticated:", session.user.email);
 
-        console.error("Auth guard failure:", err);
-        window.location.href = "login.html";
+} catch (err) {
 
-    }
+console.error("Auth error:", err);
+window.location.href = "login.html";
+
+}
 
 }
 
