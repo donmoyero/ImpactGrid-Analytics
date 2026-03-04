@@ -7,6 +7,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<link rel="icon" href="logo.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -14,44 +17,100 @@
 <style>
 
 body{
-    margin:0;
-    font-family:Inter, sans-serif;
-    background:#0b1220;
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
+margin:0;
+font-family:'Inter',sans-serif;
+background:#0b1220;
+color:#e5e7eb;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
-.login-box{
-    background:#111827;
-    padding:40px;
-    border-radius:10px;
-    width:350px;
+/* Login container */
+
+.login-container{
+background:#111827;
+padding:40px;
+border-radius:12px;
+width:360px;
+box-shadow:0 15px 40px rgba(0,0,0,0.4);
 }
+
+/* Logo */
+
+.logo{
+display:flex;
+align-items:center;
+gap:12px;
+margin-bottom:25px;
+}
+
+.logo img{
+height:40px;
+}
+
+.logo-text{
+font-weight:700;
+font-size:20px;
+}
+
+/* Subtitle */
+
+.subtitle{
+font-size:13px;
+color:#94a3b8;
+margin-bottom:25px;
+}
+
+/* Inputs */
 
 input{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    margin-bottom:15px;
-    border-radius:6px;
-    border:none;
+width:100%;
+padding:12px;
+margin-bottom:15px;
+border-radius:8px;
+border:none;
+background:#1f2937;
+color:white;
+font-size:14px;
 }
 
+input::placeholder{
+color:#94a3b8;
+}
+
+/* Button */
+
 button{
-    width:100%;
-    padding:12px;
-    background:#2563eb;
-    border:none;
-    color:white;
-    border-radius:6px;
-    cursor:pointer;
+width:100%;
+padding:12px;
+border:none;
+border-radius:8px;
+background:#2563eb;
+color:white;
+font-weight:600;
+cursor:pointer;
+transition:background 0.2s;
 }
 
 button:hover{
-    background:#1d4ed8;
+background:#1d4ed8;
+}
+
+/* Error */
+
+#errorMessage{
+margin-top:10px;
+color:#f87171;
+font-size:13px;
+}
+
+.footer{
+margin-top:25px;
+font-size:12px;
+color:#64748b;
+text-align:center;
 }
 
 </style>
@@ -60,9 +119,16 @@ button:hover{
 
 <body>
 
-<div class="login-box">
+<div class="login-container">
 
-<h2>ImpactGrid Login</h2>
+<div class="logo">
+<img src="logo.png">
+<div class="logo-text">ImpactGrid</div>
+</div>
+
+<div class="subtitle">
+SME Financial Stability Platform
+</div>
 
 <input id="email" type="email" placeholder="Email">
 
@@ -70,16 +136,24 @@ button:hover{
 
 <button onclick="login()">Sign In</button>
 
+<div id="errorMessage"></div>
+
+<div class="footer">
+© 2026 ImpactGrid Analytics
+</div>
+
 </div>
 
 <script>
+
+/* ================= SUPABASE CLIENT ================= */
 
 const supabase = window.supabase.createClient(
 "YOUR_SUPABASE_URL",
 "YOUR_PUBLIC_ANON_KEY"
 );
 
-/* ================= AUTO LOGIN ================= */
+/* ================= AUTO REDIRECT ================= */
 
 async function checkSession(){
 
@@ -100,14 +174,19 @@ async function login(){
 const email = document.getElementById("email").value;
 const password = document.getElementById("password").value;
 
+const errorBox = document.getElementById("errorMessage");
+errorBox.innerText = "";
+
 const { error } = await supabase.auth.signInWithPassword({
 email,
 password
 });
 
 if(error){
-alert(error.message);
+
+errorBox.innerText = error.message;
 return;
+
 }
 
 window.location.href = "index.html";
