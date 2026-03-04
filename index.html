@@ -227,17 +227,25 @@ function toggleSidebar() {
     document.getElementById("sidebar").classList.toggle("active-mobile");
 }
 
-/* AUTH PROTECTION */
+/* AUTH + SESSION CONTROL */
 document.addEventListener("DOMContentLoaded", async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        window.location.href = "login.html";
-    }
-});
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
 
-/* SESSION LISTENER */
-supabase.auth.onAuthStateChange((event, session) => {
-    if (!session) {
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        /* SESSION LISTENER */
+        supabase.auth.onAuthStateChange((event, session) => {
+            if (!session) {
+                window.location.href = "login.html";
+            }
+        });
+
+    } catch (err) {
+        console.error("Auth error:", err);
         window.location.href = "login.html";
     }
 });
