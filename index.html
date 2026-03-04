@@ -44,8 +44,6 @@ grid-template-columns:1fr;
 
 <div id="app" class="app-layout">
 
-<button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
-
 <aside class="sidebar" id="sidebar">
 
 <div class="logo-container" onclick="toggleSidebar()" style="cursor:pointer;">
@@ -86,7 +84,6 @@ Risk Assessment
 </ul>
 </nav>
 
-<!-- THEME TOGGLE -->
 <div class="theme-toggle" onclick="toggleTheme()">
 Toggle Theme
 </div>
@@ -332,8 +329,10 @@ ImpactGrid Financial Stability Regime Model (IFSRM)
 
 <script>
 
+/* SIDEBAR COLLAPSE */
+
 function toggleSidebar(){
-document.getElementById("sidebar").classList.toggle("active-mobile");
+document.getElementById("sidebar").classList.toggle("collapsed");
 }
 
 /* THEME TOGGLE */
