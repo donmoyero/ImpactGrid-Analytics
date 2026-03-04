@@ -329,17 +329,35 @@ ImpactGrid Financial Stability Regime Model (IFSRM)
 
 <script>
 
-/* SIDEBAR COLLAPSE */
+/* ================= SIDEBAR TOGGLE (MOBILE FIX) ================= */
 
 function toggleSidebar(){
-document.getElementById("sidebar").classList.toggle("collapsed");
+
+const sidebar = document.getElementById("sidebar");
+
+if(window.innerWidth <= 900){
+
+sidebar.classList.toggle("active-mobile");
+
+}else{
+
+sidebar.classList.toggle("collapsed");
+
 }
 
-/* THEME TOGGLE */
+}
+
+/* ================= THEME TOGGLE ================= */
 
 function toggleTheme(){
+
 document.body.classList.toggle("light-mode");
-localStorage.setItem("theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+
+localStorage.setItem(
+"theme",
+document.body.classList.contains("light-mode") ? "light" : "dark"
+);
+
 }
 
 if(localStorage.getItem("theme")==="light"){
