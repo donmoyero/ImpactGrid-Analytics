@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>ImpactGrid | SME Financial Stability Modelling Engine</title>
+<meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ImpactGrid - Regime-Dependent Financial Stability Modelling for SMEs.">
+<title>ImpactGrid | SME Financial Stability Modelling Engine</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="ImpactGrid - Regime-Dependent Financial Stability Modelling for SMEs.">
 
-    <link rel="stylesheet" href="./style.css">
+<link rel="icon" href="logo.png">
 
-    <!-- Chart Engine -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Supabase Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<link rel="stylesheet" href="./style.css">
 
-    <!-- Auth Guard -->
-    <script src="./auth.js" defer></script>
+<!-- Chart Engine -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+
+<!-- Supabase Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+<!-- Auth Guard -->
+<script src="./auth.js" defer></script>
+
 </head>
 
 <body>
@@ -29,40 +33,73 @@
 <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
 
 <aside class="sidebar" id="sidebar">
-    <div class="logo-container">
-        <img src="logo.png" alt="ImpactGrid Logo" class="logo-img">
-        <div>
-            <span class="logo-text">ImpactGrid</span>
-            <div style="font-size:12px; color:#64748b; margin-top:4px; letter-spacing:0.5px;">
-                Engine v2
-            </div>
-        </div>
-    </div>
 
-    <nav>
-        <ul>
-            <li onclick="showSection('dashboard', event)" class="active">Financial Overview</li>
-            <li onclick="showSection('forecast', event)">Forecast Horizons</li>
-            <li onclick="showSection('matrix', event)">Performance Matrix</li>
-            <li onclick="showSection('risk', event)">Risk Assessment</li>
-            <li onclick="logout()">Logout</li>
-        </ul>
-    </nav>
+<div class="logo-container">
+<img src="logo.png" alt="ImpactGrid Logo" class="logo-img">
+
+<div>
+<span class="logo-text">ImpactGrid</span>
+
+<div style="font-size:12px;color:#64748b;margin-top:4px;letter-spacing:0.5px;">
+Engine v2
+</div>
+</div>
+</div>
+
+<!-- Logged in user display -->
+<div id="userDisplay" style="font-size:12px;color:#94a3b8;margin:15px 0 20px 0;">
+Authenticated Session
+</div>
+
+<nav>
+<ul>
+
+<li onclick="showSection('dashboard', event)" class="active">
+Financial Overview
+</li>
+
+<li onclick="showSection('forecast', event)">
+Forecast Horizons
+</li>
+
+<li onclick="showSection('matrix', event)">
+Performance Matrix
+</li>
+
+<li onclick="showSection('risk', event)">
+Risk Assessment
+</li>
+
+</ul>
+</nav>
+
+<!-- Logout Button -->
+<div style="margin-top:auto;padding-top:20px;">
+<button onclick="logout()" class="btn-primary" style="width:100%;">
+Logout
+</button>
+</div>
+
 </aside>
 
 <main class="main-content">
 
 <header class="dashboard-header">
-    <h1>SME Financial Stability Modelling Engine</h1>
-    <p class="engine-subtitle">
-        ImpactGrid Financial Stability Regime Model (IFSRM)
-    </p>
+
+<h1>SME Financial Stability Modelling Engine</h1>
+
+<p class="engine-subtitle">
+ImpactGrid Financial Stability Regime Model (IFSRM)
+</p>
+
 </header>
 
 <!-- ================= DASHBOARD ================= -->
+
 <section id="dashboard" class="page-section active-section">
 
 <section class="card">
+
 <h2>Business Profile & Reporting Context</h2>
 
 <div class="grid">
@@ -303,12 +340,15 @@
 </main>
 </div>
 
+<!-- Engine Script -->
 <script src="./script.js" defer></script>
 
 <script>
-function toggleSidebar() {
+
+function toggleSidebar(){
 document.getElementById("sidebar").classList.toggle("active-mobile");
 }
+
 </script>
 
 </body>
