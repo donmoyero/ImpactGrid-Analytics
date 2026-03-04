@@ -323,16 +323,17 @@ canvas {
 }
 
 /* =========================================================
-   RESPONSIVE (MOBILE COLLAPSIBLE SIDEBAR)
+   RESPONSIVE (MOBILE SIDEBAR FIX)
 ========================================================= */
 
 @media (max-width: 900px) {
 
-    /* Sidebar stays visible but collapsed */
+    /* sidebar collapsed state */
 
     .sidebar{
         width:70px;
         padding:20px 10px;
+        overflow:hidden;
     }
 
     /* expanded sidebar */
@@ -342,13 +343,22 @@ canvas {
         padding:36px 24px;
     }
 
-    /* hide text when collapsed */
+    /* hide content when collapsed */
 
     .sidebar:not(.active-mobile) nav,
     .sidebar:not(.active-mobile) .theme-toggle,
     .sidebar:not(.active-mobile) button,
     .sidebar:not(.active-mobile) .logo-text{
         display:none;
+    }
+
+    /* SHOW content when open */
+
+    .sidebar.active-mobile nav,
+    .sidebar.active-mobile .theme-toggle,
+    .sidebar.active-mobile button,
+    .sidebar.active-mobile .logo-text{
+        display:block;
     }
 
     .card {
