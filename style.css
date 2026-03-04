@@ -88,18 +88,20 @@ body.light-mode .sidebar li:hover {
     transition: width 0.25s ease;
 }
 
-/* ===== COLLAPSED SIDEBAR ===== */
+/* ===== COLLAPSED SIDEBAR (DESKTOP) ===== */
 
 .sidebar.collapsed{
     width:70px;
+    overflow:hidden;
 }
 
-/* hide text when collapsed */
+/* hide content when collapsed */
 
-.sidebar.collapsed .logo-text,
-.sidebar.collapsed nav li{
-    opacity:0;
-    pointer-events:none;
+.sidebar.collapsed nav,
+.sidebar.collapsed .theme-toggle,
+.sidebar.collapsed button,
+.sidebar.collapsed .logo-text{
+    display:none;
 }
 
 /* ================= LOGO ================= */
@@ -122,7 +124,6 @@ body.light-mode .sidebar li:hover {
     font-weight: 600;
     letter-spacing: 0.8px;
     margin-bottom: 0;
-    transition: opacity 0.2s ease;
 }
 
 .sidebar ul {
@@ -322,10 +323,32 @@ canvas {
 }
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE (MOBILE SIDEBAR OVERLAY)
 ========================================================= */
 
 @media (max-width: 900px) {
+
+    .sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        height: 100%;
+        width: 250px;
+        z-index: 1200;
+        transition: left 0.25s ease;
+    }
+
+    .sidebar.active-mobile{
+        left:0;
+    }
+
+    .sidebar.collapsed{
+        width:250px;
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
 
     .card {
         margin: 30px 20px;
