@@ -17,20 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
     bindGlobalFunctions();
 });
 
-/* ================= SIDEBAR TOGGLE ================= */
-
-function toggleSidebar(){
-
-    const sidebar = document.getElementById("sidebar");
-    if(!sidebar) return;
-
-    if(window.innerWidth <= 900){
-        sidebar.classList.toggle("active-mobile");
-    }else{
-        sidebar.classList.toggle("collapsed");
-    }
-}
-
 /* ================= CURRENCY ================= */
 
 function setCurrency(currency){
@@ -61,8 +47,8 @@ function addData(){
     const date=new Date(monthValue+"-01");
     const profit=revenue-expenses;
 
-    const exists=businessData.find(d=>
-        d.date.toISOString().slice(0,7)===date.toISOString().slice(0,7)
+    const exists=businessData.find(d =>
+        d.date.toISOString().slice(0,7) === date.toISOString().slice(0,7)
     );
 
     if(exists){
@@ -99,16 +85,18 @@ function updateAll(){
         resetAdvancedSections();
 
     }
-
 }
 
-/* ================= RESET ================= */
+/* ================= RESET IF <3 MONTHS ================= */
 
 function resetAdvancedSections(){
 
+    setText("stabilityRegimeOutput","Awaiting sufficient data...");
+    setText("interactionSensitivityOutput","—");
+    setText("stabilityIndexOutput","—");
     setText("insightEngine","");
     setText("businessHealthIndex","");
-    setText("stabilityRisk","");
+    setText("stabilityRisk","Awaiting data...");
     setText("marginRisk","");
     setText("liquidityRisk","");
 
@@ -119,10 +107,9 @@ function resetAdvancedSections(){
         forecastCharts[key]?.destroy();
         delete forecastCharts[key];
     });
-
 }
 
-/* ================= EXEC SUMMARY ================= */
+/* ================= EXECUTIVE SUMMARY ================= */
 
 function renderExecutiveSummary(){
 
@@ -154,7 +141,6 @@ function renderExecutiveSummary(){
 
     commentaryEl.innerHTML=
     "Financial structure evaluated across growth, margin and volatility dynamics.";
-
 }
 
 /* ================= LIFECYCLE ================= */
@@ -178,12 +164,16 @@ function renderLifecycle(){
     else if(volatility<15) classification="Stable Phase";
 
     container.innerHTML=`<strong>Lifecycle Classification:</strong> ${classification}`;
-
 }
 
 /* ================= INSIGHTS ================= */
 
 function renderInsights(){
+
+    if(businessData.length<3){
+        setText("insightEngine","Enter at least 3 months of data to generate insights.");
+        return;
+    }
 
     const volatility=calculateVolatility();
     const margin=getMargin();
@@ -201,12 +191,13 @@ function renderInsights(){
         insight="Strong expansion phase detected.";
 
     setText("insightEngine",insight);
-
 }
 
 /* ================= STABILITY ENGINE ================= */
 
 function renderFinancialStabilityAssessment(){
+
+    if(businessData.length<3) return;
 
     const volatility=calculateVolatility();
     const margin=getMargin();
@@ -219,12 +210,13 @@ function renderFinancialStabilityAssessment(){
     else if(volatility>25) regime="Financial Stress";
 
     setText("stabilityRegimeOutput",regime);
-
 }
 
 /* ================= FORECAST ================= */
 
 function renderForecasts(){
+
+    if(businessData.length<3) return;
 
     const first=businessData[0];
     const last=businessData[businessData.length-1];
@@ -241,7 +233,6 @@ function renderForecasts(){
     generateProjection("forecast1y",12,cagr);
     generateProjection("forecast3y",36,cagr);
     generateProjection("forecast5y",60,cagr);
-
 }
 
 function generateProjection(id,months,cagr){
@@ -266,7 +257,6 @@ function generateProjection(id,months,cagr){
 
         labels.push(date.toISOString().slice(0,7));
         data.push(Math.round(revenue));
-
     }
 
     forecastCharts[id]=new Chart(canvas,{
@@ -274,12 +264,21 @@ function generateProjection(id,months,cagr){
         data:{labels,datasets:[{label:"Projected Revenue",data}]},
         options:{responsive:true,maintainAspectRatio:false}
     });
-
 }
 
 /* ================= PERFORMANCE MATRIX ================= */
 
 function renderPerformanceMatrix(){
+
+    if(businessData.length<3){
+
+        setText("businessHealthIndex","Enter at least 3 months of data to generate performance analysis.");
+
+        performanceBarChart?.destroy();
+        distributionPieChart?.destroy();
+
+        return;
+    }
 
     const volatility=calculateVolatility();
     const growth=calculateMonthlyGrowth();
@@ -299,8 +298,7 @@ function renderPerformanceMatrix(){
             data:{
                 labels:["Stability","Growth","Profitability"],
                 datasets:[{
-                    data:[stabilityScore,growthScore,profitabilityScore],
-                    backgroundColor:["#22c55e","#3b82f6","#f59e0b"]
+                    data:[stabilityScore,growthScore,profitabilityScore]
                 }]
             },
             options:{scales:{y:{beginAtZero:true,max:100}}}
@@ -314,8 +312,7 @@ function renderPerformanceMatrix(){
             data:{
                 labels:["Stability","Growth","Profitability"],
                 datasets:[{
-                    data:[stabilityScore,growthScore,profitabilityScore],
-                    backgroundColor:["#22c55e","#3b82f6","#f59e0b"]
+                    data:[stabilityScore,growthScore,profitabilityScore]
                 }]
             }
         }
@@ -324,12 +321,20 @@ function renderPerformanceMatrix(){
     setText("businessHealthIndex",
         `Composite Index: ${Math.round((stabilityScore+growthScore+profitabilityScore)/3)} / 100`
     );
-
 }
 
 /* ================= RISK ================= */
 
 function renderRiskAssessment(){
+
+    if(businessData.length<3){
+
+        setText("stabilityRisk","Enter at least 3 months of data.");
+        setText("marginRisk","");
+        setText("liquidityRisk","");
+
+        return;
+    }
 
     const volatility=calculateVolatility();
     const margin=getMargin();
@@ -337,7 +342,6 @@ function renderRiskAssessment(){
     setText("stabilityRisk",volatility>35?"Elevated":"Low");
     setText("marginRisk",margin<8?"Elevated":"Low");
     setText("liquidityRisk",margin>5?"Stable":"Constrained");
-
 }
 
 /* ================= CORE CHARTS ================= */
@@ -353,26 +357,15 @@ function renderCoreCharts(){
     revenueChart=createChart("revenueChart","line",labels,businessData.map(d=>d.revenue),"Revenue");
     profitChart=createChart("profitChart","line",labels,businessData.map(d=>d.profit),"Profit");
     expenseChart=createChart("expenseChart","bar",labels,businessData.map(d=>d.expenses),"Expenses");
-
 }
 
 function createChart(id,type,labels,data,label){
 
     return new Chart(document.getElementById(id),{
         type,
-        data:{
-            labels,
-            datasets:[{
-                label,
-                data,
-                borderColor:"#3b82f6",
-                backgroundColor:"#3b82f6",
-                tension:0.4
-            }]
-        },
+        data:{labels,datasets:[{label,data}]},
         options:{responsive:true,maintainAspectRatio:false}
     });
-
 }
 
 /* ================= HELPERS ================= */
@@ -390,6 +383,7 @@ function calculateMonthlyGrowth(){
 }
 
 function calculateVolatility(){
+
     if(businessData.length<2) return 0;
 
     const revenues=businessData.map(d=>d.revenue);
@@ -407,7 +401,6 @@ function getMargin(){
     const totalProfit=sum("profit");
 
     return totalRevenue>0?(totalProfit/totalRevenue)*100:0;
-
 }
 
 function sum(key){
@@ -418,15 +411,15 @@ function sum(key){
 
 function showSection(sectionId,event){
 
-    document.querySelectorAll(".page-section").forEach(sec=>{
-        sec.classList.remove("active-section");
-    });
+    document.querySelectorAll(".page-section").forEach(sec =>
+        sec.classList.remove("active-section")
+    );
 
     document.getElementById(sectionId)?.classList.add("active-section");
 
-    document.querySelectorAll(".sidebar li").forEach(li=>{
-        li.classList.remove("active");
-    });
+    document.querySelectorAll(".sidebar li").forEach(li =>
+        li.classList.remove("active")
+    );
 
     if(event) event.target.classList.add("active");
 
@@ -435,7 +428,6 @@ function showSection(sectionId,event){
         if(sectionId==="matrix") renderPerformanceMatrix();
         if(sectionId==="risk") renderRiskAssessment();
     },100);
-
 }
 
 /* ================= LOGOUT ================= */
@@ -451,7 +443,6 @@ async function logout(){
     }
 
     window.location.href="login.html";
-
 }
 
 /* ================= GLOBAL BINDING ================= */
@@ -461,5 +452,4 @@ function bindGlobalFunctions(){
     window.showSection=showSection;
     window.logout=logout;
     window.setCurrency=setCurrency;
-    window.toggleSidebar=toggleSidebar;
 }
