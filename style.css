@@ -18,6 +18,7 @@ body {
     min-height: 100vh;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .hidden { display: none !important; }
@@ -30,6 +31,36 @@ body {
 
 .active-section {
     display: block;
+}
+
+/* =========================================================
+   LIGHT MODE (NEW)
+========================================================= */
+
+body.light-mode {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+body.light-mode .sidebar {
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+}
+
+body.light-mode .card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+body.light-mode .grid input,
+body.light-mode .grid select {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+}
+
+body.light-mode .sidebar li:hover {
+    background: #f1f5f9;
 }
 
 /* =========================================================
@@ -49,7 +80,6 @@ body {
     padding: 36px 24px;
     border-right: 1px solid #1e293b;
 
-    /* FIX: allows logout button to stay at bottom */
     display: flex;
     flex-direction: column;
 }
@@ -103,14 +133,41 @@ body {
 }
 
 /* =========================================================
+   THEME TOGGLE (NEW)
+========================================================= */
+
+.theme-toggle {
+    margin-top: 20px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid #1f2937;
+    background: #111827;
+    color: #e5e7eb;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.theme-toggle:hover {
+    background: #1f2937;
+}
+
+body.light-mode .theme-toggle {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+}
+
+/* =========================================================
    MOBILE TOGGLE BUTTON
 ========================================================= */
+
 .mobile-toggle {
     display: none;
     position: fixed;
     top: 18px;
     left: 18px;
-    z-index: 1100;
+    z-index: 1200;
     background: #111827;
     color: white;
     border: none;
@@ -124,6 +181,7 @@ body {
 /* =========================================================
    MAIN CONTENT
 ========================================================= */
+
 .main-content {
     flex: 1;
     padding-bottom: 70px;
@@ -132,6 +190,7 @@ body {
 /* =========================================================
    HEADER
 ========================================================= */
+
 .dashboard-header {
     padding: 52px 6%;
     border-bottom: 1px solid #1e293b;
@@ -153,6 +212,7 @@ body {
 /* =========================================================
    CARD SYSTEM
 ========================================================= */
+
 .card {
     background: #111827;
     padding: 38px;
@@ -180,6 +240,7 @@ body {
 /* =========================================================
    STRUCTURED BLOCKS
 ========================================================= */
+
 .structured-block {
     margin-top: 30px;
     padding-top: 24px;
@@ -191,6 +252,7 @@ body {
 /* =========================================================
    INPUT GRID
 ========================================================= */
+
 .grid {
     display: grid;
     gap: 18px;
@@ -220,6 +282,7 @@ body {
 /* =========================================================
    BUTTONS
 ========================================================= */
+
 .btn-primary {
     padding: 13px 20px;
     background: #1e40af;
@@ -240,8 +303,6 @@ body {
     position: relative;
     height: 320px;
     margin-bottom: 30px;
-
-    /* FIX: prevents chart overflow */
     overflow: hidden;
 }
 
@@ -253,6 +314,7 @@ canvas {
 /* =========================================================
    FOOTER
 ========================================================= */
+
 .dashboard-footer {
     text-align: center;
     padding: 50px;
@@ -263,6 +325,7 @@ canvas {
 /* =========================================================
    RESPONSIVE
 ========================================================= */
+
 @media (max-width: 900px) {
 
     .mobile-toggle {
@@ -276,7 +339,7 @@ canvas {
         height: 100%;
         width: 250px;
         transition: left 0.3s ease;
-        z-index: 1000;
+        z-index: 1100;
     }
 
     .sidebar.active-mobile {
