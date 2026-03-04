@@ -15,15 +15,6 @@
 
 <link rel="stylesheet" href="./style.css">
 
-<!-- Chart Engine -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-
-<!-- Supabase Client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-
-<!-- Auth Guard -->
-<script src="./auth.js" defer></script>
-
 </head>
 
 <body>
@@ -46,7 +37,6 @@ Engine v2
 </div>
 </div>
 
-<!-- Logged in user display -->
 <div id="userDisplay" style="font-size:12px;color:#94a3b8;margin:15px 0 20px 0;">
 Authenticated Session
 </div>
@@ -73,7 +63,6 @@ Risk Assessment
 </ul>
 </nav>
 
-<!-- Logout Button -->
 <div style="margin-top:auto;padding-top:20px;">
 <button onclick="logout()" class="btn-primary" style="width:100%;">
 Logout
@@ -340,8 +329,19 @@ ImpactGrid Financial Stability Regime Model (IFSRM)
 </main>
 </div>
 
-<!-- Engine Script -->
-<script src="./script.js" defer></script>
+<!-- ================= SCRIPT ORDER FIX ================= -->
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Auth Guard -->
+<script src="./auth.js"></script>
+
+<!-- Chart Engine -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Financial Engine -->
+<script src="./script.js"></script>
 
 <script>
 
