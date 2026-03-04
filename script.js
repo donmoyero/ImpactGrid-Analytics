@@ -95,9 +95,9 @@ function resetAdvancedSections() {
     setText("stabilityOutlook", "");
     setText("insightEngine", "");
     setText("businessHealthIndex", "");
-    setText("stabilityRisk", "");
-    setText("marginRisk", "");
-    setText("liquidityRisk", "");
+    setText("stabilityRisk", "Awaiting data...");
+    setText("marginRisk", "Awaiting data...");
+    setText("liquidityRisk", "Awaiting data...");
 
     performanceBarChart?.destroy();
     distributionPieChart?.destroy();
@@ -252,7 +252,7 @@ function generateProjection(id, months, cagr) {
 
     forecastCharts[id] = new Chart(canvas.getContext("2d"), {
         type: "line",
-        data: { labels, datasets: [{ label: "Projected Revenue", data }] },
+        data: { labels, datasets: [{ label: "Projected Revenue", data, borderColor:"#3b82f6", tension:0.4 }] },
         options: { responsive:true, maintainAspectRatio:false }
     });
 }
@@ -260,6 +260,8 @@ function generateProjection(id, months, cagr) {
 /* ================= PERFORMANCE MATRIX ================= */
 
 function renderPerformanceMatrix() {
+
+    if (businessData.length < 3) return;
 
     const volatility = calculateVolatility();
     const growth = calculateMonthlyGrowth();
@@ -278,20 +280,34 @@ function renderPerformanceMatrix() {
             type:"bar",
             data:{
                 labels:["Stability","Growth","Profitability"],
-                datasets:[{ data:[stabilityScore,growthScore,profitabilityScore] }]
+                datasets:[{
+                    label:"Score",
+                    data:[stabilityScore,growthScore,profitabilityScore],
+                    backgroundColor:["#22c55e","#3b82f6","#f59e0b"],
+                    borderRadius:6
+                }]
             },
-            options:{ scales:{ y:{ beginAtZero:true,max:100 } } }
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{legend:{display:false}},
+                scales:{y:{beginAtZero:true,max:100}}
+            }
         }
     );
 
     distributionPieChart = new Chart(
         document.getElementById("distributionPieChart"),
         {
-            type:"pie",
+            type:"doughnut",
             data:{
                 labels:["Stability","Growth","Profitability"],
-                datasets:[{ data:[stabilityScore,growthScore,profitabilityScore] }]
-            }
+                datasets:[{
+                    data:[stabilityScore,growthScore,profitabilityScore],
+                    backgroundColor:["#22c55e","#3b82f6","#f59e0b"]
+                }]
+            },
+            options:{responsive:true,maintainAspectRatio:false}
         }
     );
 
@@ -303,6 +319,8 @@ function renderPerformanceMatrix() {
 /* ================= RISK ================= */
 
 function renderRiskAssessment() {
+
+    if (businessData.length < 3) return;
 
     const volatility = calculateVolatility();
     const margin = getMargin();
@@ -330,7 +348,7 @@ function renderCoreCharts() {
 function createChart(id,type,labels,data,label){
     return new Chart(document.getElementById(id),{
         type,
-        data:{ labels, datasets:[{ label, data }] },
+        data:{ labels, datasets:[{ label, data, borderColor:"#3b82f6", tension:0.4 }] },
         options:{ responsive:true, maintainAspectRatio:false }
     });
 }
@@ -367,7 +385,7 @@ function sum(key){
     return businessData.reduce((a,b)=>a+(b[key]||0),0);
 }
 
-/* ================= NAVIGATION (FIXED) ================= */
+/* ================= NAVIGATION ================= */
 
 function showSection(sectionId, event) {
 
