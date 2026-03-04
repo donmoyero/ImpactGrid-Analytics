@@ -60,10 +60,6 @@ Engine v2
 </div>
 </div>
 
-<div id="userDisplay" style="font-size:12px;color:#94a3b8;margin:15px 0 20px 0;">
-Authenticated Session
-</div>
-
 <nav>
 <ul>
 
@@ -89,6 +85,11 @@ Risk Assessment
 
 </ul>
 </nav>
+
+<!-- THEME TOGGLE -->
+<div class="theme-toggle" onclick="toggleTheme()">
+Toggle Theme
+</div>
 
 <div style="margin-top:auto;padding-top:20px;">
 <button onclick="logout()" class="btn-primary" style="width:100%;">
@@ -330,9 +331,22 @@ ImpactGrid Financial Stability Regime Model (IFSRM)
 <script src="script.js"></script>
 
 <script>
+
 function toggleSidebar(){
 document.getElementById("sidebar").classList.toggle("active-mobile");
 }
+
+/* THEME TOGGLE */
+
+function toggleTheme(){
+document.body.classList.toggle("light-mode");
+localStorage.setItem("theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+}
+
+if(localStorage.getItem("theme")==="light"){
+document.body.classList.add("light-mode");
+}
+
 </script>
 
 </body>
