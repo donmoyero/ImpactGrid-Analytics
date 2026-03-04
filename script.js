@@ -367,7 +367,7 @@ function sum(key){
     return businessData.reduce((a,b)=>a+(b[key]||0),0);
 }
 
-/* ================= NAVIGATION ================= */
+/* ================= NAVIGATION (FIXED) ================= */
 
 function showSection(sectionId, event) {
 
@@ -382,8 +382,6 @@ function showSection(sectionId, event) {
     );
 
     if (event) event.target.classList.add("active");
-
-    /* refresh charts after section becomes visible */
 
     setTimeout(()=>{
         if(sectionId==="forecast") renderForecasts();
