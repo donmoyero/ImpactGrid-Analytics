@@ -21,8 +21,16 @@ body {
 }
 
 .hidden { display: none !important; }
-.page-section { display: none; }
-.active-section { display: block; }
+
+/* FIX: improves section switching stability */
+.page-section {
+    display: none;
+    width: 100%;
+}
+
+.active-section {
+    display: block;
+}
 
 /* =========================================================
    LAYOUT
@@ -40,6 +48,10 @@ body {
     background: #0f172a;
     padding: 36px 24px;
     border-right: 1px solid #1e293b;
+
+    /* FIX: allows logout button to stay at bottom */
+    display: flex;
+    flex-direction: column;
 }
 
 /* ================= LOGO ================= */
@@ -64,7 +76,10 @@ body {
     margin-bottom: 0;
 }
 
-.sidebar ul { list-style: none; }
+.sidebar ul {
+    list-style: none;
+    margin-bottom: 30px;
+}
 
 .sidebar li {
     padding: 13px 15px;
@@ -217,18 +232,21 @@ body {
 }
 
 /* =========================================================
-   CHART FIX (CRITICAL ADDITION)
+   CHART FIX (IMPORTANT)
 ========================================================= */
 
 .chart-card,
 .forecast-block {
     position: relative;
-    height: 320px;          /* FIX: controls chart growth */
+    height: 320px;
     margin-bottom: 30px;
+
+    /* FIX: prevents chart overflow */
+    overflow: hidden;
 }
 
 canvas {
-    width: 100% !important; /* FIX: prevents stretching */
+    width: 100% !important;
     height: 100% !important;
 }
 
@@ -280,6 +298,6 @@ canvas {
 
     .chart-card,
     .forecast-block {
-        height: 260px; /* slightly smaller on mobile */
+        height: 260px;
     }
 }
