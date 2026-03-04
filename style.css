@@ -34,7 +34,7 @@ body {
 }
 
 /* =========================================================
-   LIGHT MODE (NEW)
+   LIGHT MODE
 ========================================================= */
 
 body.light-mode {
@@ -66,6 +66,7 @@ body.light-mode .sidebar li:hover {
 /* =========================================================
    LAYOUT
 ========================================================= */
+
 .app-layout {
     display: flex;
     min-height: 100vh;
@@ -74,6 +75,7 @@ body.light-mode .sidebar li:hover {
 /* =========================================================
    SIDEBAR
 ========================================================= */
+
 .sidebar {
     width: 250px;
     background: #0f172a;
@@ -82,6 +84,22 @@ body.light-mode .sidebar li:hover {
 
     display: flex;
     flex-direction: column;
+
+    transition: width 0.25s ease;
+}
+
+/* ===== COLLAPSED SIDEBAR ===== */
+
+.sidebar.collapsed{
+    width:70px;
+}
+
+/* hide text when collapsed */
+
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed nav li{
+    opacity:0;
+    pointer-events:none;
 }
 
 /* ================= LOGO ================= */
@@ -104,6 +122,7 @@ body.light-mode .sidebar li:hover {
     font-weight: 600;
     letter-spacing: 0.8px;
     margin-bottom: 0;
+    transition: opacity 0.2s ease;
 }
 
 .sidebar ul {
@@ -133,7 +152,7 @@ body.light-mode .sidebar li:hover {
 }
 
 /* =========================================================
-   THEME TOGGLE (NEW)
+   THEME TOGGLE
 ========================================================= */
 
 .theme-toggle {
@@ -156,26 +175,6 @@ body.light-mode .theme-toggle {
     background: #f1f5f9;
     border: 1px solid #e2e8f0;
     color: #0f172a;
-}
-
-/* =========================================================
-   MOBILE TOGGLE BUTTON
-========================================================= */
-
-.mobile-toggle {
-    display: none;
-    position: fixed;
-    top: 18px;
-    left: 18px;
-    z-index: 1200;
-    background: #111827;
-    color: white;
-    border: none;
-    padding: 10px 14px;
-    font-size: 18px;
-    border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 /* =========================================================
@@ -295,7 +294,7 @@ body.light-mode .theme-toggle {
 }
 
 /* =========================================================
-   CHART FIX (IMPORTANT)
+   CHART FIX
 ========================================================= */
 
 .chart-card,
@@ -328,28 +327,6 @@ canvas {
 
 @media (max-width: 900px) {
 
-    .mobile-toggle {
-        display: block;
-    }
-
-    .sidebar {
-        position: fixed;
-        left: -260px;
-        top: 0;
-        height: 100%;
-        width: 250px;
-        transition: left 0.3s ease;
-        z-index: 1100;
-    }
-
-    .sidebar.active-mobile {
-        left: 0;
-    }
-
-    .main-content {
-        margin-left: 0 !important;
-    }
-
     .card {
         margin: 30px 20px;
         padding: 28px;
@@ -363,4 +340,5 @@ canvas {
     .forecast-block {
         height: 260px;
     }
+
 }
