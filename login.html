@@ -12,10 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<!-- Supabase Library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- Supabase Client -->
 <script src="supabase.js"></script>
 
 <style>
@@ -81,10 +78,24 @@ background:#2563eb;
 color:white;
 font-weight:600;
 cursor:pointer;
+margin-bottom:10px;
 }
 
 button:hover{
 background:#1d4ed8;
+}
+
+.google-btn{
+background:white;
+color:black;
+}
+
+.toggle{
+margin-top:10px;
+font-size:13px;
+color:#94a3b8;
+cursor:pointer;
+text-align:center;
 }
 
 #errorMessage{
@@ -117,10 +128,20 @@ text-align:center;
 SME Financial Stability Platform
 </div>
 
+<h3 id="formTitle">Sign In</h3>
+
 <input id="email" type="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
 
-<button onclick="login()">Sign In</button>
+<button id="authButton">Sign In</button>
+
+<button class="google-btn" id="googleLogin">
+Continue with Google
+</button>
+
+<div class="toggle" id="toggleAuth">
+Create an account
+</div>
 
 <div id="errorMessage"></div>
 
@@ -132,7 +153,9 @@ SME Financial Stability Platform
 
 <script>
 
-/* ================= AUTO REDIRECT IF LOGGED IN ================= */
+let isLogin = true;
+
+/* ================= SESSION CHECK ================= */
 
 async function checkSession(){
 
@@ -146,12 +169,43 @@ window.location.href = "index.html";
 
 checkSession();
 
-/* ================= LOGIN ================= */
+/* ================= TOGGLE LOGIN / SIGNUP ================= */
 
-async function login(){
+document.getElementById("toggleAuth").addEventListener("click", () => {
+
+isLogin = !isLogin;
+
+const title = document.getElementById("formTitle");
+const button = document.getElementById("authButton");
+const toggle = document.getElementById("toggleAuth");
+
+if(isLogin){
+title.innerText = "Sign In";
+button.innerText = "Sign In";
+toggle.innerText = "Create an account";
+}else{
+title.innerText = "Create Account";
+button.innerText = "Sign Up";
+toggle.innerText = "Already have an account?";
+}
+
+});
+
+/* ================= LOGIN / SIGNUP ================= */
+
+document.getElementById("authButton").addEventListener("click", async () => {
 
 const email = document.getElementById("email").value;
 const password = document.getElementById("password").value;
+
+document.getElementById("errorMessage").innerText = "";
+
+if(!email || !password){
+document.getElementById("errorMessage").innerText = "Please enter email and password.";
+return;
+}
+
+if(isLogin){
 
 const { error } = await window.supabaseClient.auth.signInWithPassword({
 email,
@@ -165,7 +219,37 @@ return;
 
 window.location.href = "index.html";
 
+}else{
+
+const { error } = await window.supabaseClient.auth.signUp({
+email,
+password
+});
+
+if(error){
+document.getElementById("errorMessage").innerText = error.message;
+return;
 }
+
+document.getElementById("errorMessage").innerText =
+"Account created. Check your email to confirm.";
+
+}
+
+});
+
+/* ================= GOOGLE LOGIN ================= */
+
+document.getElementById("googleLogin").addEventListener("click", async () => {
+
+await window.supabaseClient.auth.signInWithOAuth({
+provider: "google",
+options: {
+redirectTo: window.location.origin + "/index.html"
+}
+});
+
+});
 
 </script>
 
