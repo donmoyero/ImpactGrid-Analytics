@@ -12,10 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<!-- Supabase library -->
+<!-- Supabase Library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- Supabase client -->
+<!-- Supabase Client -->
 <script src="supabase.js"></script>
 
 <style>
@@ -72,10 +72,6 @@ color:white;
 font-size:14px;
 }
 
-input::placeholder{
-color:#94a3b8;
-}
-
 button{
 width:100%;
 padding:12px;
@@ -124,7 +120,7 @@ SME Financial Stability Platform
 <input id="email" type="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
 
-<button id="loginButton" onclick="login()">Sign In</button>
+<button onclick="login()">Sign In</button>
 
 <div id="errorMessage"></div>
 
@@ -136,15 +132,11 @@ SME Financial Stability Platform
 
 <script>
 
-/* ================= USE GLOBAL SUPABASE CLIENT ================= */
-
-const supabase = window.supabaseClient;
-
 /* ================= AUTO REDIRECT IF LOGGED IN ================= */
 
 async function checkSession(){
 
-const { data: { session } } = await supabase.auth.getSession();
+const { data: { session } } = await window.supabaseClient.auth.getSession();
 
 if(session){
 window.location.href = "index.html";
@@ -161,44 +153,19 @@ async function login(){
 const email = document.getElementById("email").value;
 const password = document.getElementById("password").value;
 
-const errorBox = document.getElementById("errorMessage");
-const button = document.getElementById("loginButton");
-
-errorBox.innerText = "";
-button.innerText = "Signing in...";
-button.disabled = true;
-
-const { error } = await supabase.auth.signInWithPassword({
+const { error } = await window.supabaseClient.auth.signInWithPassword({
 email,
 password
 });
 
 if(error){
-
-errorBox.innerText = error.message;
-
-button.innerText = "Sign In";
-button.disabled = false;
-
+document.getElementById("errorMessage").innerText = error.message;
 return;
-
 }
-
-/* redirect after login */
 
 window.location.href = "index.html";
 
 }
-
-/* ENTER KEY SUPPORT */
-
-document.addEventListener("keydown", function(e){
-
-if(e.key === "Enter"){
-login();
-}
-
-});
 
 </script>
 
