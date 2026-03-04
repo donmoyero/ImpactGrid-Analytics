@@ -21,8 +21,20 @@ body {
 }
 
 .hidden { display: none !important; }
-.page-section { display: none; }
-.active-section { display: block; }
+
+/* SAFER SECTION HANDLING */
+.page-section {
+    display: none;
+}
+
+.page-section.active-section {
+    display: block;
+}
+
+/* Fallback: ensure at least one section shows if JS fails */
+.page-section:first-of-type {
+    display: block;
+}
 
 /* =========================================================
    LAYOUT
@@ -40,6 +52,7 @@ body {
     background: #0f172a;
     padding: 36px 24px;
     border-right: 1px solid #1e293b;
+    flex-shrink: 0; /* prevents collapse */
 }
 
 /* ================= LOGO ================= */
@@ -112,6 +125,7 @@ body {
 .main-content {
     flex: 1;
     padding-bottom: 70px;
+    min-width: 0; /* prevents overflow blank bug */
 }
 
 /* =========================================================
@@ -214,21 +228,26 @@ body {
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
 }
 
 /* =========================================================
-   CHART FIX (CRITICAL ADDITION)
+   CHART FIX
 ========================================================= */
 
 .chart-card,
 .forecast-block {
     position: relative;
-    height: 320px;          /* FIX: controls chart growth */
+    height: 320px;
     margin-bottom: 30px;
 }
 
 canvas {
-    width: 100% !important; /* FIX: prevents stretching */
+    width: 100% !important;
     height: 100% !important;
 }
 
@@ -280,6 +299,6 @@ canvas {
 
     .chart-card,
     .forecast-block {
-        height: 260px; /* slightly smaller on mobile */
+        height: 260px;
     }
 }
