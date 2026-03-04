@@ -242,86 +242,6 @@ ImpactGrid Financial Stability Regime Model (IFSRM)
 
 </section>
 
-<!-- ================= FORECAST ================= -->
-
-<section id="forecast" class="page-section">
-
-<section class="card">
-
-<h2>Forecast Horizons</h2>
-
-<div class="forecast-block">
-<canvas id="forecast6m"></canvas>
-</div>
-
-<div class="forecast-block">
-<canvas id="forecast1y"></canvas>
-</div>
-
-<div class="forecast-block">
-<canvas id="forecast3y"></canvas>
-</div>
-
-<div class="forecast-block">
-<canvas id="forecast5y"></canvas>
-</div>
-
-</section>
-
-</section>
-
-<!-- ================= PERFORMANCE MATRIX ================= -->
-
-<section id="matrix" class="page-section">
-
-<section class="card">
-
-<h2>Performance Matrix</h2>
-
-<div class="chart-card">
-<canvas id="performanceBarChart"></canvas>
-</div>
-
-<div class="chart-card">
-<canvas id="distributionPieChart"></canvas>
-</div>
-
-<div class="structured-block">
-<h3>Composite Business Health Index</h3>
-<div id="businessHealthIndex"></div>
-</div>
-
-</section>
-
-</section>
-
-<!-- ================= RISK ================= -->
-
-<section id="risk" class="page-section">
-
-<section class="card">
-
-<h2>Operational Risk Assessment</h2>
-
-<div class="structured-block">
-<h3>Stability Risk</h3>
-<div id="stabilityRisk"></div>
-</div>
-
-<div class="structured-block">
-<h3>Margin Risk</h3>
-<div id="marginRisk"></div>
-</div>
-
-<div class="structured-block">
-<h3>Liquidity Risk</h3>
-<div id="liquidityRisk"></div>
-</div>
-
-</section>
-
-</section>
-
 <footer class="dashboard-footer">
 © 2026 ImpactGrid Stability Engine
 </footer>
@@ -329,26 +249,27 @@ ImpactGrid Financial Stability Regime Model (IFSRM)
 </main>
 </div>
 
-<!-- ================= SCRIPT ORDER FIX ================= -->
+<!-- ================= SCRIPT ORDER ================= -->
 
-<!-- Supabase -->
+<!-- Supabase Library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- Auth Guard -->
-<script src="./auth.js"></script>
+<!-- Supabase Client -->
+<script src="supabase.js"></script>
 
-<!-- Chart Engine -->
+<!-- Auth Guard -->
+<script src="auth.js"></script>
+
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Financial Engine -->
-<script src="./script.js"></script>
+<!-- Dashboard Engine -->
+<script src="script.js"></script>
 
 <script>
-
 function toggleSidebar(){
 document.getElementById("sidebar").classList.toggle("active-mobile");
 }
-
 </script>
 
 </body>
