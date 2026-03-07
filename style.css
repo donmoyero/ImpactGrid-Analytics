@@ -190,8 +190,15 @@ body.light-mode::before { opacity: 0.4; }
 .sidebar.collapsed .theme-toggle,
 .sidebar.collapsed button,
 .sidebar.collapsed .logo-text,
-.sidebar.collapsed .sidebar-label {
+.sidebar.collapsed .sidebar-label,
+.sidebar.collapsed .sidebar-bottom {
   display: none;
+}
+
+/* Show only the logo icon when collapsed */
+.sidebar.collapsed .logo-container {
+  justify-content: center;
+  padding: 0 0 18px;
 }
 
 /* ================= LOGO ================= */
