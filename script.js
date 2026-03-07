@@ -22,7 +22,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
   /* Init plan system after DOM ready */
   if (typeof initPlanSystem === "function") {
-    initPlanSystem();
+    initPlanSystem().then(function() {
+      if (typeof buildAIMemoryContext === 'function') buildAIMemoryContext();
+    });
   }
 
   // Close edit modal on Escape key
@@ -926,7 +928,10 @@ async function askImpactGridAI() {
   output.innerHTML += '<div class="ai-response" id="' + typingId + '"><span class="ai-typing">ImpactGrid AI is thinking<span class="dots">...</span></span></div>';
   output.scrollTop = output.scrollHeight;
 
-  var response = await ImpactGridAI.analyze(question, businessData, currentCurrency, aiChatHistory);
+  /* Build AI memory from past reports */
+  var memoryPrefix = window.aiMemoryContext ? window.aiMemoryContext + "\n\nCURRENT SESSION:\n" : "";
+  var questionWithMemory = memoryPrefix ? memoryPrefix + question : question;
+  var response = await ImpactGridAI.analyze(questionWithMemory, businessData, currentCurrency, aiChatHistory);
 
   var typingEl = document.getElementById(typingId);
   if (typingEl) typingEl.remove();
@@ -954,6 +959,23 @@ function fillAIChat(text) {
 /* ================= PDF ENGINE ================= */
 
 function generatePDF() {
+  /* Save report snapshot to Supabase for AI memory */
+  if (typeof saveReportSnapshot === 'function' && businessData.length >= 3) {
+    var totalRev = businessData.reduce(function(s,d){return s+d.revenue;},0);
+    var totalExp = businessData.reduce(function(s,d){return s+d.expenses;},0);
+    var totalPro = businessData.reduce(function(s,d){return s+d.profit;},0);
+    var insightEl = document.getElementById('aiInsights');
+    var insightText = insightEl ? (insightEl.innerText || insightEl.textContent || '') : '';
+    saveReportSnapshot({
+      summary:       'ImpactGrid Report — ' + businessData.length + ' months',
+      healthScore:   Math.round(Math.min(100, Math.max(0, (totalPro/totalRev)*100 + 50))),
+      totalRevenue:  Math.round(totalRev),
+      totalExpenses: Math.round(totalExp),
+      totalProfit:   Math.round(totalPro),
+      monthsCount:   businessData.length,
+      aiInsights:    insightText.substring(0, 500)
+    });
+  }
   if (businessData.length === 0) {
     alert("Add at least one month of data before generating a report.");
     return;
@@ -1225,6 +1247,9 @@ function sum(key) {
 /* ================= NAV ================= */
 
 function showSection(section, event) {
+  if (section === 'report' && typeof renderReportHistory === 'function') {
+    setTimeout(renderReportHistory, 150);
+  }
   document.querySelectorAll(".page-section").forEach(function(s) {
     s.classList.remove("active-section");
   });
