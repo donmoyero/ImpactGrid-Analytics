@@ -18,10 +18,9 @@
       --mid:rgba(34,43,66,0.9);--text:#edf0f7;--sec:#a0b8d8;
       --muted:#6b7fa0;--success:#2dd4a0;--danger:#ff4d6d;
     }
-    html,body{height:100%;overflow:hidden;}
-    body{font-family:'Manrope',sans-serif;background:#030508;color:var(--text);}
+    html{height:100%;}body{min-height:100%;overflow-y:auto;font-family:'Manrope',sans-serif;background:#030508;color:var(--text);}
 
-    #starsCanvas,#earthCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;}
+    #starsCanvas,#earthCanvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;}
 
     .space-overlay{
       position:fixed;inset:0;z-index:1;pointer-events:none;
@@ -32,7 +31,7 @@
     }
 
     .page{
-      position:relative;z-index:10;min-height:100vh;overflow-y:auto;
+      position:relative;z-index:10;min-height:100vh;
       display:flex;align-items:center;justify-content:center;padding:20px;
     }
     .login-wrap{width:100%;max-width:420px;}
@@ -146,6 +145,15 @@
       .login-card{padding:26px 20px 22px;}
     }
   </style>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-97XD9941FC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-97XD9941FC');
+  </script>
 </head>
 <body>
 
@@ -355,7 +363,7 @@ async function handleAuth(){
 }
 
 async function handleGoogle(){
-  try{await window.supabaseClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/index.html'}});}
+  try{await window.supabaseClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://impactgridanalytics.com/index.html'}});}
   catch(e){showMsg('Google sign-in failed. Please try again.','error');}
 }
 
