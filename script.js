@@ -60,11 +60,7 @@ function formatCurrency(val) {
 /* ================= ADD DATA ================= */
 
 async function addData() {
-  /* Check entry limit */
-  if (typeof canUse === "function") {
-    var ok = await canUse("entries");
-    if (!ok) { showLimitModal("entries"); return; }
-  }
+  /* Data entry is always free and unlimited */
 
   var monthValue = document.getElementById("month").value;
   var revenue    = parseFloat(document.getElementById("revenue").value);
@@ -91,7 +87,7 @@ async function addData() {
 
   businessData.push({ date: date, revenue: revenue, expenses: expenses, profit: profit });
   businessData.sort(function(a, b) { return a.date - b.date; });
-  if (typeof incrementUsage === "function") incrementUsage("entries");
+
 
   // Clear form
   document.getElementById("month").value    = "";
@@ -957,23 +953,21 @@ function fillAIChat(text) {
 /* ================= PDF ENGINE ================= */
 
 function generatePDF() {
-  /* Save report snapshot to Supabase for AI memory */
-  if (typeof saveReportSnapshot === 'function' && businessData.length >= 3) {
-    var totalRev = businessData.reduce(function(s,d){return s+d.revenue;},0);
-    var totalExp = businessData.reduce(function(s,d){return s+d.expenses;},0);
-    var totalPro = businessData.reduce(function(s,d){return s+d.profit;},0);
-    var insightEl = document.getElementById('aiInsights');
-    var insightText = insightEl ? (insightEl.innerText || insightEl.textContent || '') : '';
-    saveReportSnapshot({
-      summary:       'ImpactGrid Report — ' + businessData.length + ' months',
-      healthScore:   Math.round(Math.min(100, Math.max(0, (totalPro/totalRev)*100 + 50))),
-      totalRevenue:  Math.round(totalRev),
-      totalExpenses: Math.round(totalExp),
-      totalProfit:   Math.round(totalPro),
-      monthsCount:   businessData.length,
-      aiInsights:    insightText.substring(0, 500)
-    });
-  }
+  /* Collect metadata for saving */
+  var _totalRev = businessData.reduce(function(s,d){return s+d.revenue;},0);
+  var _totalExp = businessData.reduce(function(s,d){return s+d.expenses;},0);
+  var _totalPro = businessData.reduce(function(s,d){return s+d.profit;},0);
+  var _insightEl = document.getElementById('aiInsights');
+  var _insightText = _insightEl ? (_insightEl.innerText || _insightEl.textContent || '') : '';
+  var _healthScore = Math.round(Math.min(100, Math.max(0, _totalRev > 0 ? (_totalPro/_totalRev)*100 + 50 : 50)));
+  var _pdfMeta = {
+    healthScore:   _healthScore,
+    monthsCount:   businessData.length,
+    totalRevenue:  Math.round(_totalRev),
+    totalExpenses: Math.round(_totalExp),
+    totalProfit:   Math.round(_totalPro),
+    aiInsights:    _insightText.substring(0, 500)
+  };
   if (businessData.length === 0) {
     alert("Add at least one month of data before generating a report.");
     return;
@@ -1205,6 +1199,13 @@ function generatePDF() {
     doc.text("Page " + p + " of " + total, W - mg - 14, 291);
   }
 
+  /* Save PDF to account */
+  if (typeof savePDFToAccount === 'function') {
+    try {
+      var _pdfBase64 = doc.output('datauristring').split(',')[1];
+      savePDFToAccount(_pdfBase64, _pdfMeta);
+    } catch(e) { console.error('PDF account save error:', e); }
+  }
   doc.save("ImpactGrid_Report_" + new Date().toISOString().slice(0, 10) + ".pdf");
 }
 
@@ -1245,8 +1246,8 @@ function sum(key) {
 /* ================= NAV ================= */
 
 function showSection(section, event) {
-  if (section === 'report' && typeof renderReportHistory === 'function') {
-    setTimeout(renderReportHistory, 150);
+  if (section === 'report') {
+    if (typeof renderSavedPDFs === 'function') setTimeout(renderSavedPDFs, 150);
   }
   document.querySelectorAll(".page-section").forEach(function(s) {
     s.classList.remove("active-section");
@@ -1413,6 +1414,7 @@ function bindGlobalFunctions() {
   window.showUpgradePrompt    = showUpgradePrompt;
   window.closeLimitModal      = closeLimitModal;
   window.handlePDFClick       = handlePDFClick;
+  window.downloadSavedPDF     = downloadSavedPDF;
 }
 
 function closeUpgradeModal() {
