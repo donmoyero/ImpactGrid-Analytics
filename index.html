@@ -56,6 +56,16 @@
     gtag('js', new Date());
     gtag('config', 'G-97XD9941FC');
   </script>
+  <!-- Mammoth for Word import -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <!-- PDF.js for PDF import -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (typeof pdfjsLib !== "undefined") {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+  </script>
 </head>
 <body>
 
@@ -300,9 +310,43 @@
         <!-- File import -->
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;">
           <label for="fileImport" style="display:inline-flex;align-items:center;gap:9px;padding:10px 20px;background:var(--bg-mid);border:1px dashed var(--border-mid);border-radius:8px;cursor:pointer;font-size:12px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;transition:border-color 0.2s,color 0.2s;">
-            <span style="font-size:16px;">&#128194;</span> Choose Excel / CSV / Word file
+            <span style="font-size:16px;">&#128194;</span> Choose File to Import
           </label>
-          <input type="file" id="fileImport" accept=".csv,.xlsx,.xls,.docx,.doc" style="display:none;" onchange="handleFileImport(event)">
+          <input type="file" id="fileImport" accept=".csv,.xlsx,.xls,.docx,.doc,.pdf" style="display:none;" onchange="handleFileImport(event)">
+          <span id="importStatus" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);"></span>
+        </div>
+
+        <!-- Format hint -->
+        <div style="margin-top:12px;padding:12px 14px;background:var(--bg-mid);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;line-height:1.9;">
+          <div style="margin-bottom:6px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span style="padding:2px 8px;background:rgba(45,212,160,0.1);border:1px solid rgba(45,212,160,0.25);border-radius:4px;color:#2DD4A0;">Excel .xlsx</span>
+            <span style="padding:2px 8px;background:rgba(45,212,160,0.1);border:1px solid rgba(45,212,160,0.25);border-radius:4px;color:#2DD4A0;">CSV .csv</span>
+            <span style="padding:2px 8px;background:rgba(100,160,255,0.1);border:1px solid rgba(100,160,255,0.25);border-radius:4px;color:#64A0FF;">Word .docx</span>
+            <span style="padding:2px 8px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.25);border-radius:4px;color:#FF4D6D;">PDF .pdf</span>
+          </div>
+          <strong style="color:var(--text-secondary);">Required columns:</strong>
+          &nbsp;<span style="color:var(--gold-light);">Month</span> | <span style="color:var(--gold-light);">Revenue</span> | <span style="color:var(--gold-light);">Expenses</span>
+          <br><span style="color:var(--text-muted);">Word &amp; PDF: must contain a table or rows with Month, Revenue, Expenses data.</span>
+        </div>
+
+        <!-- Download template -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px;background:rgba(200,169,110,0.05);border:1px solid rgba(200,169,110,0.15);border-radius:8px;">
+          <span style="font-size:20px;">📥</span>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;color:var(--gold-light);margin-bottom:2px;font-family:'Syne',sans-serif;">Don't have a spreadsheet yet?</div>
+            <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Download our pre-formatted Excel template, fill in your data, and upload it directly.</div>
+          </div>
+          <a href="ImpactGrid_Data_Template.xlsx" download style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;background:linear-gradient(135deg,rgba(200,169,110,0.2),rgba(226,201,138,0.1));border:1px solid rgba(200,169,110,0.35);border-radius:8px;color:var(--gold-light);font-size:11px;font-family:'JetBrains Mono',monospace;text-decoration:none;white-space:nowrap;letter-spacing:0.05em;transition:all 0.2s;">
+            ↓ Download Template
+          </a>
+        </div>
+
+        <!-- File import -->
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;">
+          <label for="fileImport" style="display:inline-flex;align-items:center;gap:9px;padding:10px 20px;background:var(--bg-mid);border:1px dashed var(--border-mid);border-radius:8px;cursor:pointer;font-size:12px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;transition:border-color 0.2s,color 0.2s;">
+            <span style="font-size:16px;">&#128194;</span> Choose File to Import
+          </label>
+          <input type="file" id="fileImport" accept=".csv,.xlsx,.xls,.docx,.doc,.pdf" style="display:none;" onchange="handleFileImport(event)">
           <span id="importStatus" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);"></span>
         </div>
 
