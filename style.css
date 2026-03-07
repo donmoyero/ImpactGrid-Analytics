@@ -1356,3 +1356,16 @@ canvas {
   align-items: center;
   justify-content: center;
 }
+
+/* ── Saved PDF Cards ── */
+.saved-pdf-card {
+  background: var(--bg-mid, #121729);
+  border: 1px solid var(--border-mid, #222b42);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  transition: border-color 0.2s;
+}
+.saved-pdf-card:hover {
+  border-color: rgba(200,169,110,0.25);
+}
