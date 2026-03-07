@@ -140,6 +140,14 @@
     .fs-1{bottom:18%;left:4%;}
     .fs-2{top:22%;right:4%;}
 
+    .password-wrap{position:relative;display:flex;align-items:center;}
+    .password-wrap input{padding-right:42px;}
+    .eye-btn{
+      position:absolute;right:12px;background:none;border:none;cursor:pointer;
+      color:var(--muted);padding:0;display:flex;align-items:center;transition:color 0.15s;
+    }
+    .eye-btn:hover{color:var(--gold);}
+
     @media(max-width:700px){
       .float-stat{display:none;}
       .login-card{padding:26px 20px 22px;}
@@ -209,10 +217,31 @@
         <label>Email Address</label>
         <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
       </div>
+
       <div class="field">
         <label>Password</label>
-        <input type="password" id="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
-          autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuth()">
+        <div class="password-wrap">
+          <input type="password" id="password" placeholder="Min. 8 characters"
+            autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuth()">
+          <button type="button" class="eye-btn" onclick="togglePassword('password','eyeIcon1')" tabindex="-1">
+            <svg id="eyeIcon1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="field" id="confirmPasswordField">
+        <label>Confirm Password</label>
+        <div class="password-wrap">
+          <input type="password" id="confirmPassword" placeholder="Re-enter your password"
+            autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuth()">
+          <button type="button" class="eye-btn" onclick="togglePassword('confirmPassword','eyeIcon2')" tabindex="-1">
+            <svg id="eyeIcon2" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <button class="btn-main" id="authButton" onclick="handleAuth()">Create Account</button>
@@ -314,62 +343,147 @@
 })();
 
 /* === AUTH === */
-var isLogin=false;
+var isLogin = false;
 
+/* Redirect if already logged in */
 (async function(){
-  try{var s=await window.supabaseClient.auth.getSession();if(s.data&&s.data.session)window.location.href="index.html";}catch(e){}
+  try {
+    var s = await window.supabaseClient.auth.getSession();
+    if (s.data && s.data.session) window.location.href = "index.html";
+  } catch(e) {}
 })();
 
-function setMode(login){
-  isLogin=login;
-  document.getElementById('tabSignin').classList.toggle('active',login);
-  document.getElementById('tabSignup').classList.toggle('active',!login);
-  document.getElementById('signupExtra').style.display=login?'none':'block';
-  document.getElementById('authButton').textContent=login?'Sign In':'Create Account';
-  document.getElementById('modeSubtitle').textContent=login
-    ?'Sign in to your ImpactGrid Financial Intelligence dashboard.'
-    :'Create a free account to access the ImpactGrid IFSRM platform.';
-  document.getElementById('password').autocomplete=login?'current-password':'new-password';
-  showMsg('','');
+/* Toggle password visibility */
+function togglePassword(inputId, iconId) {
+  var input = document.getElementById(inputId);
+  var icon  = document.getElementById(iconId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    input.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
 }
 
-async function handleAuth(){
-  var email=document.getElementById('email').value.trim();
-  var password=document.getElementById('password').value;
-  if(!email||!password){showMsg('Please enter your email and password.','error');return;}
-  if(!isLogin&&password.length<8){showMsg('Password must be at least 8 characters.','error');return;}
+/* Switch between Sign In and Create Account */
+function setMode(login) {
+  isLogin = login;
 
-  var btn=document.getElementById('authButton');
-  btn.textContent='Please wait\u2026';btn.style.opacity='0.7';
+  document.getElementById('tabSignin').classList.toggle('active', login);
+  document.getElementById('tabSignup').classList.toggle('active', !login);
+  document.getElementById('signupExtra').style.display          = login ? 'none' : 'block';
+  document.getElementById('confirmPasswordField').style.display = login ? 'none' : 'block';
+  document.getElementById('authButton').textContent             = login ? 'Sign In' : 'Create Account';
+  document.getElementById('modeSubtitle').textContent           = login
+    ? 'Sign in to access your ImpactGrid Financial Intelligence dashboard.'
+    : 'Create your free account to access the IFSRM analytics platform.';
+  document.getElementById('password').placeholder    = login ? 'Enter your password' : 'Min. 8 characters';
+  document.getElementById('password').autocomplete   = login ? 'current-password' : 'new-password';
 
-  try{
-    var result;
-    if(isLogin){
-      result=await window.supabaseClient.auth.signInWithPassword({email,password});
-    }else{
-      var meta={};
-      var fn=(document.getElementById('fullName')||{}).value||'';
-      var bn=(document.getElementById('businessName')||{}).value||'';
-      if(fn)meta.full_name=fn.trim();
-      if(bn)meta.business_name=bn.trim();
-      result=await window.supabaseClient.auth.signUp({email,password,options:{data:meta}});
+  showMsg('', '');
+}
+
+/* Main auth handler */
+async function handleAuth() {
+  var email    = document.getElementById('email').value.trim();
+  var password = document.getElementById('password').value;
+
+  if (!email || !password) {
+    showMsg('Please enter your email address and password.', 'error');
+    return;
+  }
+
+  if (!isLogin) {
+    /* Signup validations */
+    if (password.length < 8) {
+      showMsg('Password must be at least 8 characters.', 'error');
+      return;
     }
-    if(result.error){showMsg(result.error.message,'error');}
-    else if(!isLogin){showMsg('Account created! Check your email to confirm, then sign in.','success');setTimeout(function(){setMode(true);},3500);}
-    else{window.location.href='index.html';}
-  }catch(e){showMsg('Something went wrong. Please try again.','error');}
+    var confirm = document.getElementById('confirmPassword').value;
+    if (password !== confirm) {
+      showMsg('Passwords do not match. Please try again.', 'error');
+      return;
+    }
+  }
 
-  btn.textContent=isLogin?'Sign In':'Create Account';btn.style.opacity='1';
+  var btn = document.getElementById('authButton');
+  btn.textContent  = 'Please wait…';
+  btn.style.opacity = '0.7';
+
+  try {
+    var result;
+
+    if (isLogin) {
+      result = await window.supabaseClient.auth.signInWithPassword({ email, password });
+    } else {
+      var meta = {};
+      var fn = (document.getElementById('fullName') || {}).value || '';
+      var bn = (document.getElementById('businessName') || {}).value || '';
+      if (fn) meta.full_name    = fn.trim();
+      if (bn) meta.business_name = bn.trim();
+
+      result = await window.supabaseClient.auth.signUp({
+        email,
+        password,
+        options: { data: meta }
+      });
+    }
+
+    if (result.error) {
+      /* Make Supabase errors more human-readable */
+      var msg = result.error.message;
+      if (msg.includes('already registered')) msg = 'An account with this email already exists. Please sign in.';
+      if (msg.includes('Invalid login'))       msg = 'Incorrect email or password. Please try again.';
+      if (msg.includes('Email not confirmed')) msg = 'Please confirm your email address before signing in.';
+      showMsg(msg, 'error');
+
+    } else if (!isLogin) {
+      /* Check if email confirmation is required */
+      var needsConfirm = result.data && result.data.user && !result.data.session;
+      if (needsConfirm) {
+        showMsg('Account created! Please check your email and click the confirmation link, then sign in.', 'success');
+      } else {
+        /* Auto-confirmed — go straight to dashboard */
+        window.location.href = 'index.html';
+      }
+      setTimeout(function() { setMode(true); }, 4000);
+
+    } else {
+      window.location.href = 'index.html';
+    }
+
+  } catch(e) {
+    showMsg('Something went wrong. Please try again.', 'error');
+  }
+
+  btn.textContent   = isLogin ? 'Sign In' : 'Create Account';
+  btn.style.opacity = '1';
 }
 
-async function handleGoogle(){
-  try{await window.supabaseClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://impactgridanalytics.com/index.html'}});}
-  catch(e){showMsg('Google sign-in failed. Please try again.','error');}
+/* Google OAuth */
+async function handleGoogle() {
+  try {
+    var { error } = await window.supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://impactgridanalytics.com/index.html',
+        queryParams: { access_type: 'offline', prompt: 'consent' }
+      }
+    });
+    if (error) showMsg('Google sign-in failed: ' + error.message, 'error');
+  } catch(e) {
+    showMsg('Google sign-in failed. Please try again.', 'error');
+  }
 }
 
-function showMsg(text,type){
-  var el=document.getElementById('errorMessage');
-  el.className=type;el.textContent=text;el.style.display=text?'block':'none';
+/* Message helper */
+function showMsg(text, type) {
+  var el = document.getElementById('errorMessage');
+  el.className   = type;
+  el.textContent = text;
+  el.style.display = text ? 'block' : 'none';
 }
 </script>
 </body>
