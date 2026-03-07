@@ -110,6 +110,9 @@
         <li onclick="showSection('ai', event)">
           <span style="margin-right:10px;opacity:0.6;">◎</span> ImpactGrid AI
         </li>
+        <li onclick="showSection('upgrade', event)">
+          <span style="margin-right:10px;opacity:0.6;">⬆</span> Upgrade Plan
+        </li>
         <li onclick="showSection('report', event)">
           <span style="margin-right:10px;opacity:0.6;">⊡</span> Reports
         </li>
@@ -117,6 +120,13 @@
     </nav>
 
     <div style="margin-top:auto;padding-top:20px;border-top:1px solid var(--border);">
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px;">Signed in as</div>
+        <div id="sidebarUserEmail" style="font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;word-break:break-all;margin-bottom:8px;"></div>
+        <span id="planBadge" class="plan-badge plan-analyst">Analyst</span>
+        <a href="#" onclick="showSection('upgrade',event)" style="display:block;margin-top:8px;font-size:11px;color:var(--gold);font-family:'JetBrains Mono',monospace;text-decoration:none;letter-spacing:0.05em;">⬆ Upgrade Plan</a>
+      </div>
+      <div id="autosaveBadge" style="opacity:0;transition:opacity 0.4s;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--success);letter-spacing:0.08em;margin-bottom:10px;">✓ Data saved</div>
       <div class="theme-toggle" onclick="toggleTheme()">⬡ Toggle Theme</div>
       <button onclick="toggleSidebar()" class="btn-logout" style="margin-top:8px;">◁ Collapse</button>
       <button onclick="logout()" class="btn-logout">⎋ Logout</button>
@@ -129,6 +139,16 @@
   ================================================ -->
 
   <main class="main-content">
+
+    <!-- Plan expired banner -->
+    <div id="planExpiredBanner" style="display:none;align-items:center;gap:14px;padding:14px 20px;background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.25);border-radius:10px;margin-bottom:20px;">
+      <span style="font-size:18px;">⚠</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:#ff4d6d;margin-bottom:2px;">Your data storage has expired</div>
+        <div style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Your saved data has been cleared. Upgrade to Professional to keep your data for 12 months.</div>
+      </div>
+      <a href="https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201" target="_blank" style="padding:9px 18px;background:linear-gradient(135deg,#b8923e,#e2c98a);color:#06080f;font-weight:700;font-size:12px;border-radius:8px;text-decoration:none;white-space:nowrap;">Upgrade Now</a>
+    </div>
 
     <!-- Header -->
     <header class="dashboard-header">
@@ -429,6 +449,78 @@
     </section>
 
 
+
+    <!-- ============================================
+         SECTION: UPGRADE / PRICING
+    ============================================ -->
+    <section id="upgrade" class="page-section">
+      <section class="card">
+        <h2>Choose Your Plan</h2>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:32px;line-height:1.7;max-width:560px;">
+          Unlock the full power of ImpactGrid IFSRM. All plans include access to the AI Financial Intelligence engine.
+        </p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;">
+
+          <!-- Analyst Free -->
+          <div class="pricing-card" id="pricingAnalyst">
+            <div class="pricing-tier">Analyst</div>
+            <div class="pricing-price">Free</div>
+            <div class="pricing-desc">Perfect for getting started</div>
+            <ul class="pricing-features">
+              <li>✓ 1 month data storage</li>
+              <li>✓ Manual data entry</li>
+              <li>✓ Basic charts</li>
+              <li>✓ 5 AI questions/day</li>
+              <li>✓ 1-year forecasting</li>
+              <li style="color:var(--text-muted);">✗ File import</li>
+              <li style="color:var(--text-muted);">✗ PDF export</li>
+              <li style="color:var(--text-muted);">✗ Risk assessment</li>
+            </ul>
+            <button class="pricing-btn pricing-current" disabled>Current Plan</button>
+          </div>
+
+          <!-- Professional -->
+          <div class="pricing-card pricing-featured" id="pricingProfessional">
+            <div class="pricing-popular">MOST POPULAR</div>
+            <div class="pricing-tier">Professional</div>
+            <div class="pricing-price">£8.99<span style="font-size:14px;font-weight:400;">/mo</span></div>
+            <div class="pricing-desc">For growing businesses</div>
+            <ul class="pricing-features">
+              <li>✓ 12 months data storage</li>
+              <li>✓ File import (Excel, CSV)</li>
+              <li>✓ All charts + matrix</li>
+              <li>✓ Unlimited AI questions</li>
+              <li>✓ 3-year forecasting</li>
+              <li>✓ Risk assessment</li>
+              <li>✓ PDF report export</li>
+              <li style="color:var(--text-muted);">✗ Multi-business profiles</li>
+            </ul>
+            <a href="https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201" target="_blank" class="pricing-btn pricing-upgrade">Upgrade to Professional</a>
+          </div>
+
+          <!-- Enterprise Intelligence -->
+          <div class="pricing-card" id="pricingEnterprise">
+            <div class="pricing-tier">Enterprise Intelligence</div>
+            <div class="pricing-price">£13.99<span style="font-size:14px;font-weight:400;">/mo</span></div>
+            <div class="pricing-desc">For serious SME analytics</div>
+            <ul class="pricing-features">
+              <li>✓ Unlimited data storage</li>
+              <li>✓ Everything in Professional</li>
+              <li>✓ 10-year forecasting</li>
+              <li>✓ Multi-business profiles</li>
+              <li>✓ Industry benchmarking</li>
+              <li>✓ Priority AI responses</li>
+              <li>✓ Excel export</li>
+              <li>✓ Advanced risk modelling</li>
+            </ul>
+            <a href="https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200" target="_blank" class="pricing-btn pricing-upgrade">Upgrade to Enterprise</a>
+          </div>
+
+        </div>
+      </section>
+    </section>
+
     <!-- Footer -->
     <footer class="dashboard-footer">
       © 2026 ImpactGrid Stability Engine &nbsp;·&nbsp; IFSRM v3.0 &nbsp;·&nbsp; All rights reserved
@@ -480,8 +572,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <!-- ImpactGrid -->
+<script src="plans.js"></script>
 <script src="impactgrid-ai.js"></script>
 <script src="script.js"></script>
+
+
+<!-- Upgrade Prompt Modal -->
+<div id="upgradeModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(6,8,15,0.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-surface,#0e1220);border:1px solid rgba(200,169,110,0.3);border-radius:18px;padding:36px 32px;width:100%;max-width:400px;margin:20px;box-shadow:0 32px 80px rgba(0,0,0,0.7);text-align:center;">
+    <div style="font-size:36px;margin-bottom:16px;">⬆</div>
+    <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--text,#edf0f7);margin-bottom:8px;">Upgrade Required</div>
+    <div style="font-size:13px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:6px;"><span id="upgradeFeatureName"></span> is available on the <strong style="color:var(--gold);"><span id="upgradePlanName"></span></strong> plan.</div>
+    <div style="font-size:22px;font-family:'Syne',sans-serif;font-weight:800;color:var(--gold-light,#e2c98a);margin:20px 0 8px;"><span id="upgradePrice"></span></div>
+    <a id="upgradeBtn" href="#" target="_blank" style="display:block;padding:13px;background:linear-gradient(135deg,#b8923e,#e2c98a);color:#06080f;font-weight:700;font-size:14px;border-radius:9px;text-decoration:none;margin-bottom:12px;letter-spacing:0.02em;">Upgrade Now</a>
+    <button onclick="closeUpgradeModal()" style="background:transparent;border:1px solid var(--border,#1a2035);color:var(--text-muted);font-size:13px;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:'Manrope',sans-serif;width:100%;">Maybe Later</button>
+  </div>
+</div>
 
 </body>
 </html>
