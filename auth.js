@@ -4,6 +4,14 @@
 ================================================================ */
 const supabase = window.supabaseClient;
 
+/* Logout — defined here early so mobile topbar button always works */
+window.logout = async function() {
+  try {
+    if (supabase) await supabase.auth.signOut();
+  } catch(e) {}
+  window.location.href = "login.html";
+};
+
 async function checkAuth() {
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
