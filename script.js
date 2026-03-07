@@ -1826,6 +1826,7 @@ async function logout() {
 
 /* ================= BIND GLOBALS ================= */
 
+// Called immediately so inline onclick handlers work before DOMContentLoaded
 function bindGlobalFunctions() {
   window.addData              = addData;
   window.setCurrency          = setCurrency;
@@ -1852,6 +1853,7 @@ function bindGlobalFunctions() {
   window.handlePDFClick       = handlePDFClick;
   window.downloadSavedPDF     = downloadSavedPDF;
 }
+bindGlobalFunctions(); // Run immediately so onclick handlers work before DOMContentLoaded
 
 function closeUpgradeModal() {
   if (typeof window.closeUpgradeModal === "function" && window.closeUpgradeModal !== closeUpgradeModal) {
