@@ -115,6 +115,29 @@ function checkDuplicate() {
 }
 
 
+/* ================= MONTH STRING PARSER ================= */
+
+function parseMonthString(str) {
+  if (!str) return null;
+  str = String(str).trim();
+
+  // ISO format: 2024-01
+  var iso = str.match(/^(20\d{2})[-\/](0?[1-9]|1[0-2])$/);
+  if (iso) return iso[1] + "-" + iso[2].padStart(2,"0");
+
+  // "January 2024" or "Jan 2024"
+  var months = {jan:"01",feb:"02",mar:"03",apr:"04",may:"05",jun:"06",jul:"07",aug:"08",sep:"09",oct:"10",nov:"11",dec:"12"};
+  var named = str.match(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b[\s\-\/]*(20\d{2})\b/i);
+  if (named) { return named[2] + "-" + months[named[1].toLowerCase().slice(0,3)]; }
+
+  // "2024 January"
+  var yearFirst = str.match(/\b(20\d{2})\b[\s\-\/]*(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i);
+  if (yearFirst) { return yearFirst[1] + "-" + months[yearFirst[2].toLowerCase().slice(0,3)]; }
+
+  return null;
+}
+
+
 /* ================= FILE IMPORT ================= */
 
 function handleFileImport(event) {
@@ -1434,130 +1457,7 @@ function generatePDF() {
 
   doc.save("ImpactGrid_Report_" + new Date().toISOString().slice(0,10) + ".pdf");
 }
-gend */
-  font(6,"normal");
-  rect(mg, chartY + chartH + 9, 3, 2, C.green);
-  textC(C.textMut); doc.text("Revenue", mg + 5, chartY + chartH + 11);
-  rect(mg + 22, chartY + chartH + 9, 3, 2, C.goldL);
-  doc.text("Profit", mg + 27, chartY + chartH + 11);
 
-  y2 = chartY + chartH + 18;
-
-  /* ── AI Insights ── */
-  y2 = sectionTitle("AI Financial Insights", y2);
-
-  if (_insightText && _insightText.length > 10) {
-    rectBorder(mg, y2, cw, 48, C.surface, C.border, 0.25, 2);
-    /* Gold accent left bar */
-    rect(mg, y2, 2, 48, C.gold);
-    font(8, "normal"); textC(C.textSec);
-    var insights = doc.splitTextToSize(_insightText.substring(0, 600), cw - 10);
-    var lineH = 4.5;
-    var maxLines = Math.floor(44 / lineH);
-    insights.slice(0, maxLines).forEach(function(line, i) {
-      doc.text(line, mg + 6, y2 + 7 + i * lineH);
-    });
-    y2 += 54;
-  } else {
-    rectBorder(mg, y2, cw, 14, C.surface, C.border, 0.2, 2);
-    font(8,"normal"); textC(C.textMut);
-    doc.text("Add data and ask ImpactGrid AI for insights to appear here.", mg+6, y2+9);
-    y2 += 20;
-  }
-
-  /* ── Risk Assessment ── */
-  y2 = sectionTitle("Risk Assessment", y2);
-
-  var growthRates = [];
-  for (var i = 1; i < businessData.length; i++) {
-    if (businessData[i-1].revenue > 0) {
-      growthRates.push((businessData[i].revenue - businessData[i-1].revenue) / businessData[i-1].revenue * 100);
-    }
-  }
-  var avgGrowth = growthRates.length ? growthRates.reduce(function(a,b){return a+b;},0)/growthRates.length : 0;
-  var profitMargin = _totalRev > 0 ? _totalPro/_totalRev*100 : 0;
-
-  var risks = [
-    {
-      label: "Revenue Stability",
-      value: avgGrowth >= 5 ? "LOW RISK" : avgGrowth >= 0 ? "MODERATE" : "HIGH RISK",
-      color: avgGrowth >= 5 ? C.green : avgGrowth >= 0 ? C.gold : C.red,
-      desc:  "Avg monthly growth: " + avgGrowth.toFixed(1) + "%"
-    },
-    {
-      label: "Profit Margin Health",
-      value: profitMargin >= 20 ? "HEALTHY" : profitMargin >= 5 ? "MODERATE" : "CRITICAL",
-      color: profitMargin >= 20 ? C.green : profitMargin >= 5 ? C.gold : C.red,
-      desc:  "Net margin: " + profitMargin.toFixed(1) + "%"
-    },
-    {
-      label: "Expense Management",
-      value: _totalExp/_totalRev < 0.7 ? "CONTROLLED" : _totalExp/_totalRev < 0.9 ? "ELEVATED" : "HIGH",
-      color: _totalExp/_totalRev < 0.7 ? C.green : _totalExp/_totalRev < 0.9 ? C.gold : C.red,
-      desc:  "Expense ratio: " + (_totalRev > 0 ? (_totalExp/_totalRev*100).toFixed(1) : "N/A") + "%"
-    }
-  ];
-
-  var riskCardW = (cw - 6) / 3;
-  risks.forEach(function(r, i) {
-    var rx = mg + i * (riskCardW + 3);
-    rectBorder(rx, y2, riskCardW, 22, C.elevated, C.border, 0.25, 2);
-    font(6,"bold"); textC(C.textMut);
-    doc.text(r.label.toUpperCase(), rx + riskCardW/2, y2 + 5, {align:"center"});
-    font(9,"bold"); textC(r.color);
-    doc.text(r.value, rx + riskCardW/2, y2 + 13, {align:"center"});
-    font(6,"normal"); textC(C.textMut);
-    doc.text(r.desc, rx + riskCardW/2, y2 + 19, {align:"center"});
-  });
-  y2 += 28;
-
-  /* ── Recommendations ── */
-  y2 = sectionTitle("Strategic Recommendations", y2);
-
-  var recs = [];
-  if (profitMargin < 10)  recs.push("Review and reduce operating expenses — current margin of " + profitMargin.toFixed(1) + "% is below optimal.");
-  if (avgGrowth < 0)      recs.push("Revenue is declining — consider new customer acquisition strategies or product diversification.");
-  if (avgGrowth >= 10)    recs.push("Strong growth trajectory of " + avgGrowth.toFixed(1) + "% — consider reinvesting profits to sustain momentum.");
-  if (_totalExp/_totalRev > 0.85) recs.push("Expense ratio is high — identify fixed costs that can be renegotiated or eliminated.");
-  if (profitMargin >= 20) recs.push("Healthy profit margin — focus on scaling revenue while maintaining cost discipline.");
-  if (!recs.length)       recs.push("Business is performing within normal parameters — maintain current operational approach.");
-  recs.push("Use ImpactGrid AI for personalised scenario modelling and 3-10 year financial forecasting.");
-
-  recs.slice(0,4).forEach(function(rec, i) {
-    var recY = y2 + i * 10;
-    if (recY > 250) return;
-    rectBorder(mg, recY, cw, 9, C.surface, C.border, 0.2, 1);
-    rect(mg, recY, 2, 9, i===0?C.gold:C.blue);
-    font(7,"normal"); textC(C.textSec);
-    var recLines = doc.splitTextToSize("  " + rec, cw - 8);
-    doc.text(recLines[0], mg + 6, recY + 6);
-  });
-
-  y2 += recs.slice(0,4).length * 10 + 8;
-
-  /* ── Footer branding ── */
-  rectBorder(mg, y2, cw, 16, C.surface, C.border, 0.25, 2);
-  font(7,"bold"); textC(C.goldL);
-  doc.text("ImpactGrid Financial Intelligence Platform", W/2, y2+6, {align:"center"});
-  font(6,"normal"); textC(C.textMut);
-  doc.text("IFSRM v3.0  ·  Regime-Dependent Stability Modelling for SMEs  ·  impactgridanalytics.com", W/2, y2+12, {align:"center"});
-
-  addFooter(2, 2);
-
-  /* ── Save & upload ── */
-  var filename = "ImpactGrid-Report-" +
-    new Date().toLocaleDateString("en-GB").replace(/\//g,"-") + ".pdf";
-
-  /* Save PDF to account */
-  if (typeof savePDFToAccount === "function") {
-    try {
-      var _pdfBase64 = doc.output("datauristring").split(",")[1];
-      savePDFToAccount(_pdfBase64, _pdfMeta);
-    } catch(e) { console.error("PDF account save error:", e); }
-  }
-
-  doc.save(filename);
-}
 
 
 /* ── PDF Import ── */
