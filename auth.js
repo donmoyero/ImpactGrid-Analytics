@@ -3,7 +3,6 @@ const supabase = window.supabaseClient;
 
 /* ================= AUTH GUARD ================= */
 async function checkAuth() {
-
   try {
 
     const { data: { session }, error } = await supabase.auth.getSession();
@@ -14,18 +13,14 @@ async function checkAuth() {
       return;
     }
 
-    /* If user is NOT logged in → go to login page */
+    /* Not logged in — send to login */
     if (!session) {
       window.location.href = "login.html";
       return;
     }
 
-    /* If logged in → allow dashboard */
-    console.log("User authenticated:", session.user.email);
-
-    /* Show the app now that auth is confirmed */
-    const app = document.getElementById("app");
-    if (app) app.style.opacity = "1";
+    /* Logged in — all good */
+    console.log("Authenticated:", session.user.email);
 
   } catch (err) {
     console.error("Auth error:", err);
@@ -33,18 +28,14 @@ async function checkAuth() {
   }
 }
 
-/* ================= LISTEN FOR AUTH CHANGES ================= */
-/* Handles token refresh and session expiry automatically */
+/* ================= AUTO REDIRECT ON SIGN OUT ================= */
 supabase.auth.onAuthStateChange((event, session) => {
-
-  if (event === "SIGNED_OUT" || (!session && event !== "INITIAL_SESSION")) {
+  if (event === "SIGNED_OUT") {
     window.location.href = "login.html";
   }
-
   if (event === "TOKEN_REFRESHED") {
-    console.log("Session token refreshed.");
+    console.log("Token refreshed.");
   }
-
 });
 
 checkAuth();
