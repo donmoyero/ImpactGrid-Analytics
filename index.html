@@ -165,11 +165,14 @@
     </nav>
 
     <div class="sidebar-bottom" style="margin-top:auto;padding-top:20px;border-top:1px solid var(--border);">
-      <div style="margin-bottom:14px;">
-        <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px;">Signed in as</div>
-        <div id="sidebarUserEmail" style="font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;word-break:break-all;margin-bottom:8px;"></div>
-        <span id="planBadge" class="plan-badge plan-analyst">Analyst</span>
-        <a href="#" onclick="showSection('upgrade',event)" style="display:block;margin-top:8px;font-size:11px;color:var(--gold);font-family:'JetBrains Mono',monospace;text-decoration:none;letter-spacing:0.05em;">⬆ Upgrade Plan</a>
+      <div style="margin-bottom:14px;padding:12px 14px;background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">Current Plan</div>
+          <span id="planBadge" class="plan-badge plan-analyst">Analyst</span>
+        </div>
+        <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:3px;">Signed in as</div>
+        <div id="sidebarUserEmail" style="font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;word-break:break-all;"></div>
+        <a href="#" onclick="showSection('upgrade',event)" style="display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:10px;color:var(--gold);font-family:'JetBrains Mono',monospace;text-decoration:none;letter-spacing:0.05em;padding:5px 10px;background:rgba(200,169,110,0.08);border:1px solid rgba(200,169,110,0.2);border-radius:6px;transition:background 0.15s;" onmouseover="this.style.background='rgba(200,169,110,0.15)'" onmouseout="this.style.background='rgba(200,169,110,0.08)'">⬆ Upgrade Plan</a>
       </div>
       <div id="autosaveBadge" style="opacity:0;transition:opacity 0.4s;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--success);letter-spacing:0.08em;margin-bottom:10px;">✓ Data saved</div>
       <div id="usageBar" style="margin-bottom:12px;"></div>
