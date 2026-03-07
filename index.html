@@ -109,6 +109,10 @@
     <span class="mob-icon">◎</span>
     <span class="mob-label">AI</span>
   </button>
+  <button class="mob-nav-btn" onclick="mobileNav('settings',this)">
+    <span class="mob-icon">⚙</span>
+    <span class="mob-label">Settings</span>
+  </button>
   <button class="mob-nav-btn" onclick="mobileNav('report',this)">
     <span class="mob-icon">⊡</span>
     <span class="mob-label">Report</span>
@@ -155,30 +159,35 @@
         <li onclick="showSection('ai', event)">
           <span style="margin-right:10px;opacity:0.6;">◎</span> ImpactGrid AI
         </li>
-        <li onclick="showSection('upgrade', event)">
-          <span style="margin-right:10px;opacity:0.6;">⬆</span> Upgrade Plan
-        </li>
         <li onclick="showSection('report', event)">
           <span style="margin-right:10px;opacity:0.6;">⊡</span> Reports
+        </li>
+        <li onclick="showSection('upgrade', event)" style="margin-top:8px;border-top:1px solid var(--border);padding-top:12px;">
+          <span style="margin-right:10px;opacity:0.6;">⬆</span> Upgrade Plan
+        </li>
+        <li onclick="showSection('settings', event)">
+          <span style="margin-right:10px;opacity:0.6;">⚙</span> Settings
         </li>
       </ul>
     </nav>
 
-    <div class="sidebar-bottom" style="margin-top:auto;padding-top:20px;border-top:1px solid var(--border);">
-      <div style="margin-bottom:14px;padding:12px 14px;background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">Current Plan</div>
-          <span id="planBadge" class="plan-badge plan-analyst">Basic</span>
+    <div class="sidebar-bottom" style="padding-top:14px;border-top:1px solid var(--border);">
+      <div id="autosaveBadge" style="opacity:0;transition:opacity 0.4s;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--success);letter-spacing:0.08em;margin-bottom:6px;">✓ Data saved</div>
+      <div id="usageBar" style="margin-bottom:8px;"></div>
+      <!-- User chip -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:10px;">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dim));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0a0a0a;flex-shrink:0;" id="sidebarAvatar">U</div>
+          <div style="min-width:0;">
+            <div id="sidebarUserEmail" style="font-size:10px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;"></div>
+            <span id="planBadge" class="plan-badge plan-analyst" style="margin-top:2px;display:inline-block;">Basic</span>
+          </div>
         </div>
-        <div style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:3px;">Signed in as</div>
-        <div id="sidebarUserEmail" style="font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;word-break:break-all;"></div>
-        <a href="#" onclick="showSection('upgrade',event)" style="display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:10px;color:var(--gold);font-family:'JetBrains Mono',monospace;text-decoration:none;letter-spacing:0.05em;padding:5px 10px;background:rgba(200,169,110,0.08);border:1px solid rgba(200,169,110,0.2);border-radius:6px;transition:background 0.15s;" onmouseover="this.style.background='rgba(200,169,110,0.15)'" onmouseout="this.style.background='rgba(200,169,110,0.08)'">⬆ Upgrade Plan</a>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button onclick="toggleSidebar()" title="Collapse sidebar" style="background:transparent;border:1px solid var(--border-mid);border-radius:6px;color:var(--text-muted);font-size:13px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-mid)';this.style.color='var(--text-muted)'">◁</button>
+          <button onclick="logout()" title="Sign out" style="background:transparent;border:1px solid var(--border-mid);border-radius:6px;color:var(--text-muted);font-size:13px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'" onmouseout="this.style.borderColor='var(--border-mid)';this.style.color='var(--text-muted)'">⎋</button>
+        </div>
       </div>
-      <div id="autosaveBadge" style="opacity:0;transition:opacity 0.4s;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--success);letter-spacing:0.08em;margin-bottom:10px;">✓ Data saved</div>
-      <div id="usageBar" style="margin-bottom:12px;"></div>
-      <div class="theme-toggle" onclick="toggleTheme()">⬡ Toggle Theme</div>
-      <button onclick="toggleSidebar()" class="btn-logout" style="margin-top:8px;">◁ Collapse</button>
-      <button onclick="logout()" class="btn-logout">⎋ Logout</button>
     </div>
 
   </aside>
@@ -499,9 +508,9 @@
       <section class="card">
         <h2>AI Revenue Forecast Visualisation</h2>
         <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
-          <button class="ai-suggestion-chip" onclick="fillAIChat('3 year forecast')">3 Years</button>
-          <button class="ai-suggestion-chip" onclick="fillAIChat('5 year forecast')">5 Years</button>
-          <button class="ai-suggestion-chip" onclick="fillAIChat('10 year forecast')">10 Years</button>
+          <button class="ai-suggestion-chip" onclick="generateAIProjection(3)">3 Years</button>
+          <button class="ai-suggestion-chip" onclick="generateAIProjection(5)">5 Years</button>
+          <button class="ai-suggestion-chip" onclick="generateAIProjection(10)">10 Years</button>
         </div>
         <div class="chart-card" style="height:360px;"><canvas id="aiForecastChart"></canvas></div>
         <div id="aiForecastExplanation"></div>
@@ -511,6 +520,69 @@
 
 
     <!-- ============================================
+         SECTION: SETTINGS
+    ============================================ -->
+
+    <section id="settings" class="page-section">
+      <h2 style="font-size:22px;font-weight:700;letter-spacing:0.04em;margin-bottom:6px;">Settings</h2>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:28px;font-family:'JetBrains Mono',monospace;">Manage your account, appearance and data preferences.</p>
+
+      <div style="display:grid;gap:20px;max-width:680px;">
+
+        <!-- Account -->
+        <div style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:24px;">
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px;">Account</div>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dim));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#0a0a0a;flex-shrink:0;" id="settingsAvatar">U</div>
+            <div>
+              <div id="settingsEmail" style="font-size:13px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;"></div>
+              <span id="settingsPlanBadge" class="plan-badge plan-analyst" style="margin-top:4px;display:inline-block;">Basic</span>
+            </div>
+          </div>
+          <button onclick="logout()" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:transparent;border:1px solid var(--border-mid);border-radius:8px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'" onmouseout="this.style.borderColor='var(--border-mid)';this.style.color='var(--text-secondary)'">⎋ Sign Out</button>
+        </div>
+
+        <!-- Appearance -->
+        <div style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:24px;">
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px;">Appearance</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:13px;color:var(--text-primary);margin-bottom:4px;">Theme</div>
+              <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Switch between dark and light mode</div>
+            </div>
+            <button onclick="toggleTheme()" style="padding:9px 20px;background:rgba(200,169,110,0.08);border:1px solid rgba(200,169,110,0.25);border-radius:8px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;transition:background 0.15s;letter-spacing:0.05em;" onmouseover="this.style.background='rgba(200,169,110,0.15)'" onmouseout="this.style.background='rgba(200,169,110,0.08)'">⬡ Toggle Theme</button>
+          </div>
+        </div>
+
+        <!-- Plan & Billing -->
+        <div style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:24px;">
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px;">Plan &amp; Billing</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-size:13px;color:var(--text-primary);margin-bottom:4px;">Current Plan</div>
+              <span id="settingsPlanLabel" style="font-size:13px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;">Basic (Free)</span>
+            </div>
+            <button onclick="showSection('upgrade',event)" style="padding:9px 20px;background:linear-gradient(135deg,rgba(200,169,110,0.15),rgba(200,169,110,0.05));border:1px solid rgba(200,169,110,0.3);border-radius:8px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;letter-spacing:0.05em;">⬆ View Plans</button>
+          </div>
+          <div id="settingsUsageBar" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- Data -->
+        <div style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:24px;">
+          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px;">Data</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-size:13px;color:var(--text-primary);margin-bottom:4px;">Export Your Data</div>
+              <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Download all your financial entries as Excel</div>
+            </div>
+            <button onclick="exportData ? exportData() : alert('Export not available yet')" style="padding:9px 20px;background:transparent;border:1px solid var(--border-mid);border-radius:8px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-mid)';this.style.color='var(--text-secondary)'">↓ Export Excel</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+        <!-- ============================================
          SECTION: REPORTS
     ============================================ -->
 
