@@ -21,7 +21,7 @@ const PLAN_CONFIG = {
     label:          "Analyst",
     price:          "Free",
     color:          "#a0b0cc",
-    entries:        3,
+    entries:        Infinity,
     analyses:       3,
     pdfs:           3,
     forecasts:      3,
@@ -37,7 +37,7 @@ const PLAN_CONFIG = {
     label:          "Professional",
     price:          "£8.99/mo",
     color:          "#e2c98a",
-    entries:        20,
+    entries:        Infinity,
     analyses:       20,
     pdfs:           20,
     forecasts:      20,
@@ -274,8 +274,8 @@ function updateUsageBar() {
   if (!bar || window.isAdmin) return;
 
   const plan   = PLAN_CONFIG[window.currentPlan];
-  const types  = ["entries","analyses","pdfs","forecasts"];
-  const labels = ["Entries","Analyses","PDFs","Forecasts"];
+  const types  = ["analyses","pdfs","forecasts"];
+  const labels = ["Analyses","PDFs","Forecasts"];
 
   bar.innerHTML = types.map(function(t, i) {
     var limit = plan[t];
@@ -675,3 +675,163 @@ window.updateUsageBar      = updateUsageBar;
 window.handlePDFClick      = handlePDFClick;
 window.STRIPE_LINKS        = STRIPE_LINKS;
 window.PLAN_CONFIG         = PLAN_CONFIG;
+
+/* ================================================================
+   PDF STORAGE — save and retrieve PDFs per user
+================================================================ */
+async function savePDFToAccount(pdfBase64, metadata) {
+  if (!window.currentUser) return;
+
+  try {
+    const limit = PLAN_CONFIG[window.currentPlan].reportHistory;
+
+    /* Check how many PDFs already saved */
+    if (limit !== Infinity) {
+      const { count } = await window.supabaseClient
+        .from("user_pdfs")
+        .select("id", { count: "exact" })
+        .eq("user_id", window.currentUser.id);
+
+      if (count >= limit) {
+        /* Delete oldest to make room */
+        const { data: oldest } = await window.supabaseClient
+          .from("user_pdfs")
+          .select("id")
+          .eq("user_id", window.currentUser.id)
+          .order("created_at", { ascending: true })
+          .limit(1);
+
+        if (oldest && oldest.length) {
+          await window.supabaseClient
+            .from("user_pdfs")
+            .delete()
+            .eq("id", oldest[0].id);
+        }
+      }
+    }
+
+    const filename = "ImpactGrid-Report-" +
+      new Date().toLocaleDateString("en-GB").replace(/\//g,"-") + ".pdf";
+
+    const { error } = await window.supabaseClient
+      .from("user_pdfs")
+      .insert({
+        user_id:      window.currentUser.id,
+        filename:     filename,
+        pdf_data:     pdfBase64,
+        months_count: metadata.monthsCount  || 0,
+        health_score: metadata.healthScore  || 0,
+        plan:         window.currentPlan
+      });
+
+    if (error) console.error("PDF save error:", error.message);
+    else {
+      console.log("PDF saved to account");
+      renderSavedPDFs();
+    }
+  } catch(e) {
+    console.error("PDF save exception:", e);
+  }
+}
+
+/* ================================================================
+   RENDER SAVED PDFs in Reports section
+================================================================ */
+async function renderSavedPDFs() {
+  const container = document.getElementById("savedPDFsList");
+  if (!container || !window.currentUser) return;
+
+  container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-family:\'JetBrains Mono\',monospace;padding:8px 0;">Loading saved reports...</div>';
+
+  try {
+    const { data, error } = await window.supabaseClient
+      .from("user_pdfs")
+      .select("id, created_at, filename, months_count, health_score, plan")
+      .eq("user_id", window.currentUser.id)
+      .order("created_at", { ascending: false });
+
+    if (error) { console.error("PDF list error:", error.message); return; }
+
+    if (!data || !data.length) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-family:\'JetBrains Mono\',monospace;padding:8px 0;">No saved reports yet — generate your first report below.</div>';
+      return;
+    }
+
+    container.innerHTML = data.map(function(p) {
+      var date       = new Date(p.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+      var time       = new Date(p.created_at).toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
+      var score      = p.health_score || 0;
+      var scoreColor = score >= 70 ? "#2dd4a0" : score >= 40 ? "#c8a96e" : "#ff4d6d";
+
+      return '<div class="saved-pdf-card">' +
+        '<div style="display:flex;align-items:center;gap:14px;">' +
+          '<div style="width:42px;height:42px;border-radius:10px;background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⊡</div>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-family:\'Syne\',sans-serif;font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.filename || "Report") + '</div>' +
+            '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);margin-top:2px;">' +
+              date + ' · ' + time + ' · ' + (p.months_count||0) + ' months' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">' +
+            '<div style="text-align:center;">' +
+              '<div style="font-family:\'Syne\',sans-serif;font-size:16px;font-weight:800;color:' + scoreColor + ';line-height:1;">' + score + '</div>' +
+              '<div style="font-size:8px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);">SCORE</div>' +
+            '</div>' +
+            '<button onclick="downloadSavedPDF(\'' + p.id + '\')" style="padding:8px 14px;background:linear-gradient(135deg,rgba(200,169,110,0.15),rgba(226,201,138,0.1));border:1px solid rgba(200,169,110,0.3);border-radius:7px;color:var(--gold-light);font-size:11px;font-family:\'JetBrains Mono\',monospace;cursor:pointer;letter-spacing:0.05em;white-space:nowrap;">↓ Download</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+
+  } catch(e) {
+    console.error("renderSavedPDFs error:", e);
+  }
+}
+
+/* ================================================================
+   DOWNLOAD A SAVED PDF
+================================================================ */
+async function downloadSavedPDF(pdfId) {
+  try {
+    const btn = event.target;
+    btn.textContent = "Loading...";
+    btn.style.opacity = "0.7";
+
+    const { data, error } = await window.supabaseClient
+      .from("user_pdfs")
+      .select("pdf_data, filename")
+      .eq("id", pdfId)
+      .eq("user_id", window.currentUser.id)
+      .single();
+
+    if (error || !data) {
+      console.error("Download error:", error);
+      btn.textContent = "↓ Download";
+      btn.style.opacity = "1";
+      return;
+    }
+
+    /* Convert base64 back to blob and download */
+    var binary = atob(data.pdf_data);
+    var bytes  = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    var blob = new Blob([bytes], { type: "application/pdf" });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement("a");
+    a.href     = url;
+    a.download = data.filename || "ImpactGrid-Report.pdf";
+    a.click();
+    URL.revokeObjectURL(url);
+
+    btn.textContent = "↓ Download";
+    btn.style.opacity = "1";
+
+  } catch(e) {
+    console.error("Download exception:", e);
+  }
+}
+
+/* Expose new functions */
+window.savePDFToAccount  = savePDFToAccount;
+window.renderSavedPDFs   = renderSavedPDFs;
+window.downloadSavedPDF  = downloadSavedPDF;
