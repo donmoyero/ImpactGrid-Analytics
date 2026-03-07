@@ -1,10 +1,11 @@
-/* ================= USE GLOBAL SUPABASE CLIENT ================= */
+/* ================================================================
+   IMPACTGRID AUTH — auth.js
+   Forces login on every page load. No session = login.html.
+================================================================ */
 const supabase = window.supabaseClient;
 
-/* ================= AUTH GUARD ================= */
 async function checkAuth() {
   try {
-
     const { data: { session }, error } = await supabase.auth.getSession();
 
     if (error) {
@@ -13,13 +14,13 @@ async function checkAuth() {
       return;
     }
 
-    /* Not logged in — send to login */
+    /* Not logged in — enforce login first */
     if (!session) {
       window.location.href = "login.html";
       return;
     }
 
-    /* Logged in — all good */
+    /* Logged in — allow access */
     console.log("Authenticated:", session.user.email);
 
   } catch (err) {
@@ -28,13 +29,13 @@ async function checkAuth() {
   }
 }
 
-/* ================= AUTO REDIRECT ON SIGN OUT ================= */
+/* Auto-redirect on sign out or session expiry */
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === "SIGNED_OUT") {
     window.location.href = "login.html";
   }
   if (event === "TOKEN_REFRESHED") {
-    console.log("Token refreshed.");
+    console.log("Session refreshed.");
   }
 });
 
