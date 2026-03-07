@@ -1,33 +1,50 @@
 /* ================= USE GLOBAL SUPABASE CLIENT ================= */
-
 const supabase = window.supabaseClient;
 
 /* ================= AUTH GUARD ================= */
-
 async function checkAuth() {
 
-try {
+  try {
 
-const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabase.auth.getSession();
 
-/* If user is NOT logged in → go to login page */
+    if (error) {
+      console.error("Session error:", error.message);
+      window.location.href = "login.html";
+      return;
+    }
 
-if (!session) {
-window.location.href = "login.html";
-return;
+    /* If user is NOT logged in → go to login page */
+    if (!session) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    /* If logged in → allow dashboard */
+    console.log("User authenticated:", session.user.email);
+
+    /* Show the app now that auth is confirmed */
+    const app = document.getElementById("app");
+    if (app) app.style.opacity = "1";
+
+  } catch (err) {
+    console.error("Auth error:", err);
+    window.location.href = "login.html";
+  }
 }
 
-/* If logged in → allow dashboard */
+/* ================= LISTEN FOR AUTH CHANGES ================= */
+/* Handles token refresh and session expiry automatically */
+supabase.auth.onAuthStateChange((event, session) => {
 
-console.log("User authenticated:", session.user.email);
+  if (event === "SIGNED_OUT" || (!session && event !== "INITIAL_SESSION")) {
+    window.location.href = "login.html";
+  }
 
-} catch (err) {
+  if (event === "TOKEN_REFRESHED") {
+    console.log("Session token refreshed.");
+  }
 
-console.error("Auth error:", err);
-window.location.href = "login.html";
-
-}
-
-}
+});
 
 checkAuth();
