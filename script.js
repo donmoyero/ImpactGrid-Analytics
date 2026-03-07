@@ -20,6 +20,11 @@ document.addEventListener("DOMContentLoaded", function() {
   bindGlobalFunctions();
   renderAIInsights();
 
+  /* Init plan system after DOM ready */
+  if (typeof initPlanSystem === "function") {
+    initPlanSystem();
+  }
+
   // Close edit modal on Escape key
   document.addEventListener("keydown", function(e) {
     if (e.key === "Escape") closeEditModal();
@@ -87,6 +92,7 @@ function addData() {
   if (warn) warn.style.display = "none";
 
   updateAll();
+  if (typeof saveUserData === "function") saveUserData();
 }
 
 
@@ -888,6 +894,21 @@ function renderRiskAssessment() {
 /* ================= AI CHAT ================= */
 
 async function askImpactGridAI() {
+  /* Check AI question limit for free plan */
+  if (typeof incrementAICount === "function") {
+    var allowed = incrementAICount();
+    if (!allowed) {
+      var output2 = document.getElementById("aiChatOutput");
+      if (output2) {
+        var limitDiv = document.createElement("div");
+        limitDiv.className = "ai-response";
+        limitDiv.innerHTML = "<strong>ImpactGrid AI</strong><br><br>You have reached your 5 daily AI questions on the free Analyst plan. <a href=\'#\' onclick=\"showSection(\'upgrade\',event)\" style=\"color:var(--gold)\">Upgrade to Professional</a> for unlimited questions.";
+        output2.appendChild(limitDiv);
+        output2.scrollTop = output2.scrollHeight;
+      }
+      return;
+    }
+  }
   var input  = document.getElementById("aiChatInput");
   var output = document.getElementById("aiChatOutput");
   if (!input || !output) return;
@@ -1365,4 +1386,15 @@ function bindGlobalFunctions() {
   window.toggleMobileMenu     = toggleMobileMenu;
   window.closeMobileMenu      = closeMobileMenu;
   window.mobileNav            = mobileNav;
+  window.closeUpgradeModal    = closeUpgradeModal;
+  window.showUpgradePrompt    = showUpgradePrompt;
+}
+
+function closeUpgradeModal() {
+  if (typeof window.closeUpgradeModal === "function" && window.closeUpgradeModal !== closeUpgradeModal) {
+    window.closeUpgradeModal();
+  } else {
+    var modal = document.getElementById("upgradeModal");
+    if (modal) modal.style.display = "none";
+  }
 }
