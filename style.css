@@ -1216,3 +1216,118 @@ canvas {
   #sidebarCloseBtn  { display: none !important; }
   .mobile-topbar    { display: none !important; }
 }
+
+/* ================================================================
+   PLAN SYSTEM STYLES
+================================================================ */
+
+/* ── Plan badge in sidebar ── */
+.plan-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.plan-analyst     { background: rgba(107,127,160,0.15); color: #a0b0cc; border: 1px solid rgba(107,127,160,0.3); }
+.plan-professional{ background: rgba(200,169,110,0.12); color: #e2c98a; border: 1px solid rgba(200,169,110,0.3); }
+.plan-enterprise  { background: rgba(61,127,255,0.12);  color: #7eb3ff; border: 1px solid rgba(61,127,255,0.3); }
+.plan-admin       { background: rgba(45,212,160,0.12);  color: #2dd4a0; border: 1px solid rgba(45,212,160,0.3); }
+
+/* ── Pricing cards ── */
+.pricing-card {
+  background: var(--bg-surface, #0e1220);
+  border: 1px solid var(--border-mid, #222b42);
+  border-radius: 16px;
+  padding: 28px 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.pricing-card:hover {
+  border-color: rgba(200,169,110,0.35);
+  transform: translateY(-2px);
+}
+.pricing-featured {
+  border-color: rgba(200,169,110,0.4);
+  box-shadow: 0 0 0 1px rgba(200,169,110,0.15), 0 20px 50px rgba(200,169,110,0.08);
+}
+.pricing-popular {
+  position: absolute;
+  top: -12px; left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #b8923e, #e2c98a);
+  color: #06080f;
+  font-size: 9px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.14em;
+  padding: 4px 14px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.pricing-tier {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary, #edf0f7);
+  margin-bottom: 8px;
+}
+.pricing-price {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--gold-light, #e2c98a);
+  margin-bottom: 6px;
+  line-height: 1;
+}
+.pricing-desc {
+  font-size: 12px;
+  color: var(--text-muted, #6b7fa0);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 20px;
+}
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+  flex: 1;
+}
+.pricing-features li {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-secondary, #a0b0cc);
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(26,32,53,0.6);
+  letter-spacing: 0.02em;
+}
+.pricing-btn {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  letter-spacing: 0.02em;
+}
+.pricing-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.pricing-upgrade {
+  background: linear-gradient(135deg, #b8923e, #e2c98a);
+  color: #06080f;
+}
+.pricing-current {
+  background: rgba(107,127,160,0.1);
+  color: var(--text-muted, #6b7fa0);
+  border: 1px solid rgba(107,127,160,0.2);
+  cursor: default;
+}
+.pricing-current:hover { opacity: 1; transform: none; }
