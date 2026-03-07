@@ -21,10 +21,19 @@
 </head>
 <body>
 
-<!-- ── MOBILE: Hamburger ── -->
-<button id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-label="Open navigation">
-  <span></span><span></span><span></span>
-</button>
+<!-- ── MOBILE: Professional Top Bar ── -->
+<header class="mobile-topbar">
+  <div class="mobile-topbar-logo">
+    <img src="logo.png" alt="ImpactGrid">
+    <div>
+      <div class="mobile-topbar-logo-text">ImpactGrid</div>
+      <div class="mobile-topbar-badge">IFSRM v3.0</div>
+    </div>
+  </div>
+  <button id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-label="Open navigation">
+    <span></span><span></span><span></span>
+  </button>
+</header>
 
 <!-- ── MOBILE: Backdrop ── -->
 <div id="mobileBackdrop" onclick="closeMobileMenu()"></div>
@@ -69,11 +78,17 @@
       <img src="logo.png" alt="ImpactGrid Logo" class="logo-img">
       <div>
         <span class="logo-text">ImpactGrid</span>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:3px;font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;">ENGINE v3.0</div>
+        <div style="font-size:10px;color:var(--gold-dim);margin-top:3px;font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;">IFSRM v3.0</div>
       </div>
     </div>
 
     <nav>
+      <!-- Mobile close button -->
+      <div id="sidebarCloseBtn" style="display:none;">
+        <span class="close-label">Navigation</span>
+        <button onclick="closeMobileMenu()" aria-label="Close menu">&times;</button>
+      </div>
+
       <div class="sidebar-label">Navigation</div>
       <ul>
         <li onclick="showSection('dashboard', event)" class="active">
@@ -113,14 +128,14 @@
 
     <!-- Header -->
     <header class="dashboard-header">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
-        <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px rgba(200,169,110,0.8);flex-shrink:0;"></div>
-        <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold-dim);letter-spacing:0.14em;text-transform:uppercase;">
-          ImpactGrid IFSRM · Live
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(200,169,110,0.9);flex-shrink:0;animation:pulse-dot 2s ease-in-out infinite;"></div>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold-dim);letter-spacing:0.16em;text-transform:uppercase;">
+          ImpactGrid IFSRM · Live Intelligence
         </p>
       </div>
-      <h1>SME Financial Stability Engine</h1>
-      <p class="engine-subtitle">Regime-Dependent Financial Stability Modelling · ImpactGrid v3.0</p>
+      <h1>ImpactGrid Financial Intelligence</h1>
+      <p class="engine-subtitle">Regime-Dependent Stability Modelling for SMEs &nbsp;·&nbsp; IFSRM v3.0</p>
     </header>
 
 
@@ -228,7 +243,7 @@
       <!-- Records Table -->
       <section class="card">
         <h2>Monthly Financial Records</h2>
-        <table class="records-table">
+        <div class="records-table-wrap"><table class="records-table">
           <thead>
             <tr>
               <th>Month</th>
@@ -245,7 +260,7 @@
               </td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
         <div class="progress-box" id="dataProgress">
           0 / 3 months entered &nbsp;&middot;&nbsp; Add 3 months to activate ImpactGrid Insights
         </div>
@@ -358,14 +373,14 @@
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:10px 14px;background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);">
           <div style="width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(45,212,160,0.6);flex-shrink:0;animation:pulse-dot 2s ease-in-out infinite;"></div>
           <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:0.07em;">
-            IMPACTGRID AI · ACTIVE · Financial Adviser Engine v3.0
+            IMPACTGRID AI · ACTIVE · IFSRM Intelligence Engine v3.0
           </span>
         </div>
 
         <div id="aiChatOutput" class="ai-chat-output">
           <div class="ai-response" style="animation:none;">
             <strong>ImpactGrid AI</strong><br><br>
-            Welcome. I'm your financial intelligence analyst. Enter your business data and ask me anything — forecasts, risk analysis, growth strategy, break-even, or benchmarks.<br><br>
+            Welcome to ImpactGrid Financial Intelligence. I'm your IFSRM-powered adviser — built for serious SME analysis. Enter your business data and ask me anything: regime assessment, forecasts, risk profiling, break-even modelling, growth strategy, or benchmarks.<br><br>
             <div class="ai-suggestions">
               <button class="ai-suggestion-chip" onclick="fillAIChat('3 year projection')">3 year projection</button>
               <button class="ai-suggestion-chip" onclick="fillAIChat('How risky is my business?')">How risky is my business?</button>
