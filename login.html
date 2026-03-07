@@ -345,12 +345,23 @@
 /* === AUTH === */
 var isLogin = false;
 
-/* Redirect if already logged in */
+/* Handle OAuth redirect + session check */
 (async function(){
   try {
+    /* First let Supabase process any OAuth hash in the URL */
+    await window.supabaseClient.auth.getSession();
+
+    /* Listen for sign in event from OAuth redirect */
+    window.supabaseClient.auth.onAuthStateChange(function(event, session) {
+      if (event === 'SIGNED_IN' && session) {
+        window.location.href = 'index.html';
+      }
+    });
+
+    /* Check if already logged in */
     var s = await window.supabaseClient.auth.getSession();
     if (s.data && s.data.session) window.location.href = "index.html";
-  } catch(e) {}
+  } catch(e) { console.error('Session check error:', e); }
 })();
 
 /* Toggle password visibility */
@@ -477,7 +488,7 @@ async function handleGoogle() {
     var result = await window.supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://impactgridanalytics.com/index.html'
+        redirectTo: 'https://impactgridanalytics.com'
       }
     });
 
