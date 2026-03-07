@@ -386,3 +386,130 @@ window.incrementAICount    = incrementAICount;
 window.getRemainingAIQuestions = getRemainingAIQuestions;
 window.STRIPE_LINKS        = STRIPE_LINKS;
 window.PLAN_CONFIG         = PLAN_CONFIG;
+
+/* ================================================================
+   REPORT HISTORY — save snapshot when PDF generated
+================================================================ */
+async function saveReportSnapshot(summaryData) {
+  if (!window.currentUser) return;
+
+  const payload = {
+    user_id:        window.currentUser.id,
+    summary:        summaryData.summary        || "",
+    health_score:   summaryData.healthScore    || 0,
+    total_revenue:  summaryData.totalRevenue   || 0,
+    total_expenses: summaryData.totalExpenses  || 0,
+    total_profit:   summaryData.totalProfit    || 0,
+    months_count:   summaryData.monthsCount    || 0,
+    ai_insights:    summaryData.aiInsights     || "",
+    plan:           window.currentPlan
+  };
+
+  const { error } = await window.supabaseClient
+    .from("user_reports")
+    .insert(payload);
+
+  if (error) console.error("Report save error:", error.message);
+  else console.log("Report snapshot saved.");
+}
+
+/* ================================================================
+   LOAD REPORT HISTORY — for Reports section display
+================================================================ */
+async function loadReportHistory() {
+  if (!window.currentUser) return [];
+
+  const { data, error } = await window.supabaseClient
+    .from("user_reports")
+    .select("*")
+    .eq("user_id", window.currentUser.id)
+    .order("report_date", { ascending: false })
+    .limit(10);
+
+  if (error) { console.error("Report load error:", error.message); return []; }
+  return data || [];
+}
+
+/* ================================================================
+   RENDER REPORT HISTORY in Reports section
+================================================================ */
+async function renderReportHistory() {
+  const container = document.getElementById("reportHistoryList");
+  if (!container) return;
+
+  container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-family:\'JetBrains Mono\',monospace;">Loading report history...</div>';
+
+  const reports = await loadReportHistory();
+
+  if (!reports.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-family:\'JetBrains Mono\',monospace;padding:16px 0;">No saved reports yet. Generate your first report below.</div>';
+    return;
+  }
+
+  container.innerHTML = reports.map(function(r) {
+    var date    = new Date(r.report_date).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+    var score   = r.health_score || 0;
+    var scoreColor = score >= 70 ? "#2dd4a0" : score >= 40 ? "#c8a96e" : "#ff4d6d";
+    var profit  = (r.total_profit >= 0)
+      ? '<span style="color:#2dd4a0;">+£' + r.total_profit.toLocaleString() + '</span>'
+      : '<span style="color:#ff4d6d;">-£' + Math.abs(r.total_profit).toLocaleString() + '</span>';
+
+    return '<div class="report-history-card">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+        '<div>' +
+          '<div style="font-family:\'Syne\',sans-serif;font-size:13px;font-weight:700;color:var(--text-primary);">' + date + ' Report</div>' +
+          '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);margin-top:2px;">' + (r.months_count || 0) + ' months analysed · ' + (r.plan || 'analyst') + ' plan</div>' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<div style="font-family:\'Syne\',sans-serif;font-size:20px;font-weight:800;color:' + scoreColor + ';">' + score + '</div>' +
+          '<div style="font-size:9px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);">HEALTH SCORE</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">' +
+        '<div style="text-align:center;padding:8px;background:var(--bg-mid);border-radius:6px;">' +
+          '<div style="font-size:11px;color:#2dd4a0;font-family:\'JetBrains Mono\',monospace;">£' + (r.total_revenue||0).toLocaleString() + '</div>' +
+          '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Revenue</div>' +
+        '</div>' +
+        '<div style="text-align:center;padding:8px;background:var(--bg-mid);border-radius:6px;">' +
+          '<div style="font-size:11px;color:#ff4d6d;font-family:\'JetBrains Mono\',monospace;">£' + (r.total_expenses||0).toLocaleString() + '</div>' +
+          '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Expenses</div>' +
+        '</div>' +
+        '<div style="text-align:center;padding:8px;background:var(--bg-mid);border-radius:6px;">' +
+          '<div style="font-size:11px;font-family:\'JetBrains Mono\',monospace;">' + profit + '</div>' +
+          '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Profit</div>' +
+        '</div>' +
+      '</div>' +
+      (r.ai_insights ? '<div style="font-size:11px;color:var(--text-secondary);font-family:\'JetBrains Mono\',monospace;line-height:1.6;padding:10px;background:rgba(200,169,110,0.05);border:1px solid rgba(200,169,110,0.1);border-radius:6px;">' + r.ai_insights.substring(0,300) + (r.ai_insights.length > 300 ? "..." : "") + '</div>' : '') +
+    '</div>';
+  }).join("");
+}
+
+/* ================================================================
+   AI MEMORY FROM REPORTS — build context string for AI
+================================================================ */
+async function buildAIMemoryContext() {
+  if (!window.currentUser) return "";
+
+  const reports = await loadReportHistory();
+  if (!reports.length) return "";
+
+  var context = "USER HISTORY (" + reports.length + " saved reports):\n";
+  reports.slice(0, 3).forEach(function(r, i) {
+    var date = new Date(r.report_date).toLocaleDateString("en-GB", { month:"short", year:"numeric" });
+    context += "\nReport " + (i+1) + " (" + date + "): ";
+    context += "Health Score " + (r.health_score||0) + "/100, ";
+    context += "Revenue £" + (r.total_revenue||0).toLocaleString() + ", ";
+    context += "Expenses £" + (r.total_expenses||0).toLocaleString() + ", ";
+    context += "Profit £" + (r.total_profit||0).toLocaleString() + ". ";
+    if (r.ai_insights) context += "AI noted: " + r.ai_insights.substring(0, 150) + "...";
+  });
+
+  window.aiMemoryContext = context;
+  return context;
+}
+
+/* Expose new functions */
+window.saveReportSnapshot   = saveReportSnapshot;
+window.loadReportHistory    = loadReportHistory;
+window.renderReportHistory  = renderReportHistory;
+window.buildAIMemoryContext = buildAIMemoryContext;
