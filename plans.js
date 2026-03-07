@@ -18,7 +18,7 @@ const STRIPE_LINKS = {
 /* ── Plan definitions ── */
 const PLAN_CONFIG = {
   analyst: {
-    label:          "Analyst",
+    label:          "Basic",
     price:          "Free",
     color:          "#a0b0cc",
     entries:        Infinity,
