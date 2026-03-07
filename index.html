@@ -146,6 +146,7 @@
         <a href="#" onclick="showSection('upgrade',event)" style="display:block;margin-top:8px;font-size:11px;color:var(--gold);font-family:'JetBrains Mono',monospace;text-decoration:none;letter-spacing:0.05em;">⬆ Upgrade Plan</a>
       </div>
       <div id="autosaveBadge" style="opacity:0;transition:opacity 0.4s;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--success);letter-spacing:0.08em;margin-bottom:10px;">✓ Data saved</div>
+      <div id="usageBar" style="margin-bottom:12px;"></div>
       <div class="theme-toggle" onclick="toggleTheme()">⬡ Toggle Theme</div>
       <button onclick="toggleSidebar()" class="btn-logout" style="margin-top:8px;">◁ Collapse</button>
       <button onclick="logout()" class="btn-logout">⎋ Logout</button>
@@ -158,6 +159,16 @@
   ================================================ -->
 
   <main class="main-content">
+
+    <!-- 30-Day Free Trial Banner -->
+    <div id="trialBanner" style="display:none;align-items:center;gap:16px;padding:14px 20px;background:linear-gradient(135deg,rgba(200,169,110,0.12),rgba(226,201,138,0.06));border:1px solid rgba(200,169,110,0.3);border-radius:12px;margin-bottom:20px;">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#b8923e,#e2c98a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">⬡</div>
+      <div style="flex:1;">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--gold-light);margin-bottom:2px;">Free Trial Active</div>
+        <div style="font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;">Your 30-day free trial is active. <strong style="color:var(--gold);"><span id="trialDaysLeft">30</span> days remaining</strong> — no payment taken until your trial ends.</div>
+      </div>
+      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);text-align:right;white-space:nowrap;">TRIAL ACTIVE<br><span style="color:var(--success);">● NO CHARGE YET</span></div>
+    </div>
 
     <!-- Plan expired banner -->
     <div id="planExpiredBanner" style="display:none;align-items:center;gap:14px;padding:14px 20px;background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.25);border-radius:10px;margin-bottom:20px;">
@@ -476,7 +487,7 @@
         <p style="font-size:13px;color:var(--text-secondary);margin-bottom:28px;line-height:1.7;max-width:560px;">
           Generate a branded PDF report of all financial records, AI insights, risk assessment, and performance metrics. A snapshot is automatically saved to your history above.
         </p>
-        <button class="btn-primary" id="pdfExportBtn" onclick="generatePDF()">&#8595; &nbsp;Download PDF Report</button>
+        <button class="btn-primary" id="pdfExportBtn" onclick="handlePDFClick()">&#8595; &nbsp;Download PDF Report</button>
       </section>
 
     </section>
@@ -619,6 +630,18 @@
     <div style="font-size:22px;font-family:'Syne',sans-serif;font-weight:800;color:var(--gold-light,#e2c98a);margin:20px 0 8px;"><span id="upgradePrice"></span></div>
     <a id="upgradeBtn" href="#" target="_blank" style="display:block;padding:13px;background:linear-gradient(135deg,#b8923e,#e2c98a);color:#06080f;font-weight:700;font-size:14px;border-radius:9px;text-decoration:none;margin-bottom:12px;letter-spacing:0.02em;">Upgrade Now</a>
     <button onclick="closeUpgradeModal()" style="background:transparent;border:1px solid var(--border,#1a2035);color:var(--text-muted);font-size:13px;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:'Manrope',sans-serif;width:100%;">Maybe Later</button>
+  </div>
+</div>
+
+
+<!-- Usage Limit Modal -->
+<div id="limitModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(6,8,15,0.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-surface,#0e1220);border:1px solid rgba(200,169,110,0.25);border-radius:18px;padding:36px 32px;width:100%;max-width:420px;margin:20px;box-shadow:0 32px 80px rgba(0,0,0,0.7);text-align:center;">
+    <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;">⊘</div>
+    <div id="limitModalTitle" style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--text,#edf0f7);margin-bottom:12px;"></div>
+    <div id="limitModalBody" style="font-size:13px;color:var(--text-secondary,#a0b0cc);font-family:'JetBrains Mono',monospace;line-height:1.7;margin-bottom:24px;"></div>
+    <a id="limitUpgradeBtn" href="#" target="_blank" style="display:block;padding:13px;background:linear-gradient(135deg,#b8923e,#e2c98a);color:#06080f;font-weight:700;font-size:13px;border-radius:9px;text-decoration:none;margin-bottom:10px;letter-spacing:0.02em;">Upgrade Now</a>
+    <button onclick="closeLimitModal()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-muted);font-size:13px;padding:11px;border-radius:9px;cursor:pointer;font-family:'Manrope',sans-serif;">Continue on Current Plan</button>
   </div>
 </div>
 
