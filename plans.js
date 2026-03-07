@@ -1,68 +1,101 @@
 /* ================================================================
-   IMPACTGRID PLAN SYSTEM — plans.js
-   Handles: plan detection, feature gating, data persistence,
-            expiry, admin bypass, AI user memory
+   IMPACTGRID PLAN SYSTEM v4.0 — plans.js
+   - Rolling 30-day usage limits per user
+   - Data persistence via Supabase
+   - Report history
+   - AI memory from past reports
+   - Admin bypass
+   - Trial banner
 ================================================================ */
 
 const IMPACTGRID_ADMIN_ID = "303580e9-38c8-450b-90e0-82045e0b5c27";
 
 const STRIPE_LINKS = {
-  professional:  "https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201",
-  enterprise:    "https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200"
+  professional: "https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201",
+  enterprise:   "https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200"
 };
 
+/* ── Plan definitions ── */
 const PLAN_CONFIG = {
   analyst: {
     label:          "Analyst",
-    dataMonths:     1,
-    aiQuestions:    5,
+    price:          "Free",
+    color:          "#a0b0cc",
+    entries:        3,
+    analyses:       3,
+    pdfs:           3,
+    forecasts:      3,
+    reportHistory:  3,
+    forecastYears:  0.5,
     fileImport:     false,
-    pdfExport:      false,
-    forecastYears:  1,
-    multiProfile:   false,
-    price:          "Free"
+    matrix:         false,
+    benchmarking:   false,
+    dataMonths:     1,
+    trialDays:      0
   },
   professional: {
     label:          "Professional",
-    dataMonths:     12,
-    aiQuestions:    Infinity,
-    fileImport:     true,
-    pdfExport:      true,
+    price:          "£8.99/mo",
+    color:          "#e2c98a",
+    entries:        20,
+    analyses:       20,
+    pdfs:           20,
+    forecasts:      20,
+    reportHistory:  20,
     forecastYears:  3,
-    multiProfile:   false,
-    price:          "£8.99/mo"
+    fileImport:     true,
+    matrix:         true,
+    benchmarking:   false,
+    dataMonths:     12,
+    trialDays:      30
   },
   enterprise: {
     label:          "Enterprise Intelligence",
-    dataMonths:     Infinity,
-    aiQuestions:    Infinity,
-    fileImport:     true,
-    pdfExport:      true,
+    price:          "£13.99/mo",
+    color:          "#7eb3ff",
+    entries:        Infinity,
+    analyses:       Infinity,
+    pdfs:           Infinity,
+    forecasts:      Infinity,
+    reportHistory:  Infinity,
     forecastYears:  10,
-    multiProfile:   true,
-    price:          "£13.99/mo"
+    fileImport:     true,
+    matrix:         true,
+    benchmarking:   true,
+    dataMonths:     Infinity,
+    trialDays:      30
   },
   admin: {
     label:          "Admin",
-    dataMonths:     Infinity,
-    aiQuestions:    Infinity,
-    fileImport:     true,
-    pdfExport:      true,
+    price:          "Internal",
+    color:          "#2dd4a0",
+    entries:        Infinity,
+    analyses:       Infinity,
+    pdfs:           Infinity,
+    forecasts:      Infinity,
+    reportHistory:  Infinity,
     forecastYears:  10,
-    multiProfile:   true,
-    price:          "Internal"
+    fileImport:     true,
+    matrix:         true,
+    benchmarking:   true,
+    dataMonths:     Infinity,
+    trialDays:      0
   }
 };
 
-/* ── Global plan state ── */
-window.currentPlan     = "analyst";
-window.currentUser     = null;
-window.planConfig      = PLAN_CONFIG;
-window.isAdmin         = false;
-window.aiDailyCount    = 0;
+/* ── Global state ── */
+window.currentPlan    = "analyst";
+window.currentUser    = null;
+window.isAdmin        = false;
+window.planConfig     = PLAN_CONFIG;
+window.aiMemoryContext = "";
+
+/* Usage counters (loaded from Supabase) */
+window.usageThisMonth = { entries: 0, analyses: 0, pdfs: 0, forecasts: 0 };
+window.usagePeriodStart = null; /* rolling 30-day start */
 
 /* ================================================================
-   INIT — call once after auth confirmed
+   MAIN INIT
 ================================================================ */
 async function initPlanSystem() {
   try {
@@ -71,113 +104,338 @@ async function initPlanSystem() {
 
     window.currentUser = session.user;
 
-    /* Admin check */
+    /* ── Admin bypass ── */
     if (session.user.id === IMPACTGRID_ADMIN_ID) {
       window.currentPlan = "admin";
       window.isAdmin     = true;
-      console.log("Admin access granted.");
       applyPlanUI();
       await loadUserData();
+      await buildAIMemoryContext();
+      renderReportHistory();
       return;
     }
 
-    /* Load plan from Supabase */
-    const { data, error } = await window.supabaseClient
+    /* ── Load or create user plan row ── */
+    let { data: planRow } = await window.supabaseClient
       .from("user_plans")
       .select("*")
       .eq("user_id", session.user.id)
       .single();
 
-    if (error || !data) {
-      /* New user — create analyst row */
-      await createAnalystRow(session.user.id);
-      window.currentPlan = "analyst";
+    if (!planRow) {
+      planRow = await createUserPlanRow(session.user.id);
+    }
+
+    window.currentPlan      = planRow.plan || "analyst";
+    window.usagePeriodStart = planRow.usage_period_start
+      ? new Date(planRow.usage_period_start)
+      : new Date();
+
+    /* ── Check if 30-day usage period has rolled over ── */
+    const now        = new Date();
+    const periodEnd  = new Date(window.usagePeriodStart);
+    periodEnd.setDate(periodEnd.getDate() + 30);
+
+    if (now > periodEnd) {
+      /* Reset usage counters */
+      window.usageThisMonth    = { entries: 0, analyses: 0, pdfs: 0, forecasts: 0 };
+      window.usagePeriodStart  = now;
+      await window.supabaseClient.from("user_plans").update({
+        entries_used:       0,
+        analyses_used:      0,
+        pdfs_used:          0,
+        forecasts_used:     0,
+        usage_period_start: now.toISOString()
+      }).eq("user_id", session.user.id);
     } else {
-      /* Check expiry */
-      if (data.data_expires_at && new Date(data.data_expires_at) < new Date()) {
-        /* Expired — downgrade to analyst, wipe data */
-        await window.supabaseClient
-          .from("user_plans")
-          .update({ plan: "analyst", data_expires_at: null })
-          .eq("user_id", session.user.id);
-        await wipeExpiredData(session.user.id);
-        window.currentPlan = "analyst";
-        showPlanExpiredBanner();
-      } else {
-        window.currentPlan = data.plan || "analyst";
-      }
+      window.usageThisMonth = {
+        entries:   planRow.entries_used   || 0,
+        analyses:  planRow.analyses_used  || 0,
+        pdfs:      planRow.pdfs_used      || 0,
+        forecasts: planRow.forecasts_used || 0
+      };
     }
 
     applyPlanUI();
+    showTrialBannerIfNeeded(planRow);
     await loadUserData();
-    loadAIDailyCount();
+    await buildAIMemoryContext();
+    renderReportHistory();
 
-  } catch (e) {
+  } catch(e) {
     console.error("Plan init error:", e);
   }
 }
 
 /* ================================================================
-   CREATE ANALYST ROW for new users
+   CREATE USER PLAN ROW
 ================================================================ */
-async function createAnalystRow(userId) {
-  const expires = new Date();
-  expires.setMonth(expires.getMonth() + 1);
-
-  await window.supabaseClient.from("user_plans").insert({
-    user_id:        userId,
-    plan:           "analyst",
-    data_expires_at: expires.toISOString()
-  });
+async function createUserPlanRow(userId) {
+  const now = new Date().toISOString();
+  const row = {
+    user_id:            userId,
+    plan:               "analyst",
+    entries_used:       0,
+    analyses_used:      0,
+    pdfs_used:          0,
+    forecasts_used:     0,
+    usage_period_start: now
+  };
+  const { data } = await window.supabaseClient
+    .from("user_plans")
+    .insert(row)
+    .select()
+    .single();
+  return data || row;
 }
 
 /* ================================================================
-   SAVE USER DATA to Supabase
+   USAGE TRACKING — check and increment
+================================================================ */
+function getLimit(type) {
+  const config = PLAN_CONFIG[window.currentPlan];
+  return config ? config[type] : 0;
+}
+
+function getUsed(type) {
+  return window.usageThisMonth[type] || 0;
+}
+
+function getDaysUntilReset() {
+  if (!window.usagePeriodStart) return 30;
+  const end = new Date(window.usagePeriodStart);
+  end.setDate(end.getDate() + 30);
+  const diff = Math.ceil((end - new Date()) / (1000 * 60 * 60 * 24));
+  return Math.max(0, diff);
+}
+
+async function canUse(type) {
+  if (window.isAdmin) return true;
+  const limit = getLimit(type);
+  if (limit === Infinity) return true;
+  return getUsed(type) < limit;
+}
+
+async function incrementUsage(type) {
+  if (window.isAdmin) return;
+  const limit = getLimit(type);
+  if (limit === Infinity) return;
+
+  window.usageThisMonth[type] = (window.usageThisMonth[type] || 0) + 1;
+
+  /* Persist to Supabase */
+  const update = {};
+  update[type + "_used"] = window.usageThisMonth[type];
+  await window.supabaseClient
+    .from("user_plans")
+    .update(update)
+    .eq("user_id", window.currentUser.id);
+
+  /* Update usage bar in UI */
+  updateUsageBar();
+}
+
+function showLimitModal(type) {
+  const days   = getDaysUntilReset();
+  const limit  = getLimit(type);
+  const used   = getUsed(type);
+  const plan   = PLAN_CONFIG[window.currentPlan];
+  const labels = { entries: "data entries", analyses: "AI analyses", pdfs: "PDF reports", forecasts: "forecasts" };
+
+  const modal = document.getElementById("limitModal");
+  if (!modal) return;
+
+  document.getElementById("limitModalTitle").textContent  = "Monthly Limit Reached";
+  document.getElementById("limitModalBody").innerHTML =
+    "You have used <strong style='color:var(--gold)'>" + used + " of " + limit + " " + (labels[type]||type) + "</strong> " +
+    "on your <strong>" + plan.label + "</strong> plan this month.<br><br>" +
+    "<span style='color:var(--success);font-size:13px;'>⟳ Resets in <strong>" + days + " day" + (days !== 1 ? "s" : "") + "</strong></span>";
+
+  document.getElementById("limitUpgradeBtn").style.display =
+    (window.currentPlan === "enterprise") ? "none" : "block";
+  document.getElementById("limitUpgradeBtn").href =
+    (window.currentPlan === "analyst") ? STRIPE_LINKS.professional : STRIPE_LINKS.enterprise;
+  document.getElementById("limitUpgradeBtn").textContent =
+    (window.currentPlan === "analyst") ? "Upgrade to Professional — £8.99/mo" : "Upgrade to Enterprise — £13.99/mo";
+
+  modal.style.display = "flex";
+}
+
+function closeLimitModal() {
+  const modal = document.getElementById("limitModal");
+  if (modal) modal.style.display = "none";
+}
+
+/* ================================================================
+   USAGE BAR — shows in sidebar
+================================================================ */
+function updateUsageBar() {
+  const bar = document.getElementById("usageBar");
+  if (!bar || window.isAdmin) return;
+
+  const plan   = PLAN_CONFIG[window.currentPlan];
+  const types  = ["entries","analyses","pdfs","forecasts"];
+  const labels = ["Entries","Analyses","PDFs","Forecasts"];
+
+  bar.innerHTML = types.map(function(t, i) {
+    var limit = plan[t];
+    if (limit === Infinity) return "";
+    var used  = getUsed(t);
+    var pct   = Math.min(100, Math.round((used/limit)*100));
+    var color = pct >= 100 ? "#ff4d6d" : pct >= 70 ? "#c8a96e" : "#2dd4a0";
+    return '<div style="margin-bottom:8px;">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:3px;">' +
+        '<span style="font-size:9px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);letter-spacing:0.08em;">' + labels[i].toUpperCase() + '</span>' +
+        '<span style="font-size:9px;font-family:\'JetBrains Mono\',monospace;color:' + color + ';">' + used + '/' + limit + '</span>' +
+      '</div>' +
+      '<div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;">' +
+        '<div style="height:3px;width:' + pct + '%;background:' + color + ';border-radius:2px;transition:width 0.3s;"></div>' +
+      '</div>' +
+    '</div>';
+  }).join("") +
+  '<div style="font-size:9px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);margin-top:6px;text-align:center;">Resets in ' + getDaysUntilReset() + ' days</div>';
+}
+
+/* ================================================================
+   TRIAL BANNER
+================================================================ */
+function showTrialBannerIfNeeded(planRow) {
+  const banner = document.getElementById("trialBanner");
+  if (!banner) return;
+
+  /* Show for professional/enterprise if within trial period */
+  if (window.currentPlan === "professional" || window.currentPlan === "enterprise") {
+    const createdAt  = new Date(planRow.created_at || Date.now());
+    const trialEnd   = new Date(createdAt);
+    trialEnd.setDate(trialEnd.getDate() + 30);
+    const daysLeft   = Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24));
+
+    if (daysLeft > 0 && daysLeft <= 30) {
+      document.getElementById("trialDaysLeft").textContent = daysLeft;
+      banner.style.display = "flex";
+    }
+  }
+}
+
+/* ================================================================
+   APPLY PLAN UI
+================================================================ */
+function applyPlanUI() {
+  const config = PLAN_CONFIG[window.currentPlan];
+  if (!config) return;
+
+  /* Plan badge */
+  const badge = document.getElementById("planBadge");
+  if (badge) {
+    badge.textContent   = config.label;
+    badge.className     = "plan-badge plan-" + window.currentPlan;
+  }
+
+  /* User email */
+  const emailEl = document.getElementById("sidebarUserEmail");
+  if (emailEl && window.currentUser) {
+    emailEl.textContent = window.currentUser.email;
+  }
+
+  /* File import */
+  const importSection = document.getElementById("fileImportSection");
+  if (importSection) {
+    importSection.style.display = config.fileImport ? "block" : "none";
+  }
+
+  /* Performance matrix tab */
+  const matrixLinks = document.querySelectorAll("[data-section='matrix']");
+  matrixLinks.forEach(function(el) {
+    if (!config.matrix) {
+      el.style.opacity = "0.4";
+      el.title = "Available on Professional plan";
+    }
+  });
+
+  /* PDF button */
+  const pdfBtn = document.getElementById("pdfExportBtn");
+  if (pdfBtn) {
+    pdfBtn.onclick = function() { handlePDFClick(); };
+  }
+
+  /* Update usage bars */
+  updateUsageBar();
+}
+
+/* ================================================================
+   SAVE USER DATA
 ================================================================ */
 async function saveUserData() {
-  if (!window.currentUser) return;
+  if (!window.currentUser) {
+    console.warn("saveUserData: no user");
+    return;
+  }
 
-  const payload = {
-    user_id:      window.currentUser.id,
-    data:         JSON.stringify(window.businessData || []),
-    currency:     window.currentCurrency || "GBP",
-    business_type: (document.getElementById("businessType") || {}).value || "other",
-    updated_at:   new Date().toISOString()
-  };
+  try {
+    const payload = {
+      user_id:       window.currentUser.id,
+      data:          JSON.stringify(window.businessData || []),
+      currency:      window.currentCurrency || "GBP",
+      business_type: (document.getElementById("businessType") || {}).value || "other",
+      updated_at:    new Date().toISOString()
+    };
 
-  /* Upsert into user_data table */
-  const { error } = await window.supabaseClient
-    .from("user_data")
-    .upsert(payload, { onConflict: "user_id" });
+    console.log("Saving data for user:", window.currentUser.id, "rows:", (window.businessData||[]).length);
 
-  if (error) console.error("Save error:", error.message);
-  else showSaveBadge();
+    const { error } = await window.supabaseClient
+      .from("user_data")
+      .upsert(payload, { onConflict: "user_id" });
+
+    if (error) {
+      console.error("Save error:", error.message, error.details, error.hint);
+    } else {
+      console.log("Data saved successfully");
+      showSaveBadge();
+    }
+  } catch(e) {
+    console.error("Save exception:", e);
+  }
 }
 
 /* ================================================================
-   LOAD USER DATA from Supabase
+   LOAD USER DATA
 ================================================================ */
 async function loadUserData() {
   if (!window.currentUser) return;
 
-  const { data, error } = await window.supabaseClient
-    .from("user_data")
-    .select("*")
-    .eq("user_id", window.currentUser.id)
-    .single();
-
-  if (error || !data) return;
-
   try {
-    const parsed = JSON.parse(data.data || "[]");
+    console.log("Loading data for user:", window.currentUser.id);
+
+    const { data, error } = await window.supabaseClient
+      .from("user_data")
+      .select("*")
+      .eq("user_id", window.currentUser.id)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        console.log("No saved data yet for this user.");
+      } else {
+        console.error("Load error:", error.message, error.code);
+      }
+      return;
+    }
+
+    if (!data || !data.data) return;
+
+    const parsed = JSON.parse(data.data);
+    if (!parsed || !parsed.length) return;
+
     window.businessData = parsed.map(function(d) {
       return {
         date:     new Date(d.date),
-        revenue:  d.revenue,
-        expenses: d.expenses,
-        profit:   d.profit
+        revenue:  Number(d.revenue),
+        expenses: Number(d.expenses),
+        profit:   Number(d.profit)
       };
     });
+
+    console.log("Loaded", window.businessData.length, "months of data");
 
     /* Restore currency */
     if (data.currency) {
@@ -192,163 +450,195 @@ async function loadUserData() {
       if (bt) bt.value = data.business_type;
     }
 
-    /* Enforce plan data limit */
-    enforcePlanDataLimit();
-
     if (typeof updateAll === "function") updateAll();
-
-    /* AI user memory greeting */
-    if (window.businessData.length > 0) {
-      showAIMemoryGreeting();
-    }
+    showAIMemoryGreeting();
 
   } catch(e) {
-    console.error("Load parse error:", e);
+    console.error("Load exception:", e);
   }
 }
 
 /* ================================================================
-   WIPE EXPIRED DATA
-================================================================ */
-async function wipeExpiredData(userId) {
-  await window.supabaseClient
-    .from("user_data")
-    .delete()
-    .eq("user_id", userId);
-  window.businessData = [];
-}
-
-/* ================================================================
-   ENFORCE PLAN DATA LIMIT
-   Free = 1 month of data max
-================================================================ */
-function enforcePlanDataLimit() {
-  const config = PLAN_CONFIG[window.currentPlan];
-  if (!config || config.dataMonths === Infinity) return;
-
-  if (window.businessData && window.businessData.length > config.dataMonths) {
-    /* Keep most recent months only */
-    window.businessData = window.businessData.slice(-config.dataMonths);
-  }
-}
-
-/* ================================================================
-   APPLY PLAN UI — show/hide features based on plan
-================================================================ */
-function applyPlanUI() {
-  const config = PLAN_CONFIG[window.currentPlan];
-  if (!config) return;
-
-  /* Update plan badge in sidebar */
-  const badge = document.getElementById("planBadge");
-  if (badge) {
-    badge.textContent = config.label;
-    badge.className   = "plan-badge plan-" + window.currentPlan;
-  }
-
-  /* File import — hide for analyst */
-  const importSection = document.getElementById("fileImportSection");
-  if (importSection) {
-    importSection.style.display = config.fileImport ? "block" : "none";
-  }
-
-  /* PDF export button */
-  const pdfBtn = document.getElementById("pdfExportBtn");
-  if (pdfBtn) {
-    if (!config.pdfExport) {
-      pdfBtn.onclick = function() { showUpgradePrompt("PDF export", "professional"); };
-      pdfBtn.style.opacity = "0.5";
-    }
-  }
-
-  /* User email in sidebar */
-  const userEmail = document.getElementById("sidebarUserEmail");
-  if (userEmail && window.currentUser) {
-    userEmail.textContent = window.currentUser.email;
-  }
-}
-
-/* ================================================================
-   AI DAILY QUESTION LIMIT (free users)
-================================================================ */
-function loadAIDailyCount() {
-  if (window.currentPlan !== "analyst") return;
-  const key   = "ig_ai_date_" + (window.currentUser ? window.currentUser.id : "guest");
-  const today = new Date().toDateString();
-  const stored = localStorage.getItem(key);
-
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    if (parsed.date === today) {
-      window.aiDailyCount = parsed.count;
-    } else {
-      window.aiDailyCount = 0;
-      localStorage.setItem(key, JSON.stringify({ date: today, count: 0 }));
-    }
-  } else {
-    window.aiDailyCount = 0;
-    localStorage.setItem(key, JSON.stringify({ date: today, count: 0 }));
-  }
-}
-
-function incrementAICount() {
-  if (window.currentPlan !== "analyst") return true; /* unlimited */
-  const config = PLAN_CONFIG["analyst"];
-  if (window.aiDailyCount >= config.aiQuestions) return false;
-
-  window.aiDailyCount++;
-  const key   = "ig_ai_date_" + (window.currentUser ? window.currentUser.id : "guest");
-  const today = new Date().toDateString();
-  localStorage.setItem(key, JSON.stringify({ date: today, count: window.aiDailyCount }));
-  return true;
-}
-
-function getRemainingAIQuestions() {
-  if (window.currentPlan !== "analyst") return Infinity;
-  return Math.max(0, PLAN_CONFIG["analyst"].aiQuestions - window.aiDailyCount);
-}
-
-/* ================================================================
-   AI USER MEMORY GREETING
+   AI MEMORY GREETING
 ================================================================ */
 function showAIMemoryGreeting() {
   const output = document.getElementById("aiChatOutput");
   if (!output || !window.currentUser) return;
 
-  const name    = (window.currentUser.user_metadata && window.currentUser.user_metadata.full_name)
-                  ? window.currentUser.user_metadata.full_name.split(" ")[0]
-                  : null;
-  const months  = window.businessData ? window.businessData.length : 0;
+  const meta   = window.currentUser.user_metadata || {};
+  const name   = meta.full_name ? meta.full_name.split(" ")[0] : null;
+  const months = (window.businessData || []).length;
   const greeting = name ? "Welcome back, " + name + "." : "Welcome back.";
 
-  /* Find existing welcome message and update it */
   const existing = output.querySelector(".ai-response");
-  if (existing) {
-    existing.innerHTML = "<strong>ImpactGrid AI</strong><br><br>" +
-      greeting + " I can see your " + months + " month" + (months !== 1 ? "s" : "") +
-      " of financial data. Your records are loaded and ready for analysis.<br><br>" +
-      "<div class='ai-suggestions'>" +
+  if (existing && months > 0) {
+    existing.innerHTML =
+      "<strong>ImpactGrid AI</strong><br><br>" +
+      greeting + " Your " + months + " month" + (months !== 1 ? "s" : "") +
+      " of financial data " + (months !== 1 ? "are" : "is") + " loaded and ready for analysis." +
+      (window.aiMemoryContext ? " I also have context from your previous reports." : "") +
+      "<br><br><div class='ai-suggestions'>" +
       "<button class='ai-suggestion-chip' onclick=\"fillAIChat('Give me a full performance summary')\">Performance summary</button>" +
       "<button class='ai-suggestion-chip' onclick=\"fillAIChat('What are my biggest risks?')\">Risk analysis</button>" +
-      "<button class='ai-suggestion-chip' onclick=\"fillAIChat('3 year projection')\">3 year projection</button>" +
+      "<button class='ai-suggestion-chip' onclick=\"fillAIChat('3 year projection')\">Forecast</button>" +
       "<button class='ai-suggestion-chip' onclick=\"fillAIChat('How can I reduce costs?')\">Reduce costs</button>" +
       "</div>";
   }
 }
 
 /* ================================================================
-   SHOW UPGRADE PROMPT
+   SAVE REPORT SNAPSHOT
+================================================================ */
+async function saveReportSnapshot(summaryData) {
+  if (!window.currentUser) return;
+
+  try {
+    const { error } = await window.supabaseClient
+      .from("user_reports")
+      .insert({
+        user_id:        window.currentUser.id,
+        summary:        summaryData.summary       || "",
+        health_score:   summaryData.healthScore   || 0,
+        total_revenue:  summaryData.totalRevenue  || 0,
+        total_expenses: summaryData.totalExpenses || 0,
+        total_profit:   summaryData.totalProfit   || 0,
+        months_count:   summaryData.monthsCount   || 0,
+        ai_insights:    summaryData.aiInsights    || "",
+        plan:           window.currentPlan
+      });
+
+    if (error) console.error("Report save error:", error.message);
+    else { console.log("Report saved"); renderReportHistory(); }
+  } catch(e) {
+    console.error("Report save exception:", e);
+  }
+}
+
+/* ================================================================
+   LOAD & RENDER REPORT HISTORY
+================================================================ */
+async function renderReportHistory() {
+  const container = document.getElementById("reportHistoryList");
+  if (!container || !window.currentUser) return;
+
+  container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-family:\'JetBrains Mono\',monospace;padding:10px 0;">Loading report history...</div>';
+
+  try {
+    const limit = PLAN_CONFIG[window.currentPlan].reportHistory;
+    const query = window.supabaseClient
+      .from("user_reports")
+      .select("*")
+      .eq("user_id", window.currentUser.id)
+      .order("report_date", { ascending: false });
+
+    if (limit !== Infinity) query.limit(limit);
+    else query.limit(50);
+
+    const { data, error } = await query;
+
+    if (error) { console.error("Report history error:", error.message); return; }
+    if (!data || !data.length) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-family:\'JetBrains Mono\',monospace;padding:16px 0;">No saved reports yet — generate your first report below.</div>';
+      return;
+    }
+
+    container.innerHTML = data.map(function(r) {
+      var date       = new Date(r.report_date).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+      var score      = r.health_score || 0;
+      var scoreColor = score >= 70 ? "#2dd4a0" : score >= 40 ? "#c8a96e" : "#ff4d6d";
+      var profitFmt  = r.total_profit >= 0
+        ? '<span style="color:#2dd4a0;">+£' + Number(r.total_profit).toLocaleString() + '</span>'
+        : '<span style="color:#ff4d6d;">−£' + Math.abs(Number(r.total_profit)).toLocaleString() + '</span>';
+
+      return '<div class="report-history-card">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">' +
+          '<div>' +
+            '<div style="font-family:\'Syne\',sans-serif;font-size:14px;font-weight:700;color:var(--text-primary);">' + date + '</div>' +
+            '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);margin-top:3px;">' + (r.months_count||0) + ' months · ' + (r.plan||"analyst") + ' plan</div>' +
+          '</div>' +
+          '<div style="text-align:right;">' +
+            '<div style="font-family:\'Syne\',sans-serif;font-size:24px;font-weight:800;color:' + scoreColor + ';line-height:1;">' + score + '</div>' +
+            '<div style="font-size:9px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);">HEALTH SCORE</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:' + (r.ai_insights ? "12px" : "0") + ';">' +
+          '<div style="text-align:center;padding:8px;background:rgba(6,8,15,0.4);border-radius:6px;">' +
+            '<div style="font-size:11px;color:#2dd4a0;font-family:\'JetBrains Mono\',monospace;font-weight:600;">£' + Number(r.total_revenue||0).toLocaleString() + '</div>' +
+            '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Revenue</div>' +
+          '</div>' +
+          '<div style="text-align:center;padding:8px;background:rgba(6,8,15,0.4);border-radius:6px;">' +
+            '<div style="font-size:11px;color:#ff4d6d;font-family:\'JetBrains Mono\',monospace;font-weight:600;">£' + Number(r.total_expenses||0).toLocaleString() + '</div>' +
+            '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Expenses</div>' +
+          '</div>' +
+          '<div style="text-align:center;padding:8px;background:rgba(6,8,15,0.4);border-radius:6px;">' +
+            '<div style="font-size:11px;font-family:\'JetBrains Mono\',monospace;font-weight:600;">' + profitFmt + '</div>' +
+            '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Profit</div>' +
+          '</div>' +
+        '</div>' +
+        (r.ai_insights ? '<div style="font-size:11px;color:var(--text-secondary);font-family:\'JetBrains Mono\',monospace;line-height:1.65;padding:10px 12px;background:rgba(200,169,110,0.05);border:1px solid rgba(200,169,110,0.1);border-radius:6px;">' + r.ai_insights.substring(0,280) + (r.ai_insights.length>280?"...":"") + '</div>' : '') +
+      '</div>';
+    }).join("");
+
+  } catch(e) {
+    console.error("renderReportHistory exception:", e);
+  }
+}
+
+/* ================================================================
+   AI MEMORY CONTEXT from past reports
+================================================================ */
+async function buildAIMemoryContext() {
+  if (!window.currentUser) return "";
+  try {
+    const { data } = await window.supabaseClient
+      .from("user_reports")
+      .select("*")
+      .eq("user_id", window.currentUser.id)
+      .order("report_date", { ascending: false })
+      .limit(3);
+
+    if (!data || !data.length) { window.aiMemoryContext = ""; return ""; }
+
+    var ctx = "USER REPORT HISTORY (" + data.length + " previous reports):\n";
+    data.forEach(function(r, i) {
+      var d = new Date(r.report_date).toLocaleDateString("en-GB", { month:"short", year:"numeric" });
+      ctx += "\nReport " + (i+1) + " (" + d + "): Health Score " + (r.health_score||0) + "/100, ";
+      ctx += "Revenue £" + Number(r.total_revenue||0).toLocaleString() + ", ";
+      ctx += "Expenses £" + Number(r.total_expenses||0).toLocaleString() + ", ";
+      ctx += "Profit £" + Number(r.total_profit||0).toLocaleString() + ".";
+      if (r.ai_insights) ctx += " Key insight: " + r.ai_insights.substring(0,120) + "...";
+    });
+
+    window.aiMemoryContext = ctx;
+    return ctx;
+  } catch(e) {
+    console.error("AI memory error:", e);
+    return "";
+  }
+}
+
+/* ================================================================
+   SHOW SAVE BADGE
+================================================================ */
+function showSaveBadge() {
+  const badge = document.getElementById("autosaveBadge");
+  if (!badge) return;
+  badge.style.opacity = "1";
+  setTimeout(function() { badge.style.opacity = "0"; }, 2500);
+}
+
+/* ================================================================
+   UPGRADE MODAL
 ================================================================ */
 function showUpgradePrompt(feature, requiredPlan) {
   const plan  = PLAN_CONFIG[requiredPlan];
   const modal = document.getElementById("upgradeModal");
-  if (modal) {
-    document.getElementById("upgradeFeatureName").textContent  = feature;
-    document.getElementById("upgradePlanName").textContent     = plan.label;
-    document.getElementById("upgradePrice").textContent        = plan.price;
-    document.getElementById("upgradeBtn").href                 = STRIPE_LINKS[requiredPlan];
-    modal.style.display = "flex";
-  }
+  if (!modal) return;
+  document.getElementById("upgradeFeatureName").textContent = feature;
+  document.getElementById("upgradePlanName").textContent    = plan.label;
+  document.getElementById("upgradePrice").textContent       = plan.price;
+  document.getElementById("upgradeBtn").href                = STRIPE_LINKS[requiredPlan];
+  modal.style.display = "flex";
 }
 
 function closeUpgradeModal() {
@@ -357,21 +647,13 @@ function closeUpgradeModal() {
 }
 
 /* ================================================================
-   SHOW PLAN EXPIRED BANNER
+   HANDLE PDF CLICK — check limit first
 ================================================================ */
-function showPlanExpiredBanner() {
-  const banner = document.getElementById("planExpiredBanner");
-  if (banner) banner.style.display = "flex";
-}
-
-/* ================================================================
-   SHOW SAVE BADGE (autosave indicator)
-================================================================ */
-function showSaveBadge() {
-  const badge = document.getElementById("autosaveBadge");
-  if (!badge) return;
-  badge.style.opacity = "1";
-  setTimeout(function() { badge.style.opacity = "0"; }, 2000);
+async function handlePDFClick() {
+  const allowed = await canUse("pdfs");
+  if (!allowed) { showLimitModal("pdfs"); return; }
+  await incrementUsage("pdfs");
+  if (typeof generatePDF === "function") generatePDF();
 }
 
 /* ================================================================
@@ -380,136 +662,16 @@ function showSaveBadge() {
 window.initPlanSystem      = initPlanSystem;
 window.saveUserData        = saveUserData;
 window.loadUserData        = loadUserData;
+window.canUse              = canUse;
+window.incrementUsage      = incrementUsage;
+window.showLimitModal      = showLimitModal;
+window.closeLimitModal     = closeLimitModal;
 window.showUpgradePrompt   = showUpgradePrompt;
 window.closeUpgradeModal   = closeUpgradeModal;
-window.incrementAICount    = incrementAICount;
-window.getRemainingAIQuestions = getRemainingAIQuestions;
+window.saveReportSnapshot  = saveReportSnapshot;
+window.renderReportHistory = renderReportHistory;
+window.buildAIMemoryContext = buildAIMemoryContext;
+window.updateUsageBar      = updateUsageBar;
+window.handlePDFClick      = handlePDFClick;
 window.STRIPE_LINKS        = STRIPE_LINKS;
 window.PLAN_CONFIG         = PLAN_CONFIG;
-
-/* ================================================================
-   REPORT HISTORY — save snapshot when PDF generated
-================================================================ */
-async function saveReportSnapshot(summaryData) {
-  if (!window.currentUser) return;
-
-  const payload = {
-    user_id:        window.currentUser.id,
-    summary:        summaryData.summary        || "",
-    health_score:   summaryData.healthScore    || 0,
-    total_revenue:  summaryData.totalRevenue   || 0,
-    total_expenses: summaryData.totalExpenses  || 0,
-    total_profit:   summaryData.totalProfit    || 0,
-    months_count:   summaryData.monthsCount    || 0,
-    ai_insights:    summaryData.aiInsights     || "",
-    plan:           window.currentPlan
-  };
-
-  const { error } = await window.supabaseClient
-    .from("user_reports")
-    .insert(payload);
-
-  if (error) console.error("Report save error:", error.message);
-  else console.log("Report snapshot saved.");
-}
-
-/* ================================================================
-   LOAD REPORT HISTORY — for Reports section display
-================================================================ */
-async function loadReportHistory() {
-  if (!window.currentUser) return [];
-
-  const { data, error } = await window.supabaseClient
-    .from("user_reports")
-    .select("*")
-    .eq("user_id", window.currentUser.id)
-    .order("report_date", { ascending: false })
-    .limit(10);
-
-  if (error) { console.error("Report load error:", error.message); return []; }
-  return data || [];
-}
-
-/* ================================================================
-   RENDER REPORT HISTORY in Reports section
-================================================================ */
-async function renderReportHistory() {
-  const container = document.getElementById("reportHistoryList");
-  if (!container) return;
-
-  container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-family:\'JetBrains Mono\',monospace;">Loading report history...</div>';
-
-  const reports = await loadReportHistory();
-
-  if (!reports.length) {
-    container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-family:\'JetBrains Mono\',monospace;padding:16px 0;">No saved reports yet. Generate your first report below.</div>';
-    return;
-  }
-
-  container.innerHTML = reports.map(function(r) {
-    var date    = new Date(r.report_date).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
-    var score   = r.health_score || 0;
-    var scoreColor = score >= 70 ? "#2dd4a0" : score >= 40 ? "#c8a96e" : "#ff4d6d";
-    var profit  = (r.total_profit >= 0)
-      ? '<span style="color:#2dd4a0;">+£' + r.total_profit.toLocaleString() + '</span>'
-      : '<span style="color:#ff4d6d;">-£' + Math.abs(r.total_profit).toLocaleString() + '</span>';
-
-    return '<div class="report-history-card">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
-        '<div>' +
-          '<div style="font-family:\'Syne\',sans-serif;font-size:13px;font-weight:700;color:var(--text-primary);">' + date + ' Report</div>' +
-          '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);margin-top:2px;">' + (r.months_count || 0) + ' months analysed · ' + (r.plan || 'analyst') + ' plan</div>' +
-        '</div>' +
-        '<div style="text-align:right;">' +
-          '<div style="font-family:\'Syne\',sans-serif;font-size:20px;font-weight:800;color:' + scoreColor + ';">' + score + '</div>' +
-          '<div style="font-size:9px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);">HEALTH SCORE</div>' +
-        '</div>' +
-      '</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">' +
-        '<div style="text-align:center;padding:8px;background:var(--bg-mid);border-radius:6px;">' +
-          '<div style="font-size:11px;color:#2dd4a0;font-family:\'JetBrains Mono\',monospace;">£' + (r.total_revenue||0).toLocaleString() + '</div>' +
-          '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Revenue</div>' +
-        '</div>' +
-        '<div style="text-align:center;padding:8px;background:var(--bg-mid);border-radius:6px;">' +
-          '<div style="font-size:11px;color:#ff4d6d;font-family:\'JetBrains Mono\',monospace;">£' + (r.total_expenses||0).toLocaleString() + '</div>' +
-          '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Expenses</div>' +
-        '</div>' +
-        '<div style="text-align:center;padding:8px;background:var(--bg-mid);border-radius:6px;">' +
-          '<div style="font-size:11px;font-family:\'JetBrains Mono\',monospace;">' + profit + '</div>' +
-          '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Profit</div>' +
-        '</div>' +
-      '</div>' +
-      (r.ai_insights ? '<div style="font-size:11px;color:var(--text-secondary);font-family:\'JetBrains Mono\',monospace;line-height:1.6;padding:10px;background:rgba(200,169,110,0.05);border:1px solid rgba(200,169,110,0.1);border-radius:6px;">' + r.ai_insights.substring(0,300) + (r.ai_insights.length > 300 ? "..." : "") + '</div>' : '') +
-    '</div>';
-  }).join("");
-}
-
-/* ================================================================
-   AI MEMORY FROM REPORTS — build context string for AI
-================================================================ */
-async function buildAIMemoryContext() {
-  if (!window.currentUser) return "";
-
-  const reports = await loadReportHistory();
-  if (!reports.length) return "";
-
-  var context = "USER HISTORY (" + reports.length + " saved reports):\n";
-  reports.slice(0, 3).forEach(function(r, i) {
-    var date = new Date(r.report_date).toLocaleDateString("en-GB", { month:"short", year:"numeric" });
-    context += "\nReport " + (i+1) + " (" + date + "): ";
-    context += "Health Score " + (r.health_score||0) + "/100, ";
-    context += "Revenue £" + (r.total_revenue||0).toLocaleString() + ", ";
-    context += "Expenses £" + (r.total_expenses||0).toLocaleString() + ", ";
-    context += "Profit £" + (r.total_profit||0).toLocaleString() + ". ";
-    if (r.ai_insights) context += "AI noted: " + r.ai_insights.substring(0, 150) + "...";
-  });
-
-  window.aiMemoryContext = context;
-  return context;
-}
-
-/* Expose new functions */
-window.saveReportSnapshot   = saveReportSnapshot;
-window.loadReportHistory    = loadReportHistory;
-window.renderReportHistory  = renderReportHistory;
-window.buildAIMemoryContext = buildAIMemoryContext;
