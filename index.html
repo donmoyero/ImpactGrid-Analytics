@@ -10,12 +10,22 @@
     (function() {
       var hasSession = false;
       try {
-        // Supabase v2 key format: sb-<ref>-auth-token
-        var key = 'sb-vopehiqnduxobtaamrnh-auth-token';
-        var raw = localStorage.getItem(key);
-        if (raw) {
-          var parsed = JSON.parse(raw);
-          if (parsed && parsed.access_token) hasSession = true;
+        // Check for OAuth hash callback in URL (Google redirect)
+        if (window.location.hash && window.location.hash.indexOf('access_token') !== -1) {
+          hasSession = true; // Supabase will handle the hash
+        }
+        // Check localStorage for existing session
+        if (!hasSession) {
+          var key = 'sb-vopehiqnduxobtaamrnh-auth-token';
+          var raw = localStorage.getItem(key);
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.access_token) hasSession = true;
+          }
+        }
+        // Also check for code in URL params (PKCE flow)
+        if (!hasSession && window.location.search.indexOf('code=') !== -1) {
+          hasSession = true;
         }
       } catch(e) {}
       if (!hasSession) {
