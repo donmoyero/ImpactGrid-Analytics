@@ -4,6 +4,25 @@
 
   <meta charset="UTF-8">
   <title>ImpactGrid | SME Financial Stability Engine</title>
+
+  <!-- INSTANT AUTH GUARD -->
+  <script>
+    (function() {
+      var hasSession = false;
+      try {
+        // Supabase v2 key format: sb-<ref>-auth-token
+        var key = 'sb-vopehiqnduxobtaamrnh-auth-token';
+        var raw = localStorage.getItem(key);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && parsed.access_token) hasSession = true;
+        }
+      } catch(e) {}
+      if (!hasSession) {
+        window.location.replace('login.html');
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="ImpactGrid — Regime-Dependent Financial Stability Modelling for SMEs.">
   <link rel="icon" href="logo.png">
@@ -439,13 +458,27 @@
     ============================================ -->
 
     <section id="report" class="page-section">
+
+      <!-- Past Reports / AI Memory -->
       <section class="card">
-        <h2>Financial Report Generation</h2>
-        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:28px;line-height:1.7;max-width:560px;">
-          Generate a branded PDF report of all financial records, AI insights, risk assessment, and performance metrics — ready to share with advisors or stakeholders.
+        <h2>Saved Report History</h2>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;font-family:'JetBrains Mono',monospace;">
+          Each time you generate a report, a snapshot is saved here. The ImpactGrid AI uses these reports as memory — so it can track your progress over time and give smarter advice.
         </p>
-        <button class="btn-primary" onclick="generatePDF()">&#8595; &nbsp;Download PDF Report</button>
+        <div id="reportHistoryList">
+          <div style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Sign in to load your report history.</div>
+        </div>
       </section>
+
+      <!-- Generate New Report -->
+      <section class="card">
+        <h2>Generate New Report</h2>
+        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:28px;line-height:1.7;max-width:560px;">
+          Generate a branded PDF report of all financial records, AI insights, risk assessment, and performance metrics. A snapshot is automatically saved to your history above.
+        </p>
+        <button class="btn-primary" id="pdfExportBtn" onclick="generatePDF()">&#8595; &nbsp;Download PDF Report</button>
+      </section>
+
     </section>
 
 
