@@ -78,7 +78,13 @@
       <div class="mobile-topbar-badge">IFSRM v3.0</div>
     </div>
   </div>
-  <button class="mobile-theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">⬡</button>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="mobile-theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">⬡</button>
+    <button onclick="logout()" aria-label="Logout" style="display:flex;align-items:center;gap:6px;padding:7px 13px;background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.3);border-radius:8px;color:var(--gold-light);font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.04em;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(200,169,110,0.2)'" onmouseout="this.style.background='rgba(200,169,110,0.1)'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
+  </div>
 </header>
 
 <!-- ── MOBILE: Bottom Navigation ── -->
