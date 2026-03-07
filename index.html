@@ -66,13 +66,6 @@
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     }
   </script>
-  <script>
-    // Defined early so mobile topbar logout button works before DOMContentLoaded
-    async function logout() {
-      if (window.supabaseClient) await window.supabaseClient.auth.signOut();
-      window.location.href = "login.html";
-    }
-  </script>
 </head>
 <body>
 
