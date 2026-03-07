@@ -1853,7 +1853,6 @@ function bindGlobalFunctions() {
   window.handlePDFClick       = handlePDFClick;
   window.downloadSavedPDF     = downloadSavedPDF;
 }
-bindGlobalFunctions(); // Run immediately so onclick handlers work before DOMContentLoaded
 
 function closeUpgradeModal() {
   if (typeof window.closeUpgradeModal === "function" && window.closeUpgradeModal !== closeUpgradeModal) {
@@ -1863,3 +1862,6 @@ function closeUpgradeModal() {
     if (modal) modal.style.display = "none";
   }
 }
+
+/* All functions now defined — bind to window so inline onclick handlers work */
+bindGlobalFunctions();
