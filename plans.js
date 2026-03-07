@@ -331,10 +331,14 @@ function applyPlanUI() {
     badge.className     = "plan-badge plan-" + window.currentPlan;
   }
 
-  /* User email */
+  /* User email + avatar */
   const emailEl = document.getElementById("sidebarUserEmail");
   if (emailEl && window.currentUser) {
     emailEl.textContent = window.currentUser.email;
+  }
+  const avatarEl = document.getElementById("sidebarAvatar");
+  if (avatarEl && window.currentUser && window.currentUser.email) {
+    avatarEl.textContent = window.currentUser.email[0].toUpperCase();
   }
 
   /* File import */
@@ -653,7 +657,8 @@ async function handlePDFClick() {
   const allowed = await canUse("pdfs");
   if (!allowed) { showLimitModal("pdfs"); return; }
   await incrementUsage("pdfs");
-  if (typeof generatePDF === "function") generatePDF();
+  if (typeof window.generatePDF === "function") window.generatePDF();
+  else console.error("generatePDF not found — check script.js load order");
 }
 
 /* ================================================================
