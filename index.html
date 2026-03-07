@@ -21,6 +21,42 @@
 </head>
 <body>
 
+<!-- ── MOBILE: Hamburger ── -->
+<button id="mobileMenuBtn" onclick="toggleMobileMenu()" aria-label="Open navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- ── MOBILE: Backdrop ── -->
+<div id="mobileBackdrop" onclick="closeMobileMenu()"></div>
+
+<!-- ── MOBILE: Bottom Navigation ── -->
+<nav id="mobileBottomNav">
+  <button class="mob-nav-btn active" onclick="mobileNav('dashboard',this)">
+    <span class="mob-icon">◈</span>
+    <span class="mob-label">Overview</span>
+  </button>
+  <button class="mob-nav-btn" onclick="mobileNav('charts',this)">
+    <span class="mob-icon">◉</span>
+    <span class="mob-label">Charts</span>
+  </button>
+  <button class="mob-nav-btn" onclick="mobileNav('matrix',this)">
+    <span class="mob-icon">⊞</span>
+    <span class="mob-label">Matrix</span>
+  </button>
+  <button class="mob-nav-btn" onclick="mobileNav('risk',this)">
+    <span class="mob-icon">◬</span>
+    <span class="mob-label">Risk</span>
+  </button>
+  <button class="mob-nav-btn" onclick="mobileNav('ai',this)">
+    <span class="mob-icon">◎</span>
+    <span class="mob-label">AI</span>
+  </button>
+  <button class="mob-nav-btn" onclick="mobileNav('report',this)">
+    <span class="mob-icon">⊡</span>
+    <span class="mob-label">Report</span>
+  </button>
+</nav>
+
 <div id="app" class="app-layout">
 
   <!-- ================================================
