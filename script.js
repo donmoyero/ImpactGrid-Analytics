@@ -59,7 +59,13 @@ function formatCurrency(val) {
 
 /* ================= ADD DATA ================= */
 
-function addData() {
+async function addData() {
+  /* Check entry limit */
+  if (typeof canUse === "function") {
+    var ok = await canUse("entries");
+    if (!ok) { showLimitModal("entries"); return; }
+  }
+
   var monthValue = document.getElementById("month").value;
   var revenue    = parseFloat(document.getElementById("revenue").value);
   var expenses   = parseFloat(document.getElementById("expenses").value);
@@ -85,6 +91,7 @@ function addData() {
 
   businessData.push({ date: date, revenue: revenue, expenses: expenses, profit: profit });
   businessData.sort(function(a, b) { return a.date - b.date; });
+  if (typeof incrementUsage === "function") incrementUsage("entries");
 
   // Clear form
   document.getElementById("month").value    = "";
@@ -896,20 +903,10 @@ function renderRiskAssessment() {
 /* ================= AI CHAT ================= */
 
 async function askImpactGridAI() {
-  /* Check AI question limit for free plan */
-  if (typeof incrementAICount === "function") {
-    var allowed = incrementAICount();
-    if (!allowed) {
-      var output2 = document.getElementById("aiChatOutput");
-      if (output2) {
-        var limitDiv = document.createElement("div");
-        limitDiv.className = "ai-response";
-        limitDiv.innerHTML = "<strong>ImpactGrid AI</strong><br><br>You have reached your 5 daily AI questions on the free Analyst plan. <a href=\'#\' onclick=\"showSection(\'upgrade\',event)\" style=\"color:var(--gold)\">Upgrade to Professional</a> for unlimited questions.";
-        output2.appendChild(limitDiv);
-        output2.scrollTop = output2.scrollHeight;
-      }
-      return;
-    }
+  /* Check analyses limit */
+  if (typeof canUse === "function") {
+    var ok = await canUse("analyses");
+    if (!ok) { showLimitModal("analyses"); return; }
   }
   var input  = document.getElementById("aiChatInput");
   var output = document.getElementById("aiChatOutput");
@@ -944,6 +941,7 @@ async function askImpactGridAI() {
   lastAIInsightText = tmp.innerText || tmp.textContent || lastAIInsightText;
 
   aiChatHistory.push({ role: "ai", content: response });
+  if (typeof incrementUsage === "function") incrementUsage("analyses");
 }
 
 function fillAIChat(text) {
@@ -1413,6 +1411,8 @@ function bindGlobalFunctions() {
   window.mobileNav            = mobileNav;
   window.closeUpgradeModal    = closeUpgradeModal;
   window.showUpgradePrompt    = showUpgradePrompt;
+  window.closeLimitModal      = closeLimitModal;
+  window.handlePDFClick       = handlePDFClick;
 }
 
 function closeUpgradeModal() {
