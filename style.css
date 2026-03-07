@@ -1344,3 +1344,15 @@ canvas {
 .report-history-card:hover {
   border-color: rgba(200,169,110,0.25);
 }
+
+/* ── Usage limit modal overlay ── */
+#limitModal, #upgradeModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(6,8,15,0.88);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+}
