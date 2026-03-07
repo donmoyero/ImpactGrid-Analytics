@@ -1331,3 +1331,16 @@ canvas {
   cursor: default;
 }
 .pricing-current:hover { opacity: 1; transform: none; }
+
+/* ── Report History Cards ── */
+.report-history-card {
+  background: var(--bg-mid, #121729);
+  border: 1px solid var(--border-mid, #222b42);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  transition: border-color 0.2s;
+}
+.report-history-card:hover {
+  border-color: rgba(200,169,110,0.25);
+}
