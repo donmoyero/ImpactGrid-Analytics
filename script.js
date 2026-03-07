@@ -565,8 +565,14 @@ function createStyledChart(id, type, labels, data, label, color, fillColor) {
 
 /* ================= AI FORECAST ================= */
 
-function generateAIProjection(years) {
+async function generateAIProjection(years) {
   if (businessData.length < 3) return;
+
+  /* Check forecast plan limit */
+  if (typeof canUse === "function") {
+    var ok = await canUse("forecasts");
+    if (!ok) { if (typeof showLimitModal === "function") showLimitModal("forecasts"); return; }
+  }
 
   var canvas      = document.getElementById("aiForecastChart");
   var explanation = document.getElementById("aiForecastExplanation");
@@ -677,6 +683,8 @@ function generateAIProjection(years) {
       }
     }
   });
+
+  if (typeof incrementUsage === "function") incrementUsage("forecasts");
 
   if (explanation) {
     explanation.innerHTML =
@@ -1585,6 +1593,29 @@ function showSection(section, event) {
   if (section === 'report') {
     if (typeof renderSavedPDFs === 'function') setTimeout(renderSavedPDFs, 150);
   }
+  if (section === 'settings') {
+    // Populate settings page with live user data
+    var email = window.currentUser ? window.currentUser.email : '';
+    var plan  = window.currentPlan || 'analyst';
+    var cfg   = window.planConfig  ? window.planConfig[plan] : null;
+    var initial = email ? email[0].toUpperCase() : 'U';
+
+    var sa = document.getElementById('settingsAvatar');
+    var se = document.getElementById('settingsEmail');
+    var spb = document.getElementById('settingsPlanBadge');
+    var spl = document.getElementById('settingsPlanLabel');
+
+    if (sa)  sa.textContent  = initial;
+    if (se)  se.textContent  = email;
+    if (spb) { spb.textContent = cfg ? cfg.label : 'Basic'; spb.className = 'plan-badge plan-' + plan; }
+    if (spl) spl.textContent = cfg ? cfg.label + (plan === 'analyst' ? ' (Free)' : plan === 'professional' ? ' — £8.99/mo' : ' — £13.99/mo') : 'Basic (Free)';
+
+    // Mirror usage bar into settings
+    var ub = document.getElementById('usageBar');
+    var sub = document.getElementById('settingsUsageBar');
+    if (ub && sub) sub.innerHTML = ub.innerHTML;
+  }
+
   document.querySelectorAll(".page-section").forEach(function(s) {
     s.classList.remove("active-section");
   });
@@ -1599,8 +1630,8 @@ function showSection(section, event) {
     if (li) li.classList.add("active");
   }
 
-  // Sync bottom nav active state
-  var sectionIndex = {"dashboard":0,"charts":1,"matrix":2,"risk":3,"ai":4,"report":5};
+  // Sync bottom nav active state (settings=5, report=6)
+  var sectionIndex = {"dashboard":0,"charts":1,"matrix":2,"risk":3,"ai":4,"settings":5,"report":6};
   var idx = sectionIndex[section];
   if (idx !== undefined) {
     var btns = document.querySelectorAll(".mob-nav-btn");
