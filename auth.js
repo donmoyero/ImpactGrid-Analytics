@@ -1,10 +1,10 @@
 /* ================================================================
    IMPACTGRID AUTH — auth.js
-   Forces login on every protected page. No session = login.html.
-   Waits for supabase.js to finish initialising before running.
+   index.html  → guest mode allowed (gate handled in page JS)
+   settings.html → still redirects to login if no session
 ================================================================ */
 
-/* Logout defined immediately so the sidebar button always works */
+/* Logout always available */
 window.logout = async function () {
   try {
     if (window.supabaseClient) await window.supabaseClient.auth.signOut();
@@ -12,13 +12,26 @@ window.logout = async function () {
   window.location.href = 'login.html';
 };
 
-/* Wait for the Supabase client to be ready, THEN run auth */
+/* Pages that require login — guests redirected immediately */
+var PROTECTED_PAGES = ['settings.html'];
+var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+var isProtected = PROTECTED_PAGES.indexOf(currentPage) !== -1;
+
 window.supabaseReady.then(function (supabase) {
 
-  /* Listen for sign-out / token refresh events */
   supabase.auth.onAuthStateChange(function (event) {
     if (event === 'SIGNED_OUT') {
-      window.location.href = 'login.html';
+      if (isProtected) {
+        window.location.href = 'login.html';
+      } else {
+        /* On index — revert to guest mode, don't redirect */
+        window.__igLoggedIn = false;
+        window.__igGuestUsed = false;
+        window.currentUser = null;
+        window.businessData = [];
+        if (typeof renderRecordsPanel === 'function') renderRecordsPanel();
+        if (typeof updateAll === 'function') updateAll();
+      }
     }
     if (event === 'TOKEN_REFRESHED') {
       console.log('[ImpactGrid] Session token refreshed.');
@@ -30,25 +43,36 @@ window.supabaseReady.then(function (supabase) {
 
 async function checkAuth(supabase) {
   try {
-    var result = await supabase.auth.getSession();
+    var result  = await supabase.auth.getSession();
     var session = result.data && result.data.session;
     var error   = result.error;
 
     if (error) {
       console.error('[ImpactGrid] Session error:', error.message);
-      window.location.href = 'login.html';
+      if (isProtected) window.location.href = 'login.html';
       return;
     }
 
     if (!session) {
-      window.location.href = 'login.html';
+      if (isProtected) {
+        window.location.href = 'login.html';
+      } else {
+        /* Guest on index — allow, page JS handles the gate */
+        console.log('[ImpactGrid] Guest mode.');
+        window.__igLoggedIn = false;
+      }
       return;
     }
 
+    /* Fully authenticated */
     console.log('[ImpactGrid] Authenticated:', session.user.email);
+    window.__igLoggedIn = true;
+
+    /* Init plan system now we know user is real */
+    if (typeof initPlanSystem === 'function') initPlanSystem();
 
   } catch (err) {
     console.error('[ImpactGrid] Auth check failed:', err);
-    window.location.href = 'login.html';
+    if (isProtected) window.location.href = 'login.html';
   }
 }
