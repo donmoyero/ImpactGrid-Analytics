@@ -18,6 +18,12 @@ let lastAIInsightText = "";
 
 document.addEventListener("DOMContentLoaded", function() {
   bindGlobalFunctions();
+
+  /* Restore theme preference */
+  try {
+    if (localStorage.getItem("ig-theme") === "light") toggleTheme(true);
+  } catch(e) {}
+
   renderAIInsights();
 
   /* Init plan system after DOM ready */
@@ -1742,8 +1748,25 @@ function mobileNav(section, el) {
 
 /* ================= THEME ================= */
 
-function toggleTheme() {
-  document.body.classList.toggle("light-mode");
+function toggleTheme(isLight) {
+  /* isLight = true means switching TO light mode */
+  if (isLight === undefined) {
+    isLight = !document.body.classList.contains("light-mode");
+  }
+  document.body.classList.toggle("light-mode", isLight);
+
+  /* Sync all switches */
+  var switches = document.querySelectorAll('.theme-switch input[type="checkbox"]');
+  switches.forEach(function(sw) { sw.checked = isLight; });
+
+  /* Update sidebar label */
+  var icon  = document.getElementById("themeModeIcon");
+  var label = document.getElementById("themeModeLabel");
+  if (icon)  icon.textContent  = isLight ? "☀️" : "🌙";
+  if (label) label.textContent = isLight ? "Light Mode" : "Dark Mode";
+
+  /* Persist preference */
+  try { localStorage.setItem("ig-theme", isLight ? "light" : "dark"); } catch(e) {}
 }
 
 
