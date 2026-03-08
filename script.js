@@ -29,16 +29,16 @@ let lastAIInsightText = "";
 document.addEventListener("DOMContentLoaded", function() {
   bindGlobalFunctions();
 
-  /* Dark mode is DEFAULT — only switch to light if user previously chose light */
+  /* Light mode is DEFAULT — only switch to dark if user previously chose dark */
   try {
     var savedTheme = localStorage.getItem("ig-theme");
-    if (savedTheme === "light") {
-      toggleTheme(true); // go light
+    if (savedTheme === "dark") {
+      toggleTheme(false); // user explicitly chose dark
     } else {
-      toggleTheme(false); // default: dark mode
+      toggleTheme(true); // default: light mode
     }
   } catch(e) {
-    toggleTheme(false); // fallback to dark
+    toggleTheme(true); // fallback to light
   }
 
   renderAIInsights();
@@ -1744,11 +1744,12 @@ function mobileNav(section, el) {
 /* ================= THEME ================= */
 
 function toggleTheme(isLight) {
-  /* isLight = true means switching TO light mode */
+  /* isLight = true means showing light mode (default) */
   if (isLight === undefined) {
-    isLight = !document.body.classList.contains("light-mode");
+    isLight = document.body.classList.contains("dark-mode");
   }
-  document.body.classList.toggle("light-mode", isLight);
+  document.body.classList.toggle("dark-mode", !isLight);
+  document.body.classList.toggle("light-mode", false); // clear legacy class
 
   /* Sync all switches */
   var switches = document.querySelectorAll('.theme-switch input[type="checkbox"]');
@@ -1848,88 +1849,169 @@ function closeRecordsPanel() {
 }
 
 function renderRecordsPanel() {
-  var body    = document.getElementById("rpBody");
-  var sub     = document.getElementById("rpSub");
-  var totals  = document.getElementById("rpTotals");
-  var sync    = document.getElementById("rpSyncLabel");
-  var dot     = document.querySelector(".rp-dot");
+  var tbody  = document.getElementById("rpBody");
+  var tfoot  = document.getElementById("rpTotals");
+  var sub    = document.getElementById("rpSub");
+  var sync   = document.getElementById("rpSyncLabel");
+  var dot    = document.querySelector(".rp-dot");
 
-  if (!body) return;
+  if (!tbody) return;
 
-  var data = window.businessData || businessData || [];
+  var data  = window.businessData || businessData || [];
   var count = data.length;
 
-  // Update subtitle
-  if (sub) sub.textContent = count + " month" + (count !== 1 ? "s" : "") + " stored · auto-synced";
-
-  // Update sync status
-  if (sync) sync.textContent = window.currentUser ? "Synced to cloud — " + (window.currentUser.email || "") : "Not signed in";
-  if (dot) dot.className = "rp-dot " + (window.currentUser ? "synced" : "offline");
+  if (sub)  sub.textContent  = count + " month" + (count !== 1 ? "s" : "") + " · click any cell to edit";
+  if (sync) sync.textContent = window.currentUser ? "Synced — " + (window.currentUser.email || "") : "Not signed in";
+  if (dot)  dot.className    = "rp-dot " + (window.currentUser ? "synced" : "offline");
 
   if (count === 0) {
-    body.innerHTML = '<div class="rp-empty">No records yet.<br><span style="color:var(--text-muted);font-size:11px;">Add a month on the dashboard to get started.</span></div>';
-    if (totals) totals.innerHTML = "";
+    tbody.innerHTML = '<tr class="rp-empty-row"><td colspan="6" class="rp-empty-cell">No records yet.<br><span style="font-size:10px;opacity:0.6;">Add a month on the dashboard to get started.</span></td></tr>';
+    if (tfoot) tfoot.innerHTML = "";
     return;
   }
 
-  // Sort newest first for display
-  var sorted = data.slice().sort(function(a,b){ return b.date - a.date; });
+  // Sort by date ascending for display (oldest → newest, natural spreadsheet order)
+  var sorted = data.slice().sort(function(a,b){ return a.date - b.date; });
 
-  var totalRev = data.reduce(function(s,d){ return s+d.revenue; }, 0);
-  var totalExp = data.reduce(function(s,d){ return s+d.expenses; }, 0);
-  var totalPro = data.reduce(function(s,d){ return s+d.profit; }, 0);
-  var avgMargin = totalRev > 0 ? ((totalPro/totalRev)*100).toFixed(1) : "0.0";
-
-  // Build rows
-  var html = '';
+  var html = "";
   sorted.forEach(function(record, i) {
-    var origIdx = data.indexOf(record);
-    var profitColor = record.profit >= 0 ? "var(--success)" : "var(--danger)";
-    var profitSign  = record.profit >= 0 ? "+" : "";
-    var margin = record.revenue > 0 ? ((record.profit/record.revenue)*100).toFixed(1) : "0.0";
-    var monthStr = record.date.toISOString().slice(0,7);
+    var origIdx  = data.indexOf(record);
+    var monthStr = record.date.toISOString().slice(0, 7);
+    var margin   = record.revenue > 0 ? ((record.profit / record.revenue) * 100).toFixed(1) : "0.0";
+    var profitCls = record.profit >= 0 ? "rp-pos" : "rp-neg";
 
-    // Month-over-month indicator
-    var trend = "";
-    if (i < sorted.length - 1) {
-      var prev = sorted[i+1];
-      if (record.revenue > prev.revenue) trend = '<span class="rp-trend up">▲</span>';
-      else if (record.revenue < prev.revenue) trend = '<span class="rp-trend down">▼</span>';
-      else trend = '<span class="rp-trend flat">–</span>';
+    // Trend vs previous row
+    var trendHtml = "";
+    if (i > 0) {
+      var prev = sorted[i - 1];
+      if (record.revenue > prev.revenue)      trendHtml = '<span class="rp-arrow rp-up">▲</span>';
+      else if (record.revenue < prev.revenue) trendHtml = '<span class="rp-arrow rp-dn">▼</span>';
     }
 
-    html += '<div class="rp-row" onclick="openEditModal('+origIdx+');closeRecordsPanel();">' +
-      '<div class="rp-row-left">' +
-        '<div class="rp-month">' + monthStr + trend + '</div>' +
-        '<div class="rp-margin">' + margin + '% margin</div>' +
-      '</div>' +
-      '<div class="rp-row-right">' +
-        '<div class="rp-rev">' + formatCurrency(record.revenue) + '</div>' +
-        '<div class="rp-exp">− ' + formatCurrency(record.expenses) + '</div>' +
-        '<div class="rp-profit" style="color:' + profitColor + ';">' + profitSign + formatCurrency(record.profit) + '</div>' +
-      '</div>' +
-    '</div>';
+    html +=
+      '<tr class="rp-data-row" data-idx="' + origIdx + '">' +
+
+        // Month (read-only)
+        '<td class="rp-cell rp-cell-month">' +
+          '<span class="rp-disp">' + monthStr + trendHtml + '</span>' +
+        '</td>' +
+
+        // Revenue (editable)
+        '<td class="rp-cell rp-cell-edit" data-field="revenue" data-idx="' + origIdx + '">' +
+          '<span class="rp-disp rp-rev">' + formatCurrency(record.revenue) + '</span>' +
+          '<input class="rp-inp" type="number" step="0.01" value="' + record.revenue.toFixed(2) + '">' +
+        '</td>' +
+
+        // Expenses (editable)
+        '<td class="rp-cell rp-cell-edit" data-field="expenses" data-idx="' + origIdx + '">' +
+          '<span class="rp-disp rp-exp">' + formatCurrency(record.expenses) + '</span>' +
+          '<input class="rp-inp" type="number" step="0.01" value="' + record.expenses.toFixed(2) + '">' +
+        '</td>' +
+
+        // Profit (calculated, read-only display)
+        '<td class="rp-cell rp-cell-profit">' +
+          '<span class="rp-disp ' + profitCls + '">' + formatCurrency(record.profit) + '</span>' +
+        '</td>' +
+
+        // Margin (calculated, read-only)
+        '<td class="rp-cell rp-cell-pct">' +
+          '<span class="rp-disp rp-muted">' + margin + '%</span>' +
+        '</td>' +
+
+        // Delete
+        '<td class="rp-cell rp-cell-del">' +
+          '<button class="rp-del" data-idx="' + origIdx + '" title="Delete row">✕</button>' +
+        '</td>' +
+
+      '</tr>';
   });
 
-  body.innerHTML = html;
+  tbody.innerHTML = html;
 
-  // Totals bar
-  if (totals) {
-    var profitColor = totalPro >= 0 ? "var(--success)" : "var(--danger)";
-    totals.innerHTML =
-      '<div class="rp-total-row">' +
-        '<span class="rp-total-lbl">Total Revenue</span>' +
-        '<span class="rp-total-val" style="color:var(--gold-light);">' + formatCurrency(totalRev) + '</span>' +
-      '</div>' +
-      '<div class="rp-total-row">' +
-        '<span class="rp-total-lbl">Net Profit</span>' +
-        '<span class="rp-total-val" style="color:' + profitColor + ';">' + formatCurrency(totalPro) + '</span>' +
-      '</div>' +
-      '<div class="rp-total-row">' +
-        '<span class="rp-total-lbl">Avg Margin</span>' +
-        '<span class="rp-total-val" style="color:var(--text-secondary);">' + avgMargin + '%</span>' +
-      '</div>';
+  // Totals footer row
+  var totalRev = data.reduce(function(s,d){ return s + d.revenue; }, 0);
+  var totalExp = data.reduce(function(s,d){ return s + d.expenses; }, 0);
+  var totalPro = data.reduce(function(s,d){ return s + d.profit; }, 0);
+  var avgMargin = totalRev > 0 ? ((totalPro / totalRev) * 100).toFixed(1) : "0.0";
+  var totCls = totalPro >= 0 ? "rp-pos" : "rp-neg";
+
+  if (tfoot) {
+    tfoot.innerHTML =
+      '<tr class="rp-totals-row">' +
+        '<td class="rp-cell rp-cell-month"><span class="rp-disp" style="font-weight:700;">TOTAL</span></td>' +
+        '<td class="rp-cell"><span class="rp-disp rp-rev" style="font-weight:700;">' + formatCurrency(totalRev) + '</span></td>' +
+        '<td class="rp-cell"><span class="rp-disp rp-exp" style="font-weight:700;">' + formatCurrency(totalExp) + '</span></td>' +
+        '<td class="rp-cell"><span class="rp-disp ' + totCls + '" style="font-weight:700;">' + formatCurrency(totalPro) + '</span></td>' +
+        '<td class="rp-cell"><span class="rp-disp rp-muted" style="font-weight:700;">' + avgMargin + '%</span></td>' +
+        '<td class="rp-cell"></td>' +
+      '</tr>';
   }
+
+  // ── Attach inline edit handlers ──────────────────────────────
+  tbody.querySelectorAll(".rp-cell-edit").forEach(function(cell) {
+    var disp  = cell.querySelector(".rp-disp");
+    var inp   = cell.querySelector(".rp-inp");
+    var field = cell.getAttribute("data-field");
+    var idx   = parseInt(cell.getAttribute("data-idx"), 10);
+
+    // Click display → show input
+    disp.addEventListener("click", function() {
+      cell.classList.add("rp-editing");
+      inp.focus();
+      inp.select();
+    });
+
+    // Commit on blur or Enter
+    function commitEdit() {
+      var raw = parseFloat(inp.value);
+      if (isNaN(raw) || raw < 0) raw = 0;
+      cell.classList.remove("rp-editing");
+
+      var record = data[idx];
+      if (!record) return;
+
+      record[field] = raw;
+      // Recalculate profit
+      record.profit = record.revenue - record.expenses;
+
+      // Re-render panel (keeps cursor position naturally)
+      renderRecordsPanel();
+
+      // Update ALL dashboard analysis live
+      if (typeof updateAll === "function") updateAll();
+      if (typeof saveUserData === "function") saveUserData();
+
+      // Flash sync dot
+      var dot2 = document.querySelector(".rp-dot");
+      if (dot2) { dot2.className = "rp-dot saving"; setTimeout(function(){ dot2.className = "rp-dot synced"; }, 1200); }
+    }
+
+    inp.addEventListener("blur", commitEdit);
+    inp.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") { inp.blur(); }
+      if (e.key === "Escape") { cell.classList.remove("rp-editing"); }
+      // Tab → move to next editable cell
+      if (e.key === "Tab") {
+        e.preventDefault();
+        var allEditable = Array.from(tbody.querySelectorAll(".rp-cell-edit"));
+        var pos = allEditable.indexOf(cell);
+        var next = allEditable[e.shiftKey ? pos - 1 : pos + 1];
+        if (next) { inp.blur(); next.querySelector(".rp-disp").click(); }
+      }
+    });
+  });
+
+  // ── Delete row handlers ──────────────────────────────────────
+  tbody.querySelectorAll(".rp-del").forEach(function(btn) {
+    btn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      var idx = parseInt(btn.getAttribute("data-idx"), 10);
+      data.splice(idx, 1);
+      renderRecordsPanel();
+      if (typeof updateAll === "function") updateAll();
+      if (typeof saveUserData === "function") saveUserData();
+    });
+  });
 }
 
 /* All functions now defined — bind to window so inline onclick handlers work */
