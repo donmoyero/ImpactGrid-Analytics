@@ -4,14 +4,29 @@
   <meta charset="UTF-8"/>
   <title>Settings — ImpactGrid</title>
   <script>
+    /* Auth pre-check: only redirect if clearly no session token present.
+       Full session validation happens async after Supabase loads. */
     (function() {
-      var ok = false;
       try {
+        var ok = false;
         if (window.location.hash.indexOf('access_token') !== -1) ok = true;
-        if (!ok) { var r = localStorage.getItem('sb-vopehiqnduxobtaamrnh-auth-token'); if (r && JSON.parse(r).access_token) ok = true; }
-        if (!ok && window.location.search.indexOf('code=') !== -1) ok = true;
-      } catch(e) {}
-      if (!ok) window.location.replace('login.html');
+        if (window.location.search.indexOf('code=') !== -1) ok = true;
+        if (!ok) {
+          /* Check all possible Supabase token keys */
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (k && k.indexOf('auth-token') !== -1) {
+              try {
+                var val = JSON.parse(localStorage.getItem(k));
+                if (val && (val.access_token || (val.session && val.session.access_token))) { ok = true; break; }
+              } catch(e) {}
+            }
+          }
+        }
+        if (!ok) window.location.replace('login.html');
+      } catch(e) {
+        /* If localStorage is blocked (e.g. local file), don't redirect — let async auth handle it */
+      }
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -640,8 +655,8 @@ function populateBilling(){
   show.forEach(function(p){
     var pc=(window.planConfig||{})[p]||{};
     el.innerHTML+='<div style="display:flex;align-items:center;justify-content:space-between;gap:13px;padding:13px 15px;background:var(--bg-mid);border:1px solid var(--border-mid);border-radius:var(--r);">'+
-    '<div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:2px;">'+(pc.label||p)+'</div>'+
-    '<div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);">'+(pc.price||'')+' · '+(pc.analyses===Infinity?'Unlimited AI analyses':(pc.analyses||'?')+' analyses/mo')+'</div></div>'+
+    '<div><div style="font-family:Syne,sans-serif;font-weight:700;font-size:13px;margin-bottom:2px;">'+(pc.label||p)+'</div>'+
+    '<div style="font-size:10px;font-family:JetBrains Mono,monospace;color:var(--text-muted);">'+(pc.price||'')+' · '+(pc.analyses===Infinity?'Unlimited AI analyses':(pc.analyses||'?')+' analyses/mo')+'</div></div>'+
     '<a href="'+lnks[p]+'" target="_blank" class="btn-g" style="white-space:nowrap;">Upgrade →</a></div>';
   });
 }
@@ -652,10 +667,10 @@ async function populateStorage(){
     var plan=window.currentPlan||'analyst',config=(window.planConfig||{})[plan]||{};
     var{count}=await _sb.from('user_data').select('*',{count:'exact',head:true}).eq('user_id',_u.id);
     el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;">'+
-      '<div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:3px;">Records Stored</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;">'+(count||0)+' months</div></div>'+
-      '<div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:3px;">Data Limit</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;">'+(config.dataMonths===Infinity?'Unlimited':(config.dataMonths||1)+' months')+'</div></div>'+
-    '</div><p style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);">Encrypted at rest · Supabase EU-West · GDPR compliant.</p>';
-  }catch(e){el.innerHTML='<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);">Could not load storage info.</span>';}
+      '<div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;"><div style="font-family:JetBrains Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:3px;">Records Stored</div><div style="font-family:Syne,sans-serif;font-weight:700;font-size:15px;">'+(count||0)+' months</div></div>'+
+      '<div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;"><div style="font-family:JetBrains Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:3px;">Data Limit</div><div style="font-family:Syne,sans-serif;font-weight:700;font-size:15px;">'+(config.dataMonths===Infinity?'Unlimited':(config.dataMonths||1)+' months')+'</div></div>'+
+    '</div><p style="font-size:10px;font-family:JetBrains Mono,monospace;color:var(--text-muted);">Encrypted at rest · Supabase EU-West · GDPR compliant.</p>';
+  }catch(e){el.innerHTML='<span style="font-family:JetBrains\ Mono,monospace;font-size:10px;color:var(--text-muted);">Could not load storage info.</span>';}
 }
 
 async function svNotif(k,v){if(!_sb||!_u)return;try{var p=(_u.user_metadata||{}).notification_prefs||{};p[k]=v;await _sb.auth.updateUser({data:{notification_prefs:p}});}catch(e){}}
@@ -667,9 +682,7 @@ async function expData(fmt){
     var{data:rows}=await _sb.from('user_data').select('*').eq('user_id',_u.id);
     var{data:plan}=await _sb.from('user_plans').select('*').eq('user_id',_u.id).single();
     if(fmt==='csv'){
-      var csv='Month,Revenue,Expenses,Profit
-';(rows||[]).forEach(function(r){csv+=[r.month_year,r.revenue,r.expenses,r.profit].join(',')+'
-';});
+      var csv='Month,Revenue,Expenses,Profit\n';(rows||[]).forEach(function(r){csv+=(r.month_year||'')+','+(r.revenue||0)+','+(r.expenses||0)+','+(r.profit||0)+'\n';});
       dlF('impactgrid-data.csv',csv,'text/csv');
     }else{
       dlF('impactgrid-export.json',JSON.stringify({exported_at:new Date().toISOString(),user:{email:_u.email,id:_u.id},plan:plan,financial_data:rows},null,2),'application/json');
