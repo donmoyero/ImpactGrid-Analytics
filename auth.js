@@ -1,50 +1,54 @@
 /* ================================================================
    IMPACTGRID AUTH — auth.js
-   Forces login on every page load. No session = login.html.
+   Forces login on every protected page. No session = login.html.
+   Waits for supabase.js to finish initialising before running.
 ================================================================ */
-const supabase = window.supabaseClient;
 
-/* Logout — defined here early so mobile topbar button always works */
-window.logout = async function() {
+/* Logout defined immediately so the sidebar button always works */
+window.logout = async function () {
   try {
-    if (supabase) await supabase.auth.signOut();
-  } catch(e) {}
-  window.location.href = "login.html";
+    if (window.supabaseClient) await window.supabaseClient.auth.signOut();
+  } catch (e) {}
+  window.location.href = 'login.html';
 };
 
-async function checkAuth() {
-  try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+/* Wait for the Supabase client to be ready, THEN run auth */
+window.supabaseReady.then(function (supabase) {
 
-    if (error) {
-      console.error("Session error:", error.message);
-      window.location.href = "login.html";
-      return;
+  /* Listen for sign-out / token refresh events */
+  supabase.auth.onAuthStateChange(function (event) {
+    if (event === 'SIGNED_OUT') {
+      window.location.href = 'login.html';
     }
-
-    /* Not logged in — enforce login first */
-    if (!session) {
-      window.location.href = "login.html";
-      return;
+    if (event === 'TOKEN_REFRESHED') {
+      console.log('[ImpactGrid] Session token refreshed.');
     }
+  });
 
-    /* Logged in — allow access */
-    console.log("Authenticated:", session.user.email);
-
-  } catch (err) {
-    console.error("Auth error:", err);
-    window.location.href = "login.html";
-  }
-}
-
-/* Auto-redirect on sign out or session expiry */
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_OUT") {
-    window.location.href = "login.html";
-  }
-  if (event === "TOKEN_REFRESHED") {
-    console.log("Session refreshed.");
-  }
+  checkAuth(supabase);
 });
 
-checkAuth();
+async function checkAuth(supabase) {
+  try {
+    var result = await supabase.auth.getSession();
+    var session = result.data && result.data.session;
+    var error   = result.error;
+
+    if (error) {
+      console.error('[ImpactGrid] Session error:', error.message);
+      window.location.href = 'login.html';
+      return;
+    }
+
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    console.log('[ImpactGrid] Authenticated:', session.user.email);
+
+  } catch (err) {
+    console.error('[ImpactGrid] Auth check failed:', err);
+    window.location.href = 'login.html';
+  }
+}
