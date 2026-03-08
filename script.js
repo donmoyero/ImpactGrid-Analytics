@@ -1694,6 +1694,7 @@ function toggleSidebar() {
   // Update main content margin to match sidebar width
   var main = document.querySelector(".main-content");
   if (main) main.style.marginLeft = isCollapsed ? "64px" : "260px";
+  document.body.classList.toggle("sidebar-collapsed", isCollapsed);
 
   var tab = document.getElementById("sidebar-reopen-tab");
 
