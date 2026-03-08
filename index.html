@@ -65,8 +65,11 @@
 </head>
 <body>
 
-<!-- ── MOBILE: Professional Top Bar ── -->
+<!-- ── MOBILE: Top Bar ── -->
 <header class="mobile-topbar">
+  <button class="mob-hamburger" onclick="toggleMobileMenu()" id="mobileMenuBtn" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </button>
   <div class="mobile-topbar-logo">
     <img src="logo.png" alt="ImpactGrid">
     <div>
@@ -74,9 +77,8 @@
       <div class="mobile-topbar-badge">IFSRM v3.0</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <!-- Dark/Light Toggle Switch -->
-    <label class="theme-switch" title="Toggle light/dark mode">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <label class="theme-switch" title="Toggle dark/light mode">
       <input type="checkbox" id="themeSwitchMobile" onchange="toggleTheme(this.checked)">
       <span class="theme-switch-track">
         <span class="theme-switch-icon dark-icon">🌙</span>
@@ -84,7 +86,6 @@
         <span class="theme-switch-thumb"></span>
       </span>
     </label>
-    <!-- Logout -->
     <button onclick="logout()" class="topbar-logout-btn" aria-label="Logout">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Logout
@@ -123,6 +124,8 @@
     <span class="mob-label">Report</span>
   </button>
 </nav>
+
+<div id="sbOverlay" onclick="closeMobileMenu()"></div>
 
 <div id="app" class="app-layout">
 
@@ -174,14 +177,9 @@
           <span style="margin-right:10px;opacity:0.6;">⚙</span> Settings
         </li>
       </ul>
-    </nav>
 
-    <div class="sidebar-bottom">
-      <div id="autosaveBadge" style="opacity:0;transition:opacity 0.4s;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--success);letter-spacing:0.08em;margin-bottom:8px;">✓ Data saved</div>
-      <div id="usageBar" style="margin-bottom:10px;"></div>
-
-      <!-- Theme Toggle Switch -->
-      <div class="sidebar-theme-row">
+      <!-- Theme Toggle — inside nav, above the bottom user section -->
+      <div class="sidebar-theme-row" style="margin-top:16px;">
         <span class="sidebar-theme-label">
           <span class="theme-mode-icon" id="themeModeIcon">🌙</span>
           <span id="themeModeLabel">Dark Mode</span>
@@ -193,6 +191,11 @@
           </span>
         </label>
       </div>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div id="autosaveBadge" style="opacity:0;transition:opacity 0.4s;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--success);letter-spacing:0.08em;margin-bottom:8px;">✓ Data saved</div>
+      <div id="usageBar" style="margin-bottom:8px;"></div>
 
       <!-- User chip -->
       <div class="sidebar-user-chip">
@@ -206,7 +209,7 @@
         <button onclick="toggleSidebar()" class="chip-icon-btn" title="Collapse sidebar">◁</button>
       </div>
 
-      <!-- Logout Button — prominent -->
+      <!-- Logout Button -->
       <button onclick="logout()" class="sidebar-logout-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Sign Out
