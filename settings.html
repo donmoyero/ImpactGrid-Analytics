@@ -92,6 +92,12 @@ a{color:inherit;text-decoration:none;}
 .settings-panels{flex:1;min-width:0;}
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
+
+/* Avatar picker */
+.av-picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.av-opt{width:36px;height:36px;background:var(--bg-surface);border:1.5px solid var(--border-mid);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s,transform .1s;line-height:1;}
+.av-opt:hover{border-color:var(--gold);background:var(--bg-elevated);transform:scale(1.1);}
+.av-opt.selected{border-color:var(--gold);background:rgba(200,169,110,.15);box-shadow:0 0 0 2px rgba(200,169,110,.25);}
 .panel-title{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:3px;}
 .panel-sub{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);margin-bottom:20px;}
 
@@ -288,9 +294,29 @@ a{color:inherit;text-decoration:none;}
           <div class="panel-sub">Your name appears in AI adviser greetings and PDF report headers.</div>
           <div class="sc">
             <div class="sc-lbl">Avatar</div>
-            <div class="av-row">
-              <div class="av-lg" id="avPrev">U</div>
-              <div><p style="font-size:12px;color:var(--text-secondary);margin-bottom:3px;">Initials avatar generated from your first name.</p><small style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);">Profile photo upload coming soon.</small></div>
+            <div class="av-row" style="margin-bottom:14px;">
+              <div class="av-lg" id="avPrev">🦁</div>
+              <div>
+                <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Choose an avatar emoji for your profile.</p>
+                <div class="av-picker" id="avPicker">
+                  <button class="av-opt" onclick="pickAvatar('🦁',this)">🦁</button>
+                  <button class="av-opt" onclick="pickAvatar('🐯',this)">🐯</button>
+                  <button class="av-opt" onclick="pickAvatar('🦊',this)">🦊</button>
+                  <button class="av-opt" onclick="pickAvatar('🐺',this)">🐺</button>
+                  <button class="av-opt" onclick="pickAvatar('🦅',this)">🦅</button>
+                  <button class="av-opt" onclick="pickAvatar('🦋',this)">🦋</button>
+                  <button class="av-opt" onclick="pickAvatar('🐉',this)">🐉</button>
+                  <button class="av-opt" onclick="pickAvatar('🌙',this)">🌙</button>
+                  <button class="av-opt" onclick="pickAvatar('⚡',this)">⚡</button>
+                  <button class="av-opt" onclick="pickAvatar('🔥',this)">🔥</button>
+                  <button class="av-opt" onclick="pickAvatar('💎',this)">💎</button>
+                  <button class="av-opt" onclick="pickAvatar('🚀',this)">🚀</button>
+                  <button class="av-opt" onclick="pickAvatar('🌊',this)">🌊</button>
+                  <button class="av-opt" onclick="pickAvatar('🏔️',this)">🏔️</button>
+                  <button class="av-opt" onclick="pickAvatar('🎯',this)">🎯</button>
+                  <button class="av-opt" onclick="pickAvatar('👑',this)">👑</button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="sc">
@@ -328,7 +354,8 @@ a{color:inherit;text-decoration:none;}
           <div class="panel-sub">Change your password and review active sessions.</div>
           <div class="sc">
             <div class="sc-lbl">Change Password</div>
-            <div class="sc-sub">Minimum 8 characters. Mix of letters, numbers and symbols recommended.</div>
+            <div class="sc-sub">Enter your current password first, then choose a new one. Minimum 8 characters.</div>
+            <div class="fg1"><div class="fl"><label>Current Password</label><input type="password" id="pw0" placeholder="Your existing password"/></div></div>
             <div class="fg1"><div class="fl"><label>New Password</label><input type="password" id="pw1" placeholder="At least 8 characters" oninput="chkPw()"/></div></div>
             <div class="pw-sr"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">Strength</span><span id="pwLbl" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);">—</span></div>
             <div class="pw-bw"><div class="pw-bf" id="pwBar"></div></div>
@@ -559,7 +586,19 @@ function populateSidebar(){
 
 function showSt(id,msg,t){var e=document.getElementById(id);if(!e)return;e.textContent=msg;e.className='sstatus show '+t;setTimeout(function(){e.classList.remove('show');},3500);}
 
+var _selectedAvatar=null;
+
+function pickAvatar(emoji,btn){
+  _selectedAvatar=emoji;
+  var a=document.getElementById('avPrev');if(a)a.textContent=emoji;
+  var s=document.getElementById('sidebarAvatar');if(s)s.textContent=emoji;
+  // Highlight selected
+  document.querySelectorAll('.av-opt').forEach(function(b){b.classList.remove('selected');});
+  if(btn)btn.classList.add('selected');
+}
+
 function refreshAv(){
+  if(_selectedAvatar)return; // Don't override emoji selection
   var f=document.getElementById('firstName').value.trim();
   var l=f?f[0].toUpperCase():(_u?(_u.email||'U')[0].toUpperCase():'U');
   var a=document.getElementById('avPrev');if(a)a.textContent=l;
@@ -570,17 +609,30 @@ function loadProfile(){
   if(!_u)return;
   var e=_u.email||'';
   var ce=document.getElementById('curEmail');if(ce)ce.value=e;
-  var ap=document.getElementById('avPrev');if(ap)ap.textContent=(e[0]||'U').toUpperCase();
   var m=_u.user_metadata||{};
+  // Restore avatar
+  if(m.avatar_emoji){
+    _selectedAvatar=m.avatar_emoji;
+    var ap=document.getElementById('avPrev');if(ap)ap.textContent=m.avatar_emoji;
+    var sa=document.getElementById('sidebarAvatar');if(sa)sa.textContent=m.avatar_emoji;
+    // Highlight the correct button
+    document.querySelectorAll('.av-opt').forEach(function(b){
+      if(b.textContent===m.avatar_emoji)b.classList.add('selected');
+    });
+  } else {
+    var ap=document.getElementById('avPrev');if(ap)ap.textContent=(e[0]||'U').toUpperCase();
+  }
   var set=function(id,v){var el=document.getElementById(id);if(el&&v)el.value=v;};
   set('firstName',m.first_name);set('lastName',m.last_name);set('displayName',m.display_name);set('businessName',m.business_name);
-  refreshAv();
+  if(!m.avatar_emoji)refreshAv();
 }
 
 async function saveProfile(){
   if(!_sb||!_u){showSt('st-profile','✕ Not logged in','err');return;}
   try{
-    var{error}=await _sb.auth.updateUser({data:{first_name:document.getElementById('firstName').value.trim(),last_name:document.getElementById('lastName').value.trim(),display_name:document.getElementById('displayName').value.trim(),business_name:document.getElementById('businessName').value.trim()}});
+    var updateData={first_name:document.getElementById('firstName').value.trim(),last_name:document.getElementById('lastName').value.trim(),display_name:document.getElementById('displayName').value.trim(),business_name:document.getElementById('businessName').value.trim()};
+    if(_selectedAvatar)updateData.avatar_emoji=_selectedAvatar;
+    var{error}=await _sb.auth.updateUser({data:updateData});
     if(error)throw error;
     refreshAv();showSt('st-profile','✓ Profile saved','ok');
   }catch(e){showSt('st-profile','✕ '+e.message,'err');}
@@ -608,15 +660,27 @@ function chkPw(){
 }
 
 async function changePassword(){
-  if(!_sb){showSt('st-pw','✕ Not logged in','err');return;}
-  var p1=document.getElementById('pw1').value,p2=document.getElementById('pw2').value;
-  if(!p1||p1.length<8){showSt('st-pw','✕ Min 8 characters','err');return;}
-  if(p1!==p2){showSt('st-pw','✕ Passwords do not match','err');return;}
+  if(!_sb||!_u){showSt('st-pw','✕ Not logged in','err');return;}
+  var p0=document.getElementById('pw0').value;
+  var p1=document.getElementById('pw1').value;
+  var p2=document.getElementById('pw2').value;
+  if(!p0){showSt('st-pw','✕ Enter your current password','err');return;}
+  if(!p1||p1.length<8){showSt('st-pw','✕ New password must be at least 8 characters','err');return;}
+  if(p1!==p2){showSt('st-pw','✕ New passwords do not match','err');return;}
+  if(p0===p1){showSt('st-pw','✕ New password must be different from current','err');return;}
+  showSt('st-pw','Verifying…','');
   try{
+    // Re-authenticate with current password first
+    var{error:signInErr}=await _sb.auth.signInWithPassword({email:_u.email,password:p0});
+    if(signInErr){showSt('st-pw','✕ Current password is incorrect','err');return;}
+    // Now update to new password
     var{error}=await _sb.auth.updateUser({password:p1});
     if(error)throw error;
-    document.getElementById('pw1').value='';document.getElementById('pw2').value='';chkPw();
-    showSt('st-pw','✓ Password updated','ok');
+    document.getElementById('pw0').value='';
+    document.getElementById('pw1').value='';
+    document.getElementById('pw2').value='';
+    chkPw();
+    showSt('st-pw','✓ Password updated successfully','ok');
   }catch(e){showSt('st-pw','✕ '+e.message,'err');}
 }
 
