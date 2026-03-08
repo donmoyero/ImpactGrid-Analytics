@@ -4,7 +4,14 @@
 // Always access through window.businessData so data persists across login
 if (!window.businessData) window.businessData = [];
 var businessData = window.businessData; // reference, not copy
-let currentCurrency   = "GBP";
+// currentCurrency — always sync to window so plans.js loadUserData() can restore it
+if (!window.currentCurrency) window.currentCurrency = "GBP";
+var currentCurrency = "GBP";
+Object.defineProperty(window, "currentCurrency", {
+  get: function() { return currentCurrency; },
+  set: function(v) { currentCurrency = v; },
+  configurable: true
+});
 
 let revenueChart      = null;
 let profitChart       = null;
@@ -62,14 +69,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
 function setCurrency(currency) {
   currentCurrency = currency;
+  window.currentCurrency = currency;
   updateAll();
 }
 
 function formatCurrency(val) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: currentCurrency
-  }).format(val);
+  var cur = window.currentCurrency || currentCurrency || "GBP";
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: cur }).format(val);
+  } catch(e) {
+    return cur + Number(val).toFixed(2);
+  }
 }
 
 
@@ -1179,7 +1189,7 @@ function generatePDF() {
   var metaItems = [
     ["Generated",   new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})],
     ["Currency",    cur],
-    ["Data Period", businessData.length > 0 ? businessData[0].month+" – "+businessData[businessData.length-1].month : "—"],
+    ["Data Period", businessData.length > 0 ? businessData[0].date.toISOString().slice(0,7)+" – "+businessData[businessData.length-1].date.toISOString().slice(0,7) : "—"],
     ["Plan",        (window.currentPlan||"analyst").charAt(0).toUpperCase()+(window.currentPlan||"analyst").slice(1)],
     ["Platform",    "impactgridanalytics.com"]
   ];
@@ -1282,7 +1292,7 @@ function generatePDF() {
     var trend = i===0 ? "—" : (d.revenue > businessData[i-1].revenue ? "▲" : d.revenue < businessData[i-1].revenue ? "▼" : "–");
     var trendCol = i===0 ? C.textMut : (d.revenue > businessData[i-1].revenue ? C.green : d.revenue < businessData[i-1].revenue ? C.red : C.textMut);
 
-    label(d.month,          cols[0].x, y2+5, 7.5, C.textPri, "bold");
+    label(d.date.toISOString().slice(0,7), cols[0].x, y2+5, 7.5, C.textPri, "bold");
     label(fmt(d.revenue),   cols[1].x, y2+5, 7.5, C.blue);
     label(fmt(d.expenses),  cols[2].x, y2+5, 7.5, C.red);
     label(fmt(d.profit),    cols[3].x, y2+5, 7.5, profCol, "bold");
@@ -1501,47 +1511,6 @@ function generatePDF() {
 
 
 
-/* ── PDF Import ── */
-function importPDF(file, statusEl) {
-  if (statusEl) { statusEl.textContent = "Reading PDF..."; statusEl.style.color = "var(--gold-light)"; }
-
-  /* Use PDF.js if available, otherwise use text extraction */
-  if (window.pdfjsLib) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var typedArray = new Uint8Array(e.target.result);
-      window.pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
-        var textPromises = [];
-        for (var i = 1; i <= pdf.numPages; i++) {
-          textPromises.push(pdf.getPage(i).then(function(page) {
-            return page.getTextContent().then(function(tc) {
-              return tc.items.map(function(item) { return item.str; }).join(" ");
-            });
-          }));
-        }
-        Promise.all(textPromises).then(function(pages) {
-          var fullText = pages.join("\n");
-          parsePDFText(fullText, statusEl);
-        });
-      }).catch(function(err) {
-        if (statusEl) { statusEl.textContent = "Could not read PDF. Try copying data into the Excel template."; statusEl.style.color = "var(--danger)"; }
-      });
-    };
-    reader.readAsArrayBuffer(file);
-  } else {
-    /* Load PDF.js dynamically */
-    var script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-    script.onload = function() {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-      importPDF(file, statusEl);
-    };
-    script.onerror = function() {
-      if (statusEl) { statusEl.textContent = "PDF support unavailable. Please use Excel or CSV format."; statusEl.style.color = "var(--danger)"; }
-    };
-    document.head.appendChild(script);
-  }
-}
 
 function parsePDFText(text, statusEl) {
   /* Try to extract financial data from PDF text */
@@ -1567,16 +1536,18 @@ function parsePDFText(text, statusEl) {
     if (!parsed) return;
 
     /* Check duplicate */
-    var exists = businessData.some(function(d){ return d.month === parsed; });
+    var exists = businessData.some(function(d){ return d.date.toISOString().slice(0,7) === parsed; });
     if (exists) return;
 
-    businessData.push({ month: parsed, revenue: rev, expenses: exp, profit: rev - exp });
+    businessData.push({ date: new Date(parsed+"-01"), revenue: rev, expenses: exp, profit: rev - exp });
     imported++;
   });
 
   if (imported > 0) {
-    businessData.sort(function(a,b){ return a.month.localeCompare(b.month); });
-    renderTable(); updateChart(); updateMetrics(); saveUserData();
+    businessData.sort(function(a,b){ return a.date - b.date; });
+    window.businessData = businessData;
+    updateAll();
+    if (typeof saveUserData === "function") saveUserData();
     if (statusEl) { statusEl.textContent = "✓ Imported " + imported + " months from PDF."; statusEl.style.color = "var(--success)"; }
     if (errors > 0 && statusEl) statusEl.textContent += " (" + errors + " rows skipped)";
   } else {
@@ -1837,12 +1808,8 @@ function bindGlobalFunctions() {
 }
 
 function closeUpgradeModal() {
-  if (typeof window.closeUpgradeModal === "function" && window.closeUpgradeModal !== closeUpgradeModal) {
-    window.closeUpgradeModal();
-  } else {
-    var modal = document.getElementById("upgradeModal");
-    if (modal) modal.style.display = "none";
-  }
+  var modal = document.getElementById("upgradeModal");
+  if (modal) modal.style.display = "none";
 }
 
 
