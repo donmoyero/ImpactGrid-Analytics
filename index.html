@@ -173,6 +173,9 @@
         <li onclick="showSection('upgrade', event)" style="margin-top:8px;border-top:1px solid var(--border);padding-top:12px;">
           <span style="margin-right:10px;opacity:0.6;">⬆</span> Upgrade Plan
         </li>
+        <li onclick="toggleRecordsPanel()" id="navRecords">
+          <span style="margin-right:10px;opacity:0.6;">📋</span> Records
+        </li>
         <li onclick="window.location.href='settings.html'">
           <span style="margin-right:10px;opacity:0.6;">⚙</span> Settings
         </li>
@@ -716,6 +719,34 @@
     <button onclick="closeLimitModal()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-muted);font-size:13px;padding:11px;border-radius:9px;cursor:pointer;font-family:'Manrope',sans-serif;">Continue on Current Plan</button>
   </div>
 </div>
+
+
+<!-- ── RECORDS PANEL ── -->
+<div id="recordsPanelOverlay" onclick="closeRecordsPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;backdrop-filter:blur(2px);"></div>
+
+<aside id="recordsPanel" class="records-panel">
+  <div class="rp-header">
+    <div>
+      <div class="rp-title">Financial Records</div>
+      <div class="rp-sub" id="rpSub">0 months stored</div>
+    </div>
+    <button class="rp-close" onclick="closeRecordsPanel()" title="Close">✕</button>
+  </div>
+
+  <div class="rp-status" id="rpSyncStatus">
+    <span class="rp-dot synced"></span>
+    <span id="rpSyncLabel">Synced to cloud</span>
+  </div>
+
+  <div class="rp-body" id="rpBody">
+    <div class="rp-empty">No records yet.<br>Add a month on the dashboard to get started.</div>
+  </div>
+
+  <div class="rp-footer">
+    <div class="rp-totals" id="rpTotals"></div>
+    <button class="rp-add-btn" onclick="closeRecordsPanel();showSection('dashboard',null);">+ Add Month</button>
+  </div>
+</aside>
 
 </body>
 </html>
