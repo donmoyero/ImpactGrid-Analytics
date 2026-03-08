@@ -459,17 +459,78 @@ a{color:inherit;text-decoration:none;}
 <div class="mo" id="moDelete"><div class="mb"><button class="mc" onclick="closeMo('moDelete')">✕</button><div class="mt">Delete Account Forever?</div><div class="ms">Permanently and irreversibly deletes your account, all records, all reports, and all AI history. <strong>Cannot be recovered.</strong></div><div style="margin-bottom:14px;"><label style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">Type your email to confirm</label><input type="text" id="delConf" placeholder="your@email.com" class="mc-inp"/></div><div class="mbtns"><button class="btn-d" onclick="delAccount()">Permanently Delete Account</button><button class="btn-o" onclick="closeMo('moDelete')">Cancel</button></div></div></div>
 
 <script src="supabase.js"></script>
-<script src="auth.js"></script>
-<script src="plans.js"></script>
+<script>
+/* ── Inline plan config — no plans.js needed (avoids dashboard-only function calls) ── */
+var PLAN_CONFIG = {
+  analyst:      { label:"Basic",                  price:"Free",          analyses:3,        pdfs:3,        forecasts:3,        forecastYears:0.5,  dataMonths:1         },
+  professional: { label:"Professional",           price:"£8.99/mo",      analyses:20,       pdfs:20,       forecasts:20,       forecastYears:3,    dataMonths:12        },
+  enterprise:   { label:"Enterprise Intelligence",price:"£13.99/mo",     analyses:Infinity, pdfs:Infinity, forecasts:Infinity, forecastYears:10,   dataMonths:Infinity  },
+  admin:        { label:"Admin",                  price:"Internal",      analyses:Infinity, pdfs:Infinity, forecasts:Infinity, forecastYears:10,   dataMonths:Infinity  }
+};
+window.planConfig     = PLAN_CONFIG;
+window.currentPlan    = "analyst";
+window.usageThisMonth = { analyses:0, pdfs:0, forecasts:0 };
+</script>
 <script>
 var _sb=null,_u=null;
 
+/* ── UI functions defined immediately — all onclick handlers work instantly ── */
+function swTab(n,b){
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(function(t){t.classList.remove('active');});
+  var panel=document.getElementById('tab-'+n);
+  if(panel)panel.classList.add('active');
+  b.classList.add('active');
+}
+function openMo(id){var el=document.getElementById(id);if(el)el.classList.add('open');}
+function closeMo(id){
+  var el=document.getElementById(id);if(el)el.classList.remove('open');
+  var i=document.querySelector('#'+id+' input[type="text"]');if(i)i.value='';
+}
+function doLogout(){
+  if(window.supabaseClient){window.supabaseClient.auth.signOut().then(function(){window.location.href='login.html';});}
+  else{window.location.href='login.html';}
+}
+function closeSb(){
+  var s=document.getElementById('sidebar');if(s)s.classList.remove('mob-open');
+  var o=document.getElementById('sbOverlay');if(o)o.style.display='none';
+}
+
 document.addEventListener('DOMContentLoaded',async function(){
-  await new Promise(function(r){setTimeout(r,90);});
-  _sb=window.supabaseClient||null;
-  if(typeof initPlanSystem==='function') await initPlanSystem();
-  if(_sb){var{data:{session}}=await _sb.auth.getSession();if(session)_u=session.user;}
-  populateSidebar();loadProfile();populateBilling();populateStorage();populateSession();
+  try{
+    /* Small delay to let supabase.js assign window.supabaseClient */
+    await new Promise(function(r){setTimeout(r,120);});
+    _sb = window.supabaseClient || null;
+
+    /* Get session */
+    if(_sb){
+      var sess = await _sb.auth.getSession();
+      if(sess && sess.data && sess.data.session) _u = sess.data.session.user;
+    }
+
+    /* Load plan from Supabase user_plans table */
+    if(_sb && _u){
+      try{
+        var res = await _sb.from('user_plans').select('*').eq('user_id',_u.id).single();
+        if(res && res.data){
+          window.currentPlan    = res.data.plan || 'analyst';
+          window.usageThisMonth = {
+            analyses:  res.data.analyses_used  || 0,
+            pdfs:      res.data.pdfs_used       || 0,
+            forecasts: res.data.forecasts_used  || 0
+          };
+        }
+      }catch(e){ /* no plan row yet — stay on analyst */ }
+    }
+
+    populateSidebar();
+    loadProfile();
+    populateBilling();
+    populateStorage();
+    populateSession();
+  }catch(e){
+    console.warn('Settings init error:',e);
+  }
 });
 
 function populateSidebar(){
@@ -478,20 +539,8 @@ function populateSidebar(){
   var el=document.getElementById('sidebarUserEmail');if(el)el.textContent=e;
   var av=document.getElementById('sidebarAvatar');if(av)av.textContent=(e[0]||'U').toUpperCase();
   var pb=document.getElementById('planBadge');
-  if(pb&&window.currentPlan){pb.textContent=(window.planConfig||{})[window.currentPlan]?.label||window.currentPlan;pb.className='plan-badge plan-'+window.currentPlan;}
+  if(pb&&window.currentPlan){var pc=(window.planConfig||{})[window.currentPlan]||{};pb.textContent=pc.label||window.currentPlan;pb.className='plan-badge plan-'+window.currentPlan;}
 }
-
-function doLogout(){if(window.logout){window.logout();return;}if(_sb)_sb.auth.signOut().then(function(){window.location.href='login.html';});}
-function closeSb(){document.getElementById('sidebar').classList.remove('mob-open');document.getElementById('sbOverlay').style.display='none';}
-
-function swTab(n,b){
-  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.tab-btn').forEach(function(t){t.classList.remove('active');});
-  document.getElementById('tab-'+n).classList.add('active');b.classList.add('active');
-}
-
-function openMo(id){document.getElementById(id).classList.add('open');}
-function closeMo(id){document.getElementById(id).classList.remove('open');var i=document.querySelector('#'+id+' input[type="text"]');if(i)i.value='';}
 
 function showSt(id,msg,t){var e=document.getElementById(id);if(!e)return;e.textContent=msg;e.className='sstatus show '+t;setTimeout(function(){e.classList.remove('show');},3500);}
 
