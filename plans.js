@@ -454,7 +454,14 @@ async function loadUserData() {
       if (bt) bt.value = data.business_type;
     }
 
+    // Sync to script.js local reference
+    if (typeof businessData !== "undefined") {
+      // Splice in place so the reference stays valid
+      businessData.length = 0;
+      (window.businessData || []).forEach(function(d){ businessData.push(d); });
+    }
     if (typeof updateAll === "function") updateAll();
+    if (typeof renderRecordsPanel === "function") renderRecordsPanel();
     showAIMemoryGreeting();
 
   } catch(e) {
