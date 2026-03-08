@@ -10,11 +10,9 @@
     (function() {
       var hasSession = false;
       try {
-        // Check for OAuth hash callback in URL (Google redirect)
         if (window.location.hash && window.location.hash.indexOf('access_token') !== -1) {
-          hasSession = true; // Supabase will handle the hash
+          hasSession = true;
         }
-        // Check localStorage for existing session
         if (!hasSession) {
           var key = 'sb-vopehiqnduxobtaamrnh-auth-token';
           var raw = localStorage.getItem(key);
@@ -23,7 +21,6 @@
             if (parsed && parsed.access_token) hasSession = true;
           }
         }
-        // Also check for code in URL params (PKCE flow)
         if (!hasSession && window.location.search.indexOf('code=') !== -1) {
           hasSession = true;
         }
@@ -46,7 +43,6 @@
 
   <!-- PDF engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-97XD9941FC"></script>
@@ -109,7 +105,7 @@
     <span class="mob-icon">◎</span>
     <span class="mob-label">AI</span>
   </button>
-  <button class="mob-nav-btn" onclick="mobileNav('settings',this)">
+  <button class="mob-nav-btn" onclick="window.location.href='settings.html'">
     <span class="mob-icon">⚙</span>
     <span class="mob-label">Settings</span>
   </button>
@@ -165,7 +161,7 @@
         <li onclick="showSection('upgrade', event)" style="margin-top:8px;border-top:1px solid var(--border);padding-top:12px;">
           <span style="margin-right:10px;opacity:0.6;">⬆</span> Upgrade Plan
         </li>
-        <li onclick="showSection('settings', event)">
+        <li onclick="window.location.href='settings.html'">
           <span style="margin-right:10px;opacity:0.6;">⚙</span> Settings
         </li>
       </ul>
@@ -277,7 +273,6 @@
       <section class="card">
         <h2>Monthly Financial Data Entry</h2>
 
-        <!-- 3-month guidance -->
         <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 16px;margin-bottom:20px;background:rgba(200,169,110,0.07);border:1px solid rgba(200,169,110,0.25);border-left:3px solid var(--gold);border-radius:8px;">
           <span style="font-size:16px;flex-shrink:0;margin-top:1px;">&#128203;</span>
           <div>
@@ -286,7 +281,6 @@
           </div>
         </div>
 
-        <!-- Manual entry -->
         <div class="grid">
           <div>
             <label>Reporting Month</label>
@@ -306,14 +300,12 @@
           </div>
         </div>
 
-        <!-- File import divider -->
         <div style="display:flex;align-items:center;gap:14px;margin:22px 0 18px;">
           <div style="flex:1;height:1px;background:var(--border);"></div>
           <span style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);letter-spacing:0.1em;white-space:nowrap;">OR IMPORT FROM FILE</span>
           <div style="flex:1;height:1px;background:var(--border);"></div>
         </div>
 
-        <!-- Download template -->
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px;background:rgba(200,169,110,0.05);border:1px solid rgba(200,169,110,0.15);border-radius:8px;">
           <span style="font-size:20px;">📥</span>
           <div style="flex:1;">
@@ -325,7 +317,6 @@
           </a>
         </div>
 
-        <!-- File import -->
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;">
           <label for="fileImport" style="display:inline-flex;align-items:center;gap:9px;padding:10px 20px;background:var(--bg-mid);border:1px dashed var(--border-mid);border-radius:8px;cursor:pointer;font-size:12px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;transition:border-color 0.2s,color 0.2s;">
             <span style="font-size:16px;">&#128194;</span> Choose File to Import
@@ -334,7 +325,6 @@
           <span id="importStatus" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);"></span>
         </div>
 
-        <!-- Format hint -->
         <div style="margin-top:12px;padding:12px 14px;background:var(--bg-mid);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;line-height:1.9;">
           <div style="margin-bottom:6px;display:flex;gap:8px;flex-wrap:wrap;">
             <span style="padding:2px 8px;background:rgba(45,212,160,0.1);border:1px solid rgba(45,212,160,0.25);border-radius:4px;color:#2DD4A0;">Excel .xlsx</span>
@@ -347,7 +337,7 @@
           <br><span style="color:var(--text-muted);">Word &amp; PDF: must contain a table or rows with Month, Revenue, Expenses data.</span>
         </div>
 
-              </section>
+      </section>
 
       <!-- Records Table -->
       <section class="card">
@@ -520,75 +510,11 @@
 
 
     <!-- ============================================
-         SECTION: SETTINGS
-    ============================================ -->
-
-    <section id="settings" class="page-section">
-      <h2 style="font-size:22px;font-weight:700;letter-spacing:0.04em;margin-bottom:6px;">Settings</h2>
-      <p style="color:var(--text-muted);font-size:13px;margin-bottom:28px;font-family:'JetBrains Mono',monospace;">Manage your account, appearance and data preferences.</p>
-
-      <div style="display:grid;gap:20px;max-width:680px;">
-
-        <!-- Account -->
-        <div style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:24px;">
-          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px;">Account</div>
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
-            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dim));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#0a0a0a;flex-shrink:0;" id="settingsAvatar">U</div>
-            <div>
-              <div id="settingsEmail" style="font-size:13px;color:var(--text-primary);font-family:'JetBrains Mono',monospace;"></div>
-              <span id="settingsPlanBadge" class="plan-badge plan-analyst" style="margin-top:4px;display:inline-block;">Basic</span>
-            </div>
-          </div>
-          <button onclick="logout()" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:transparent;border:1px solid var(--border-mid);border-radius:8px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'" onmouseout="this.style.borderColor='var(--border-mid)';this.style.color='var(--text-secondary)'">⎋ Sign Out</button>
-        </div>
-
-        <!-- Appearance -->
-        <div style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:24px;">
-          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px;">Appearance</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div>
-              <div style="font-size:13px;color:var(--text-primary);margin-bottom:4px;">Theme</div>
-              <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Switch between dark and light mode</div>
-            </div>
-            <button onclick="toggleTheme()" style="padding:9px 20px;background:rgba(200,169,110,0.08);border:1px solid rgba(200,169,110,0.25);border-radius:8px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;transition:background 0.15s;letter-spacing:0.05em;" onmouseover="this.style.background='rgba(200,169,110,0.15)'" onmouseout="this.style.background='rgba(200,169,110,0.08)'">⬡ Toggle Theme</button>
-          </div>
-        </div>
-
-        <!-- Plan & Billing -->
-        <div style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:24px;">
-          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px;">Plan &amp; Billing</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-            <div>
-              <div style="font-size:13px;color:var(--text-primary);margin-bottom:4px;">Current Plan</div>
-              <span id="settingsPlanLabel" style="font-size:13px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;">Basic (Free)</span>
-            </div>
-            <button onclick="showSection('upgrade',event)" style="padding:9px 20px;background:linear-gradient(135deg,rgba(200,169,110,0.15),rgba(200,169,110,0.05));border:1px solid rgba(200,169,110,0.3);border-radius:8px;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;letter-spacing:0.05em;">⬆ View Plans</button>
-          </div>
-          <div id="settingsUsageBar" style="margin-top:16px;"></div>
-        </div>
-
-        <!-- Data -->
-        <div style="background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:24px;">
-          <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:16px;">Data</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-            <div>
-              <div style="font-size:13px;color:var(--text-primary);margin-bottom:4px;">Export Your Data</div>
-              <div style="font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Download all your financial entries as Excel</div>
-            </div>
-            <button onclick="exportData ? exportData() : alert('Export not available yet')" style="padding:9px 20px;background:transparent;border:1px solid var(--border-mid);border-radius:8px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border-mid)';this.style.color='var(--text-secondary)'">↓ Export Excel</button>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-        <!-- ============================================
          SECTION: REPORTS
     ============================================ -->
 
     <section id="report" class="page-section">
 
-      <!-- Saved PDF Reports -->
       <section class="card">
         <h2>Your Saved Reports</h2>
         <p style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;font-family:'JetBrains Mono',monospace;">
@@ -599,7 +525,6 @@
         </div>
       </section>
 
-      <!-- Generate New Report -->
       <section class="card">
         <h2>Generate New Report</h2>
         <p style="font-size:13px;color:var(--text-secondary);margin-bottom:28px;line-height:1.7;max-width:560px;">
@@ -609,7 +534,6 @@
       </section>
 
     </section>
-
 
 
     <!-- ============================================
