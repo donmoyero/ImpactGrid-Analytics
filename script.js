@@ -1691,6 +1691,10 @@ function toggleSidebar() {
   sidebar.classList.toggle("collapsed");
   var isCollapsed = sidebar.classList.contains("collapsed");
 
+  // Update main content margin to match sidebar width
+  var main = document.querySelector(".main-content");
+  if (main) main.style.marginLeft = isCollapsed ? "64px" : "260px";
+
   var tab = document.getElementById("sidebar-reopen-tab");
 
   if (isCollapsed) {
@@ -1701,9 +1705,9 @@ function toggleSidebar() {
       tab.title = "Open sidebar";
       tab.style.cssText =
         "position:fixed;left:0;top:50%;transform:translateY(-50%);" +
-        "width:22px;height:48px;background:#0e1220;" +
-        "border:1px solid #222b42;border-left:none;" +
-        "border-radius:0 6px 6px 0;color:#c8a96e;font-size:11px;" +
+        "width:22px;height:48px;background:var(--bg-surface,#fff);" +
+        "border:1px solid var(--border-mid,#cdd2e8);border-left:none;" +
+        "border-radius:0 6px 6px 0;color:var(--gold,#a07828);font-size:11px;" +
         "cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;";
       tab.onclick = function() { toggleSidebar(); };
       document.body.appendChild(tab);
