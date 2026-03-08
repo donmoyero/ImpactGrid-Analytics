@@ -22,16 +22,16 @@ let lastAIInsightText = "";
 document.addEventListener("DOMContentLoaded", function() {
   bindGlobalFunctions();
 
-  /* Light mode is DEFAULT — only switch to dark if user previously chose dark */
+  /* Dark mode is DEFAULT — only switch to light if user previously chose light */
   try {
     var savedTheme = localStorage.getItem("ig-theme");
-    if (savedTheme === "dark") {
-      toggleTheme(false); // go dark
+    if (savedTheme === "light") {
+      toggleTheme(true); // go light
     } else {
-      toggleTheme(true);  // default: light mode
+      toggleTheme(false); // default: dark mode
     }
   } catch(e) {
-    toggleTheme(true); // fallback to light
+    toggleTheme(false); // fallback to dark
   }
 
   renderAIInsights();
