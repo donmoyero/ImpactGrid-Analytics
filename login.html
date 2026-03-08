@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
   <script src="supabase.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -346,24 +346,25 @@
 /* === AUTH === */
 var isLogin = false;
 
-/* Handle OAuth redirect + session check */
-(async function(){
-  try {
-    /* First let Supabase process any OAuth hash in the URL */
-    await window.supabaseClient.auth.getSession();
+/* Handle OAuth redirect + session check — waits for supabase to be ready */
+function waitForSupabase(cb, attempts) {
+  attempts = attempts || 0;
+  if (attempts > 50) { console.warn('Supabase never loaded'); return; }
+  if (window.supabaseClient) { cb(); }
+  else { setTimeout(function(){ waitForSupabase(cb, attempts+1); }, 100); }
+}
 
-    /* Listen for sign in event from OAuth redirect */
+waitForSupabase(async function() {
+  try {
     window.supabaseClient.auth.onAuthStateChange(function(event, session) {
       if (event === 'SIGNED_IN' && session) {
         window.location.href = 'index.html';
       }
     });
-
-    /* Check if already logged in */
     var s = await window.supabaseClient.auth.getSession();
-    if (s.data && s.data.session) window.location.href = "index.html";
+    if (s.data && s.data.session) window.location.href = 'index.html';
   } catch(e) { console.error('Session check error:', e); }
-})();
+});
 
 /* Toggle password visibility */
 function togglePassword(inputId, iconId) {
@@ -423,6 +424,13 @@ async function handleAuth() {
   var btn = document.getElementById('authButton');
   btn.textContent  = 'Please wait…';
   btn.style.opacity = '0.7';
+
+  if (!window.supabaseClient) {
+    showMsg('Authentication service not ready. Please refresh the page.', 'error');
+    btn.textContent = isLogin ? 'Sign In' : 'Create Account';
+    btn.style.opacity = '1';
+    return;
+  }
 
   try {
     var result;
