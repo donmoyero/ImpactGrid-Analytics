@@ -1,22 +1,33 @@
 /* ================================================================
-   IMPACTGRID — SUPABASE CLIENT
-   DO NOT MODIFY THIS FILE
+   IMPACTGRID — SUPABASE CLIENT  (DO NOT MODIFY)
 ================================================================ */
-
-(function() {
+(function () {
   var SUPABASE_URL = 'https://vopehiqnduxobtaamrnh.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_oPR-GdRq7Rz3RvBepMkVQw_b7R6ocA3';
 
-  /* Wait for the Supabase library to be available */
-  function initClient() {
-    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-      window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      console.log('[ImpactGrid] Supabase client ready');
+  function tryInit() {
+    /* supabase global is set by the CDN script */
+    if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+      try {
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: true
+          }
+        });
+        console.log('[ImpactGrid] Supabase ready');
+      } catch (e) {
+        console.error('[ImpactGrid] Supabase createClient failed:', e);
+      }
     } else {
-      /* Retry after a short delay if library not yet loaded */
-      setTimeout(initClient, 50);
+      setTimeout(tryInit, 80);
     }
   }
 
-  initClient();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryInit);
+  } else {
+    tryInit();
+  }
 })();
