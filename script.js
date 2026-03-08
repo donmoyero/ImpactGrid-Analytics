@@ -1691,34 +1691,26 @@ function toggleSidebar() {
 /* ================= MOBILE MENU ================= */
 
 function toggleMobileMenu() {
-  var sidebar   = document.getElementById("sidebar");
-  var backdrop  = document.getElementById("mobileBackdrop");
-  var btn       = document.getElementById("mobileMenuBtn");
-  var closeBtn  = document.getElementById("sidebarCloseBtn");
+  var sidebar  = document.getElementById("sidebar");
+  var overlay  = document.getElementById("sbOverlay");
   if (!sidebar) return;
 
-  var isOpen = sidebar.classList.contains("mobile-open");
+  var isOpen = sidebar.classList.contains("mob-open");
   if (isOpen) {
     closeMobileMenu();
   } else {
-    sidebar.classList.add("mobile-open");
-    if (backdrop) backdrop.classList.add("visible");
-    if (btn)      btn.classList.add("open");
-    if (closeBtn) closeBtn.style.display = "flex";
+    sidebar.classList.add("mob-open");
+    if (overlay) overlay.style.display = "block";
     document.body.style.overflow = "hidden";
   }
 }
 
 function closeMobileMenu() {
-  var sidebar   = document.getElementById("sidebar");
-  var backdrop  = document.getElementById("mobileBackdrop");
-  var btn       = document.getElementById("mobileMenuBtn");
-  var closeBtn  = document.getElementById("sidebarCloseBtn");
+  var sidebar  = document.getElementById("sidebar");
+  var overlay  = document.getElementById("sbOverlay");
 
-  if (sidebar)  sidebar.classList.remove("mobile-open");
-  if (backdrop) backdrop.classList.remove("visible");
-  if (btn)      btn.classList.remove("open");
-  if (closeBtn) closeBtn.style.display = "none";
+  if (sidebar) sidebar.classList.remove("mob-open");
+  if (overlay) overlay.style.display = "none";
   document.body.style.overflow = "";
 }
 
