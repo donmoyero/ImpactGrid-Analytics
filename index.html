@@ -5,29 +5,31 @@
   <meta charset="UTF-8">
   <title>ImpactGrid | SME Financial Stability Engine</title>
 
-  <!-- INSTANT AUTH GUARD -->
+  <!-- GUEST MODE: allow first try free, gate everything after -->
   <script>
     (function() {
+      // Check if already logged in — if so, proceed normally
       var hasSession = false;
       try {
-        if (window.location.hash && window.location.hash.indexOf('access_token') !== -1) {
-          hasSession = true;
-        }
+        if (window.location.hash && window.location.hash.indexOf('access_token') !== -1) hasSession = true;
+        if (!hasSession && window.location.search.indexOf('code=') !== -1) hasSession = true;
         if (!hasSession) {
-          var key = 'sb-vopehiqnduxobtaamrnh-auth-token';
-          var raw = localStorage.getItem(key);
-          if (raw) {
-            var parsed = JSON.parse(raw);
-            if (parsed && parsed.access_token) hasSession = true;
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (k && k.indexOf('auth-token') !== -1) {
+              try {
+                var val = JSON.parse(localStorage.getItem(k));
+                if (val && (val.access_token || (val.session && val.session.access_token))) {
+                  hasSession = true; break;
+                }
+              } catch(e) {}
+            }
           }
         }
-        if (!hasSession && window.location.search.indexOf('code=') !== -1) {
-          hasSession = true;
-        }
-      } catch(e) {}
-      if (!hasSession) {
-        window.location.replace('login.html');
-      }
+      } catch(e) { hasSession = true; }
+      // Mark guest or logged-in state — don't redirect, just track
+      window.__igLoggedIn = hasSession;
+      window.__igGuestUsed = false; // flips to true after first free try
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,7 +41,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="./styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 
   <!-- PDF engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
@@ -66,13 +68,11 @@
   <!-- CRITICAL LAYOUT v6 -->
   <style>
     html, body { height: 100%; margin: 0; padding: 0; }
-    /* NO overflow-x:hidden on body — it breaks position:fixed sidebar */
 
     .mobile-topbar { display: none; }
     #mobileBottomNav { display: none; }
     #sbOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 350; }
 
-    /* DESKTOP: fixed sidebar + margin on main */
     .app-layout {
       display: block !important;
       min-height: 100vh;
@@ -103,7 +103,6 @@
       margin-left: 64px !important;
     }
 
-    /* MOBILE */
     @media (max-width: 900px) {
       .mobile-topbar  { display: flex !important; position: fixed; top:0; left:0; right:0; height:58px; z-index:300; }
       #mobileBottomNav { display: flex !important; position: fixed; bottom:0; left:0; right:0; height:62px; z-index:300; }
@@ -201,7 +200,6 @@
     </div>
 
     <nav>
-      <!-- Mobile close button -->
       <div id="sidebarCloseBtn" style="display:none;">
         <span class="close-label">Navigation</span>
         <button onclick="closeMobileMenu()" aria-label="Close menu">&times;</button>
@@ -238,7 +236,6 @@
         </li>
       </ul>
 
-      <!-- Theme Toggle — inside nav, above the bottom user section -->
       <div class="sidebar-theme-row" style="margin-top:16px;">
         <span class="sidebar-theme-label">
           <span class="theme-mode-icon" id="themeModeIcon">☀️</span>
@@ -257,7 +254,6 @@
       <div id="autosaveBadge" style="opacity:0;transition:opacity 0.4s;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--success);letter-spacing:0.08em;margin-bottom:8px;">✓ Data saved</div>
       <div id="usageBar" style="margin-bottom:8px;"></div>
 
-      <!-- User chip -->
       <div class="sidebar-user-chip">
         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
           <div class="sidebar-avatar" id="sidebarAvatar">U</div>
@@ -269,7 +265,6 @@
         <button onclick="toggleSidebar()" class="chip-icon-btn" title="Collapse sidebar">◁</button>
       </div>
 
-      <!-- Logout Button -->
       <button onclick="logout()" class="sidebar-logout-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Sign Out
@@ -323,7 +318,6 @@
 
     <section id="dashboard" class="page-section active-section">
 
-      <!-- Business Profile -->
       <section class="card">
         <h2>Business Profile &amp; Reporting Context</h2>
         <div class="grid">
@@ -359,7 +353,6 @@
         </div>
       </section>
 
-      <!-- Data Entry -->
       <section class="card">
         <h2>Monthly Financial Data Entry</h2>
 
@@ -429,7 +422,6 @@
 
       </section>
 
-      <!-- Records Table -->
       <section class="card">
         <h2>Monthly Financial Records</h2>
         <div class="records-table-wrap"><table class="records-table">
@@ -455,7 +447,6 @@
         </div>
       </section>
 
-      <!-- AI Insights -->
       <section class="card">
         <h2>ImpactGrid AI Financial Insights</h2>
         <div id="aiInsights">
@@ -475,13 +466,10 @@
     <section id="charts" class="page-section">
       <section class="card">
         <h2>Operational Performance Charts</h2>
-
         <div style="margin-bottom:6px;font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;">Revenue Trend</div>
         <div class="chart-card"><canvas id="revenueChart"></canvas></div>
-
         <div style="margin-bottom:6px;font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;">Profit / Loss Trend</div>
         <div class="chart-card"><canvas id="profitChart"></canvas></div>
-
         <div style="margin-bottom:6px;font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;">Expense Breakdown</div>
         <div class="chart-card"><canvas id="expenseChart"></canvas></div>
       </section>
@@ -495,7 +483,6 @@
     <section id="matrix" class="page-section">
       <section class="card">
         <h2>Performance Matrix</h2>
-
         <div class="matrix-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:20px;">
           <div>
             <div style="margin-bottom:8px;font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;">Score Breakdown</div>
@@ -506,7 +493,6 @@
             <div class="chart-card"><canvas id="distributionPieChart"></canvas></div>
           </div>
         </div>
-
         <div class="structured-block">
           <h3>Composite Business Health Index</h3>
           <div id="businessHealthIndex">
@@ -524,7 +510,6 @@
     <section id="risk" class="page-section">
       <section class="card">
         <h2>Operational Risk Assessment</h2>
-
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:8px;">
           <div class="structured-block" style="margin-top:0;padding-top:16px;">
             <h3>Stability Risk</h3>
@@ -539,7 +524,6 @@
             <div id="liquidityRisk" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-secondary);margin-top:6px;">—</div>
           </div>
         </div>
-
         <div class="structured-block">
           <h3>ImpactGrid Risk Insight</h3>
           <div id="riskInsight">
@@ -555,17 +539,14 @@
     ============================================ -->
 
     <section id="ai" class="page-section">
-
       <section class="card">
         <h2>ImpactGrid AI Intelligence</h2>
-
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:10px 14px;background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);">
           <div style="width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(45,212,160,0.6);flex-shrink:0;animation:pulse-dot 2s ease-in-out infinite;"></div>
           <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:0.07em;">
             IMPACTGRID AI · ACTIVE · IFSRM Intelligence Engine v3.0
           </span>
         </div>
-
         <div id="aiChatOutput" class="ai-chat-output">
           <div class="ai-response" style="animation:none;">
             <strong>ImpactGrid AI</strong><br><br>
@@ -578,7 +559,6 @@
             </div>
           </div>
         </div>
-
         <div class="ai-chat-input-row">
           <input id="aiChatInput" placeholder="Ask ImpactGrid AI anything about your business..." onkeydown="if(event.key==='Enter') askImpactGridAI()">
           <button class="btn-primary" onclick="askImpactGridAI()">Ask AI</button>
@@ -595,7 +575,6 @@
         <div class="chart-card" style="height:360px;"><canvas id="aiForecastChart"></canvas></div>
         <div id="aiForecastExplanation"></div>
       </section>
-
     </section>
 
 
@@ -604,7 +583,6 @@
     ============================================ -->
 
     <section id="report" class="page-section">
-
       <section class="card">
         <h2>Your Saved Reports</h2>
         <p style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;font-family:'JetBrains Mono',monospace;">
@@ -614,7 +592,6 @@
           <div style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">Sign in to view your saved reports.</div>
         </div>
       </section>
-
       <section class="card">
         <h2>Generate New Report</h2>
         <p style="font-size:13px;color:var(--text-secondary);margin-bottom:28px;line-height:1.7;max-width:560px;">
@@ -622,7 +599,6 @@
         </p>
         <button class="btn-primary" id="pdfExportBtn" onclick="handlePDFClick()">&#8595; &nbsp;Download PDF Report</button>
       </section>
-
     </section>
 
 
@@ -635,10 +611,7 @@
         <p style="font-size:13px;color:var(--text-secondary);margin-bottom:32px;line-height:1.7;max-width:560px;">
           Unlock the full power of ImpactGrid IFSRM. All plans include access to the AI Financial Intelligence engine.
         </p>
-
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;">
-
-          <!-- Basic Free -->
           <div class="pricing-card" id="pricingAnalyst">
             <div class="pricing-tier">Basic</div>
             <div class="pricing-price">Free</div>
@@ -655,8 +628,6 @@
             </ul>
             <button class="pricing-btn pricing-current" disabled>Current Plan</button>
           </div>
-
-          <!-- Professional -->
           <div class="pricing-card pricing-featured" id="pricingProfessional">
             <div class="pricing-popular">MOST POPULAR</div>
             <div class="pricing-tier">Professional</div>
@@ -674,8 +645,6 @@
             </ul>
             <a href="https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201" target="_blank" class="pricing-btn pricing-upgrade">Upgrade to Professional</a>
           </div>
-
-          <!-- Enterprise Intelligence -->
           <div class="pricing-card" id="pricingEnterprise">
             <div class="pricing-tier">Enterprise Intelligence</div>
             <div class="pricing-price">£13.99<span style="font-size:14px;font-weight:400;">/mo</span></div>
@@ -692,12 +661,10 @@
             </ul>
             <a href="https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200" target="_blank" class="pricing-btn pricing-upgrade">Upgrade to Enterprise</a>
           </div>
-
         </div>
       </section>
     </section>
 
-    <!-- Footer -->
     <footer class="dashboard-footer">
       © 2026 ImpactGrid Stability Engine &nbsp;·&nbsp; IFSRM v3.0 &nbsp;·&nbsp; All rights reserved
     </footer>
@@ -737,20 +704,17 @@
 <!-- ================================================
      SCRIPTS — order matters
 ================================================ -->
-
-<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
 <script src="supabase.js"></script>
 <script src="auth.js"></script>
 
-<!-- Chart.js + SheetJS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<!-- ImpactGrid -->
 <script src="plans.js"></script>
 <script src="impactgrid-ai.js"></script>
 <script src="script.js"></script>
+<script src="records-panel.js"></script>
 
 
 <!-- Upgrade Prompt Modal -->
@@ -765,7 +729,6 @@
   </div>
 </div>
 
-
 <!-- Usage Limit Modal -->
 <div id="limitModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(6,8,15,0.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
   <div style="background:var(--bg-surface,#0e1220);border:1px solid rgba(200,169,110,0.25);border-radius:18px;padding:36px 32px;width:100%;max-width:420px;margin:20px;box-shadow:0 32px 80px rgba(0,0,0,0.7);text-align:center;">
@@ -777,57 +740,339 @@
   </div>
 </div>
 
+<!-- Records Panel — rendered dynamically by records-panel.js -->
+<aside id="recordsPanel" class="records-panel"></aside>
 
-<!-- ── RECORDS PANEL ── -->
-<div id="recordsPanelOverlay" onclick="closeRecordsPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;backdrop-filter:blur(2px);"></div>
+<!-- ================================================
+     GUEST GATE MODAL — inline auth, no page navigation
+================================================ -->
+<style>
+  .gg-field { margin-bottom: 13px; }
+  .gg-field label { display:block; font-size:10px; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.09em; color:var(--text-muted,#8b94b5); margin-bottom:6px; }
+  .gg-field input { width:100%; padding:11px 14px; background:var(--bg-mid,#f0f2f8); border:1.5px solid var(--border,#dde1f0); border-radius:9px; color:var(--text-primary,#0f1629); font-size:13.5px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s, box-shadow 0.15s; box-sizing:border-box; }
+  .gg-field input:focus { border-color:var(--gold,#b07d2e); box-shadow:0 0 0 3px rgba(176,125,46,0.1); }
+  .gg-field input::placeholder { color:var(--text-muted,#8b94b5); opacity:0.7; }
+  .gg-btn-main { width:100%; padding:13px; background:linear-gradient(135deg,#8a6020,#d4a043,#b07d2e); border:none; border-radius:10px; color:#fff; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 4px 18px rgba(176,125,46,0.25); transition:filter 0.15s, transform 0.15s; letter-spacing:0.01em; }
+  .gg-btn-main:hover { filter:brightness(1.08); transform:translateY(-1px); }
+  .gg-btn-main:disabled { opacity:0.6; cursor:not-allowed; transform:none; filter:none; }
+  .gg-btn-google { width:100%; padding:11px; background:rgba(255,255,255,0.7); border:1.5px solid var(--border,#dde1f0); border-radius:10px; display:flex; align-items:center; justify-content:center; gap:9px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--text-secondary,#4a5578); cursor:pointer; transition:border-color 0.15s, box-shadow 0.15s; }
+  .gg-btn-google:hover { border-color:var(--gold,#b07d2e); box-shadow:0 2px 10px rgba(176,125,46,0.12); }
+  .gg-divider { display:flex; align-items:center; gap:10px; margin:14px 0; font-size:10px; font-family:'JetBrains Mono',monospace; color:var(--text-muted,#8b94b5); letter-spacing:0.08em; }
+  .gg-divider::before,.gg-divider::after { content:''; flex:1; height:1px; background:var(--border,#dde1f0); }
+  .gg-tab-row { display:flex; background:rgba(220,224,238,0.5); border:1px solid var(--border,#dde1f0); border-radius:10px; padding:3px; margin-bottom:20px; gap:3px; }
+  .gg-tab { flex:1; padding:9px; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.18s; background:transparent; color:var(--text-muted,#8b94b5); }
+  .gg-tab.active { background:#fff; color:var(--text-primary,#0f1629); box-shadow:0 1px 6px rgba(15,22,41,0.08); }
+  .gg-msg { margin-top:12px; padding:10px 13px; border-radius:8px; font-size:12px; font-family:'JetBrains Mono',monospace; line-height:1.55; display:none; }
+  .gg-msg.error { background:rgba(220,38,62,0.07); border:1px solid rgba(220,38,62,0.22); color:#c0263e; }
+  .gg-msg.success { background:rgba(5,150,105,0.07); border:1px solid rgba(5,150,105,0.22); color:#0a7a5a; }
+  .gg-spinner { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:gg-spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
+  @keyframes gg-spin { to { transform:rotate(360deg); } }
+  @keyframes gg-modal-in { from { opacity:0; transform:scale(0.94) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
+</style>
 
-<aside id="recordsPanel" class="records-panel">
+<div id="guestGateModal" style="display:none;position:fixed;inset:0;z-index:4000;background:rgba(10,13,24,0.65);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--bg-surface,#fff);border:1px solid var(--border-mid,#d0d5ec);border-radius:24px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 32px 80px rgba(15,22,41,0.18);position:relative;animation:gg-modal-in 0.28s cubic-bezier(0.34,1.3,0.64,1);">
 
-  <!-- Header -->
-  <div class="rp-header">
-    <div>
-      <div class="rp-title">📊 Financial Records</div>
-      <div class="rp-sub" id="rpSub">0 months stored</div>
+    <!-- Gold top accent -->
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--gold,#b07d2e),transparent);"></div>
+
+    <!-- ── TEASER PANEL (shown first) ── -->
+    <div id="ggTeaser" style="padding:40px 36px 32px;text-align:center;">
+      <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,rgba(176,125,46,0.12),rgba(212,160,67,0.06));border:1px solid rgba(176,125,46,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:24px;">🔓</div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:21px;font-weight:800;color:var(--text-primary,#0f1629);margin-bottom:8px;letter-spacing:-0.3px;line-height:1.2;">You've seen what ImpactGrid can do</div>
+      <div style="font-size:13px;color:var(--text-secondary,#4a5578);line-height:1.7;margin-bottom:20px;font-family:'DM Sans',sans-serif;">Save your data, unlock AI insights, charts, risk analysis and more — free forever, no card needed.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:26px;">
+        <span style="padding:3px 10px;background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.2);border-radius:20px;font-size:11px;color:#059669;font-family:'JetBrains Mono',monospace;">✓ Free forever</span>
+        <span style="padding:3px 10px;background:rgba(176,125,46,0.08);border:1px solid rgba(176,125,46,0.2);border-radius:20px;font-size:11px;color:var(--gold,#b07d2e);font-family:'JetBrains Mono',monospace;">✓ AI analysis</span>
+        <span style="padding:3px 10px;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.18);border-radius:20px;font-size:11px;color:#2563eb;font-family:'JetBrains Mono',monospace;">✓ Charts & reports</span>
+        <span style="padding:3px 10px;background:rgba(176,125,46,0.08);border:1px solid rgba(176,125,46,0.2);border-radius:20px;font-size:11px;color:var(--gold,#b07d2e);font-family:'JetBrains Mono',monospace;">✓ Data saved</span>
+      </div>
+      <button onclick="ggShowAuth('signup')" style="width:100%;padding:13px;background:linear-gradient(135deg,#8a6020,#d4a043,#b07d2e);border:none;border-radius:10px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(176,125,46,0.25);margin-bottom:10px;transition:filter 0.15s;" onmouseover="this.style.filter='brightness(1.08)'" onmouseout="this.style.filter='none'">Create Free Account →</button>
+      <button onclick="ggShowAuth('signin')" style="width:100%;padding:11px;background:transparent;border:1.5px solid var(--border-mid,#d0d5ec);border-radius:10px;color:var(--text-secondary,#4a5578);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;margin-bottom:14px;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--gold,#b07d2e)'" onmouseout="this.style.borderColor='var(--border-mid,#d0d5ec)'">Sign in to existing account</button>
+      <button onclick="closeGuestGate()" style="background:transparent;border:none;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted,#8b94b5);cursor:pointer;letter-spacing:0.04em;padding:4px 0;">Maybe later — keep exploring</button>
     </div>
-    <button class="rp-close" onclick="closeRecordsPanel()" title="Close">✕</button>
-  </div>
 
-  <!-- Sync bar -->
-  <div class="rp-status">
-    <span class="rp-dot synced"></span>
-    <span id="rpSyncLabel">Synced to cloud</span>
-    <span style="flex:1"></span>
-    <span class="rp-hint-inline">Click any cell to edit</span>
-  </div>
+    <!-- ── INLINE AUTH PANEL (shown after clicking CTA) ── -->
+    <div id="ggAuth" style="display:none;padding:32px 36px 28px;">
+      <!-- Back link -->
+      <button onclick="ggShowTeaser()" style="background:none;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted,#8b94b5);letter-spacing:0.05em;padding:0;margin-bottom:20px;display:flex;align-items:center;gap:6px;" onmouseover="this.style.color='var(--gold,#b07d2e)'" onmouseout="this.style.color='var(--text-muted,#8b94b5)'">← Back</button>
 
-  <!-- Spreadsheet -->
-  <div class="rp-sheet-wrap">
-    <table class="rp-sheet" id="rpSheet">
-      <thead>
-        <tr>
-          <th class="rp-th rp-col-month">Month</th>
-          <th class="rp-th rp-col-num">Revenue</th>
-          <th class="rp-th rp-col-num">Expenses</th>
-          <th class="rp-th rp-col-num">Profit</th>
-          <th class="rp-th rp-col-pct">Margin</th>
-          <th class="rp-th rp-col-del"></th>
-        </tr>
-      </thead>
-      <tbody id="rpBody">
-        <tr class="rp-empty-row">
-          <td colspan="6" class="rp-empty-cell">No records yet. Add a month on the dashboard.</td>
-        </tr>
-      </tbody>
-      <tfoot id="rpTotals"></tfoot>
-    </table>
-  </div>
+      <!-- Tabs -->
+      <div class="gg-tab-row">
+        <button class="gg-tab active" id="ggTabSignup" onclick="ggSetMode('signup')">Create Account</button>
+        <button class="gg-tab" id="ggTabSignin" onclick="ggSetMode('signin')">Sign In</button>
+      </div>
 
-  <!-- Footer -->
-  <div class="rp-footer">
-    <button class="rp-add-btn" onclick="closeRecordsPanel(); showSection('dashboard', null);">+ Add Month</button>
-  </div>
+      <!-- Signup-only fields -->
+      <div id="ggSignupExtra">
+        <div class="gg-field">
+          <label>Full Name</label>
+          <input type="text" id="ggName" placeholder="Your name" autocomplete="name">
+        </div>
+      </div>
 
-</aside>
+      <div class="gg-field">
+        <label>Email Address</label>
+        <input type="email" id="ggEmail" placeholder="you@example.com" autocomplete="email">
+      </div>
+
+      <div class="gg-field">
+        <label>Password</label>
+        <input type="password" id="ggPassword" placeholder="Min. 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')ggHandleAuth()">
+      </div>
+
+      <div class="gg-field" id="ggConfirmField">
+        <label>Confirm Password</label>
+        <input type="password" id="ggConfirm" placeholder="Re-enter password" autocomplete="new-password" onkeydown="if(event.key==='Enter')ggHandleAuth()">
+      </div>
+
+      <!-- Forgot password (signin only) -->
+      <div id="ggForgotRow" style="display:none;text-align:right;margin-top:-6px;margin-bottom:12px;">
+        <a href="#" onclick="ggHandleForgot();return false;" style="font-size:11.5px;font-family:'JetBrains Mono',monospace;color:var(--text-muted,#8b94b5);text-decoration:none;" onmouseover="this.style.color='var(--gold,#b07d2e)'" onmouseout="this.style.color='var(--text-muted,#8b94b5)'">Forgot password?</a>
+      </div>
+
+      <button class="gg-btn-main" id="ggAuthBtn" onclick="ggHandleAuth()" style="margin-top:4px;margin-bottom:12px;">Create Free Account</button>
+
+      <div class="gg-divider"><span>or</span></div>
+
+      <button class="gg-btn-google" onclick="ggHandleGoogle()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="gg-msg" id="ggMsg"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   GUEST GATE SYSTEM — inline auth, zero page navigation
+================================================================ */
+var _ggMode = 'signup'; // 'signup' | 'signin'
+
+function showGuestGate() {
+  var m = document.getElementById('guestGateModal');
+  if (m) { m.style.display = 'flex'; ggShowTeaser(); }
+}
+function closeGuestGate() {
+  var m = document.getElementById('guestGateModal');
+  if (m) { m.style.display = 'none'; }
+}
+function ggShowTeaser() {
+  document.getElementById('ggTeaser').style.display = 'block';
+  document.getElementById('ggAuth').style.display   = 'none';
+  ggClearMsg();
+}
+function ggShowAuth(mode) {
+  document.getElementById('ggTeaser').style.display = 'none';
+  document.getElementById('ggAuth').style.display   = 'block';
+  ggSetMode(mode);
+}
+function ggSetMode(mode) {
+  _ggMode = mode;
+  ggClearMsg();
+  var isSignin = (mode === 'signin');
+  document.getElementById('ggTabSignup').classList.toggle('active', !isSignin);
+  document.getElementById('ggTabSignin').classList.toggle('active',  isSignin);
+  document.getElementById('ggSignupExtra').style.display  = isSignin ? 'none' : 'block';
+  document.getElementById('ggConfirmField').style.display = isSignin ? 'none' : 'block';
+  document.getElementById('ggForgotRow').style.display    = isSignin ? 'block' : 'none';
+  document.getElementById('ggAuthBtn').textContent        = isSignin ? 'Sign In' : 'Create Free Account';
+  document.getElementById('ggPassword').placeholder       = isSignin ? 'Enter your password' : 'Min. 8 characters';
+  document.getElementById('ggPassword').autocomplete      = isSignin ? 'current-password' : 'new-password';
+}
+
+function ggShowMsg(text, type) {
+  var el = document.getElementById('ggMsg');
+  el.textContent   = text;
+  el.className     = 'gg-msg ' + (type || '');
+  el.style.display = text ? 'block' : 'none';
+}
+function ggClearMsg() { ggShowMsg('', ''); }
+
+function ggSetLoading(loading) {
+  var btn = document.getElementById('ggAuthBtn');
+  btn.disabled = loading;
+  if (loading) {
+    btn.innerHTML = '<span class="gg-spinner"></span>Please wait…';
+  } else {
+    btn.textContent = _ggMode === 'signin' ? 'Sign In' : 'Create Free Account';
+  }
+}
+
+/* Main auth handler */
+async function ggHandleAuth() {
+  ggClearMsg();
+  var email    = (document.getElementById('ggEmail').value || '').trim();
+  var password = document.getElementById('ggPassword').value || '';
+
+  if (!email)    { ggShowMsg('Please enter your email address.', 'error'); return; }
+  if (!password) { ggShowMsg('Please enter your password.', 'error'); return; }
+
+  if (_ggMode === 'signup') {
+    if (password.length < 8) { ggShowMsg('Password must be at least 8 characters.', 'error'); return; }
+    var confirm = document.getElementById('ggConfirm').value || '';
+    if (password !== confirm) { ggShowMsg('Passwords do not match.', 'error'); return; }
+  }
+
+  ggSetLoading(true);
+  try {
+    var sb = await window.supabaseReady;
+
+    if (_ggMode === 'signin') {
+      var { data, error } = await sb.auth.signInWithPassword({ email: email, password: password });
+      if (error) {
+        var msg = error.message;
+        if (msg.includes('Invalid login'))       msg = 'Incorrect email or password.';
+        if (msg.includes('Email not confirmed')) msg = 'Please confirm your email first, then sign in.';
+        ggShowMsg(msg, 'error');
+        ggSetLoading(false);
+      } else {
+        /* Success — unlock the dashboard without reload */
+        ggOnAuthSuccess(data.user);
+      }
+
+    } else {
+      var name = (document.getElementById('ggName').value || '').trim();
+      var meta = name ? { full_name: name } : {};
+      var { data, error } = await sb.auth.signUp({
+        email: email, password: password,
+        options: { data: meta, emailRedirectTo: window.location.origin + '/index.html' }
+      });
+      if (error) {
+        var msg = error.message;
+        if (msg.includes('already registered') || msg.includes('already exists'))
+          msg = 'Account already exists. Use Sign In instead.';
+        ggShowMsg(msg, 'error');
+        ggSetLoading(false);
+      } else if (data.session) {
+        ggOnAuthSuccess(data.user);
+      } else {
+        /* Email confirmation required */
+        ggSetLoading(false);
+        ggShowMsg('✓ Check your email (' + email + ') for a confirmation link, then sign in here.', 'success');
+        setTimeout(function() { ggSetMode('signin'); }, 3000);
+      }
+    }
+  } catch(e) {
+    ggShowMsg('Something went wrong. Please try again.', 'error');
+    ggSetLoading(false);
+  }
+}
+
+/* Forgot password */
+async function ggHandleForgot() {
+  var email = (document.getElementById('ggEmail').value || '').trim();
+  if (!email) { ggShowMsg('Enter your email above first.', 'error'); return; }
+  try {
+    var sb = await window.supabaseReady;
+    await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/index.html' });
+    ggShowMsg('✓ Reset link sent to ' + email, 'success');
+  } catch(e) { ggShowMsg('Failed to send reset link.', 'error'); }
+}
+
+/* Google OAuth */
+async function ggHandleGoogle() {
+  try {
+    var sb = await window.supabaseReady;
+    await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/index.html' }
+    });
+  } catch(e) { ggShowMsg('Google sign-in failed.', 'error'); }
+}
+
+/* Called when auth succeeds — unlock dashboard in-place */
+function ggOnAuthSuccess(user) {
+  window.__igLoggedIn = true;
+  window.__igGuestUsed = false;
+  closeGuestGate();
+
+  /* Remove guest banner */
+  var banner = document.getElementById('ggGuestBanner');
+  if (banner) banner.remove();
+
+  /* Update sidebar user info */
+  if (user && user.email) {
+    var emailEl = document.getElementById('sidebarUserEmail');
+    var avatarEl = document.getElementById('sidebarAvatar');
+    if (emailEl) emailEl.textContent = user.email;
+    if (avatarEl) avatarEl.textContent = user.email.charAt(0).toUpperCase();
+  }
+
+  /* Show a brief welcome toast */
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#0a7a5a,#059669);color:#fff;padding:12px 24px;border-radius:40px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 8px 28px rgba(5,150,105,0.35);animation:gg-modal-in 0.3s ease;white-space:nowrap;';
+  toast.textContent = '✓ Signed in — welcome to ImpactGrid!';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 3500);
+
+  /* Init plan system now user is real */
+  if (typeof initPlanSystem === 'function') initPlanSystem();
+
+  /* Re-intercept nav sections — now logged in, open all */
+  window.showSection = _origShowSection || window.showSection;
+  window.mobileNav   = _origMobileNav   || window.mobileNav;
+}
+
+/* Gate check */
+function guestGateCheck(context) {
+  if (window.__igLoggedIn) return true;
+  if (context === 'addData') {
+    if (!window.__igGuestUsed) { window.__igGuestUsed = true; return true; }
+    showGuestGate(); return false;
+  }
+  showGuestGate(); return false;
+}
+
+/* Intercept addData */
+var _origAddData = window.addData;
+if (typeof _origAddData === 'function') {
+  window.addData = function() { if (!guestGateCheck('addData')) return; _origAddData.apply(this, arguments); };
+} else {
+  document.addEventListener('DOMContentLoaded', function() {
+    var orig = window.addData;
+    if (typeof orig === 'function') {
+      window.addData = function() { if (!guestGateCheck('addData')) return; orig.apply(this, arguments); };
+    }
+  });
+}
+
+/* Intercept section nav */
+var _origShowSection = window.showSection;
+function _gatedShowSection(id, el) {
+  var gated = ['charts','matrix','risk','ai','report','upgrade'];
+  if (!window.__igLoggedIn && gated.indexOf(id) !== -1) { showGuestGate(); return; }
+  if (_origShowSection) _origShowSection(id, el);
+}
+window.showSection = _gatedShowSection;
+
+var _origMobileNav = window.mobileNav;
+window.mobileNav = function(id, el) {
+  var gated = ['charts','matrix','risk','ai','report','upgrade'];
+  if (!window.__igLoggedIn && gated.indexOf(id) !== -1) { showGuestGate(); return; }
+  if (_origMobileNav) _origMobileNav(id, el);
+};
+
+/* Guest banner */
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.__igLoggedIn) return;
+  var header = document.querySelector('.dashboard-header');
+  if (!header) return;
+  var banner = document.createElement('div');
+  banner.id = 'ggGuestBanner';
+  banner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding:10px 16px;background:linear-gradient(135deg,rgba(176,125,46,0.08),rgba(212,160,67,0.04));border:1px solid rgba(176,125,46,0.2);border-radius:10px;font-size:12px;font-family:"DM Sans",sans-serif;color:var(--text-secondary,#4a5578);';
+  banner.innerHTML = '<span>👋 <strong style="color:var(--text-primary,#0f1629);">You\'re in guest mode.</strong> Add one record to try ImpactGrid free — then create your account to unlock everything.</span>'
+    + '<button onclick="showGuestGate()" style="flex-shrink:0;padding:6px 14px;background:linear-gradient(135deg,#8a6020,#d4a043);border:none;border-radius:7px;color:#fff;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:\'DM Sans\',sans-serif;">Sign up free →</button>';
+  header.appendChild(banner);
+});
+
+window.showGuestGate  = showGuestGate;
+window.closeGuestGate = closeGuestGate;
+window.guestGateCheck = guestGateCheck;
+</script>
 
 </body>
 </html>
