@@ -12,7 +12,6 @@
         if (window.location.hash.indexOf('access_token') !== -1) ok = true;
         if (window.location.search.indexOf('code=') !== -1) ok = true;
         if (!ok) {
-          /* Check all possible Supabase token keys */
           for (var i = 0; i < localStorage.length; i++) {
             var k = localStorage.key(i);
             if (k && k.indexOf('auth-token') !== -1) {
@@ -25,7 +24,7 @@
         }
         if (!ok) window.location.replace('login.html');
       } catch(e) {
-        /* If localStorage is blocked (e.g. local file), don't redirect — let async auth handle it */
+        /* localStorage blocked — let async auth handle it */
       }
     })();
   </script>
@@ -37,7 +36,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
   <style>
 :root {
-  /* LIGHT MODE DEFAULT */
   --bg:#f0f2f8; --bg-mid:#e8eaf4; --bg-surface:#ffffff; --bg-elevated:#f7f8fd;
   --border:#e2e5f0; --border-mid:#cdd2e8; --border-hi:#b4bcda;
   --gold:#a07828; --gold-light:#c49a3a; --gold-dim:#7a5c1e;
@@ -61,8 +59,6 @@ html{height:100%;}
 body{background:var(--bg);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased;}
 a{color:inherit;text-decoration:none;}
 .app-layout{display:flex;min-height:100vh;}
-
-/* SIDEBAR */
 .sidebar{width:var(--sw);min-height:100vh;background:var(--bg-mid);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:200;transition:transform .3s;overflow:hidden;}
 .logo-container{display:flex;align-items:center;gap:11px;padding:22px 20px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .logo-img{width:30px;height:30px;border-radius:7px;}
@@ -79,18 +75,12 @@ a{color:inherit;text-decoration:none;}
 .plan-professional{background:rgba(226,201,138,.1);color:var(--gold-light);border:1px solid rgba(226,201,138,.25);}
 .plan-enterprise{background:rgba(74,143,255,.1);color:var(--blue);border:1px solid rgba(74,143,255,.25);}
 .plan-admin{background:rgba(45,212,160,.1);color:var(--success);border:1px solid rgba(45,212,160,.25);}
-
-/* MAIN */
 .main-content{margin-left:var(--sw);flex:1;padding:32px 36px 48px;min-height:100vh;}
-
-/* PAGE HEADER */
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);}
 .page-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:22px;letter-spacing:.03em;}
 .page-sub{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);margin-top:3px;}
 .back-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:1px solid var(--border-mid);border-radius:var(--r-sm);color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:border-color .15s,color .15s;white-space:nowrap;}
 .back-btn:hover{border-color:var(--gold);color:var(--gold);}
-
-/* SETTINGS LAYOUT */
 .settings-layout{display:flex;gap:26px;align-items:flex-start;}
 .settings-tabs{width:185px;flex-shrink:0;position:sticky;top:24px;}
 .tab-label{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.12em;padding:0 12px 8px;}
@@ -103,21 +93,15 @@ a{color:inherit;text-decoration:none;}
 .settings-panels{flex:1;min-width:0;}
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
-
-/* Avatar picker */
 .av-picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
 .av-opt{width:36px;height:36px;background:var(--bg-surface);border:1.5px solid var(--border-mid);border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s,transform .1s;line-height:1;}
 .av-opt:hover{border-color:var(--gold);background:var(--bg-elevated);transform:scale(1.1);}
 .av-opt.selected{border-color:var(--gold);background:rgba(200,169,110,.15);box-shadow:0 0 0 2px rgba(200,169,110,.25);}
 .panel-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:16px;margin-bottom:3px;}
 .panel-sub{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);margin-bottom:20px;}
-
-/* CARDS */
 .sc{background:var(--bg-elevated);border:1px solid var(--border-mid);border-radius:14px;padding:22px 24px;margin-bottom:14px;}
 .sc-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--gold);text-transform:uppercase;letter-spacing:.14em;margin-bottom:12px;}
 .sc-sub{font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;line-height:1.6;margin-bottom:14px;}
-
-/* FIELDS */
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px;}
 .fg1{display:grid;grid-template-columns:1fr;gap:13px;margin-bottom:13px;}
 .fl{display:flex;flex-direction:column;gap:4px;}
@@ -129,20 +113,14 @@ a{color:inherit;text-decoration:none;}
 .save-row{display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
 .sstatus{font-family:'JetBrains Mono',monospace;font-size:10px;opacity:0;transition:opacity .3s;}
 .sstatus.show{opacity:1;}.sstatus.ok{color:var(--success);}.sstatus.err{color:var(--danger);}
-
-/* BUTTONS */
 .btn-g{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;background:linear-gradient(135deg,#b8923e,var(--gold-light));color:#06080f;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;border:none;border-radius:var(--r-sm);cursor:pointer;transition:opacity .18s;}
 .btn-g:hover{opacity:.88;}
 .btn-o{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:transparent;border:1px solid var(--border-mid);color:var(--text-secondary);font-family:'JetBrains Mono',monospace;font-size:11px;border-radius:var(--r-sm);cursor:pointer;transition:border-color .15s,color .15s;}
 .btn-o:hover{border-color:var(--gold);color:var(--gold);}
 .btn-d{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:transparent;border:1px solid rgba(255,77,109,.3);color:var(--danger);font-family:'JetBrains Mono',monospace;font-size:11px;border-radius:var(--r-sm);cursor:pointer;transition:background .15s,border-color .15s;}
 .btn-d:hover{background:rgba(255,77,109,.06);border-color:rgba(255,77,109,.55);}
-
-/* AVATAR */
 .av-row{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
 .av-lg{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-dim));display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:20px;color:#0a0a0a;flex-shrink:0;}
-
-/* TOGGLE */
 .trow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);gap:14px;}
 .trow:last-child{border-bottom:none;padding-bottom:0;}
 .tinfo strong{display:block;font-size:12px;font-weight:600;margin-bottom:2px;}
@@ -153,17 +131,11 @@ a{color:inherit;text-decoration:none;}
 .tgl-sl::before{content:'';position:absolute;width:15px;height:15px;border-radius:50%;left:2px;bottom:2px;background:var(--text-muted);transition:.25s;}
 .tgl input:checked+.tgl-sl{background:rgba(200,169,110,.2);border-color:var(--gold);}
 .tgl input:checked+.tgl-sl::before{transform:translateX(17px);background:var(--gold-light);}
-
-/* PW STRENGTH */
 .pw-sr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
 .pw-bw{background:rgba(255,255,255,.06);border-radius:3px;height:3px;overflow:hidden;margin-bottom:13px;}
 .pw-bf{height:100%;border-radius:3px;width:0%;transition:width .3s,background .3s;}
-
-/* PLAN ROW */
 .pr{display:flex;align-items:center;gap:13px;padding:13px 15px;background:var(--bg-mid);border:1px solid var(--border-mid);border-radius:var(--r);margin-bottom:13px;}
 .pr-ico{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,rgba(200,169,110,.2),rgba(200,169,110,.05));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
-
-/* USAGE */
 .ug{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
 .ui{background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 13px;}
 .ui-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:4px;}
@@ -171,8 +143,6 @@ a{color:inherit;text-decoration:none;}
 .ui-num span{font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:400;color:var(--text-muted);}
 .ubw{background:rgba(255,255,255,.06);border-radius:3px;height:3px;overflow:hidden;}
 .ubf{height:100%;border-radius:3px;transition:width .5s;}
-
-/* SESSION */
 .si{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
 .si:last-child{border-bottom:none;}
 .si-ico{width:34px;height:34px;border-radius:8px;background:var(--bg-mid);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
@@ -180,16 +150,12 @@ a{color:inherit;text-decoration:none;}
 .si-meta strong{display:block;font-size:12px;font-weight:600;margin-bottom:2px;}
 .si-meta span{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);}
 .badge-cur{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--success);background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.08em;}
-
-/* DANGER */
 .dz{background:rgba(255,77,109,.04);border:1px solid rgba(255,77,109,.2);border-radius:14px;padding:20px 22px;}
 .dz-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--danger);margin-bottom:14px;}
 .di{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,77,109,.1);}
 .di:last-child{border-bottom:none;padding-bottom:0;}
 .di strong{display:block;font-size:12px;font-weight:600;margin-bottom:3px;}
 .di p{font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;line-height:1.55;max-width:320px;}
-
-/* MODAL */
 .mo{display:none;position:fixed;inset:0;z-index:3000;background:rgba(6,8,15,.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;}
 .mo.open{display:flex;}
 .mb{background:var(--bg-surface);border:1px solid var(--border-mid);border-radius:16px;padding:30px 26px;width:100%;max-width:395px;margin:20px;box-shadow:0 32px 80px rgba(0,0,0,.7);position:relative;}
@@ -200,11 +166,8 @@ a{color:inherit;text-decoration:none;}
 .mbtns{display:flex;gap:9px;}
 .mc-inp{width:100%;margin-top:6px;background:var(--bg-mid);border:1px solid var(--border-mid);color:var(--text-primary);padding:9px 12px;border-radius:var(--r-sm);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;}
 .mc-inp:focus{border-color:var(--danger);}
-
-/* MOBILE */
 .mob-top{display:none;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg-mid);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:300;}
 @keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(200,169,110,.5);}50%{box-shadow:0 0 0 6px rgba(200,169,110,0);}}
-
 @media(max-width:900px){
   .sidebar{transform:translateX(-100%);}
   .sidebar.mob-open{transform:translateX(0);}
@@ -222,12 +185,11 @@ a{color:inherit;text-decoration:none;}
 <script>
 (function(){
   var t = localStorage.getItem('ig-theme');
-  if (t === 'dark') {/* stay default dark vars */} 
-  else { document.documentElement.classList.add('light-init'); document.body && document.body.classList.add('light-mode'); }
-  // Apply on body when ready
-  document.addEventListener('DOMContentLoaded',function(){
-    if(t !== 'dark') document.body.classList.add('light-mode');
-  });
+  if (t !== 'dark') {
+    document.addEventListener('DOMContentLoaded',function(){
+      document.body.classList.add('light-mode');
+    });
+  }
 })();
 </script>
 <header class="mob-top">
@@ -241,8 +203,6 @@ a{color:inherit;text-decoration:none;}
 <div id="sbOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:199;" onclick="closeSb()"></div>
 
 <div class="app-layout">
-
-  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="logo-container">
       <img src="logo.png" alt="ImpactGrid" class="logo-img">
@@ -278,9 +238,7 @@ a{color:inherit;text-decoration:none;}
     </div>
   </aside>
 
-  <!-- MAIN -->
   <main class="main-content">
-
     <div class="page-header">
       <div>
         <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
@@ -294,8 +252,6 @@ a{color:inherit;text-decoration:none;}
     </div>
 
     <div class="settings-layout">
-
-      <!-- TAB NAV -->
       <div class="settings-tabs">
         <div class="tab-label">Preferences</div>
         <button class="tab-btn active" onclick="swTab('profile',this)"><span style="width:16px;text-align:center;opacity:.7">◎</span>&nbsp;Profile</button>
@@ -307,9 +263,7 @@ a{color:inherit;text-decoration:none;}
         <button class="tab-btn dtab" onclick="swTab('danger',this)"><span style="width:16px;text-align:center;">⚠</span>&nbsp;Danger Zone</button>
       </div>
 
-      <!-- PANELS -->
       <div class="settings-panels">
-
         <!-- PROFILE -->
         <div class="tab-panel active" id="tab-profile">
           <div class="panel-title">Profile</div>
@@ -507,9 +461,8 @@ a{color:inherit;text-decoration:none;}
             </div>
           </div>
         </div>
-
-      </div><!-- /panels -->
-    </div><!-- /layout -->
+      </div>
+    </div>
 
     <footer style="margin-top:44px;padding-top:18px;border-top:1px solid var(--border);font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);letter-spacing:.06em;">© 2026 ImpactGrid Stability Engine &nbsp;·&nbsp; IFSRM v3.0</footer>
   </main>
@@ -517,28 +470,24 @@ a{color:inherit;text-decoration:none;}
 
 <!-- MODALS -->
 <div class="mo" id="moClear"><div class="mb"><button class="mc" onclick="closeMo('moClear')">✕</button><div class="mt">Clear All Financial Data?</div><div class="ms">Permanently deletes all revenue, expenses, and profit records. Account and plan stay active. <strong>Cannot be undone.</strong></div><div style="margin-bottom:14px;"><label style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">Type <strong style="color:var(--danger)">DELETE</strong> to confirm</label><input type="text" id="clearConf" placeholder="Type DELETE" class="mc-inp"/></div><div class="mbtns"><button class="btn-d" onclick="clearData()">Yes, Delete My Data</button><button class="btn-o" onclick="closeMo('moClear')">Cancel</button></div></div></div>
-
 <div class="mo" id="moCancel"><div class="mb"><button class="mc" onclick="closeMo('moCancel')">✕</button><div class="mt">Cancel Subscription?</div><div class="ms">Downgraded to <strong>Basic (free)</strong> at end of billing period. Financial data preserved. Re-subscribe anytime.</div><div class="mbtns"><button class="btn-d" onclick="cancelSub()">Yes, Cancel Plan</button><button class="btn-o" onclick="closeMo('moCancel')">Keep My Plan</button></div></div></div>
-
 <div class="mo" id="moDelete"><div class="mb"><button class="mc" onclick="closeMo('moDelete')">✕</button><div class="mt">Delete Account Forever?</div><div class="ms">Permanently and irreversibly deletes your account, all records, all reports, and all AI history. <strong>Cannot be recovered.</strong></div><div style="margin-bottom:14px;"><label style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);">Type your email to confirm</label><input type="text" id="delConf" placeholder="your@email.com" class="mc-inp"/></div><div class="mbtns"><button class="btn-d" onclick="delAccount()">Permanently Delete Account</button><button class="btn-o" onclick="closeMo('moDelete')">Cancel</button></div></div></div>
 
 <script src="supabase.js"></script>
 <script>
-/* ── Inline plan config — no plans.js needed (avoids dashboard-only function calls) ── */
 var PLAN_CONFIG = {
-  analyst:      { label:"Basic",                  price:"Free",          analyses:3,        pdfs:3,        forecasts:3,        forecastYears:0.5,  dataMonths:1         },
-  professional: { label:"Professional",           price:"£8.99/mo",      analyses:20,       pdfs:20,       forecasts:20,       forecastYears:3,    dataMonths:12        },
-  enterprise:   { label:"Enterprise Intelligence",price:"£13.99/mo",     analyses:Infinity, pdfs:Infinity, forecasts:Infinity, forecastYears:10,   dataMonths:Infinity  },
-  admin:        { label:"Admin",                  price:"Internal",      analyses:Infinity, pdfs:Infinity, forecasts:Infinity, forecastYears:10,   dataMonths:Infinity  }
+  analyst:      { label:"Basic",                  price:"Free",      analyses:3,        pdfs:3,        forecasts:3,        forecastYears:0.5, dataMonths:1        },
+  professional: { label:"Professional",           price:"£8.99/mo",  analyses:20,       pdfs:20,       forecasts:20,       forecastYears:3,   dataMonths:12       },
+  enterprise:   { label:"Enterprise Intelligence",price:"£13.99/mo", analyses:Infinity, pdfs:Infinity, forecasts:Infinity, forecastYears:10,  dataMonths:Infinity },
+  admin:        { label:"Admin",                  price:"Internal",  analyses:Infinity, pdfs:Infinity, forecasts:Infinity, forecastYears:10,  dataMonths:Infinity }
 };
 window.planConfig     = PLAN_CONFIG;
 window.currentPlan    = "analyst";
 window.usageThisMonth = { analyses:0, pdfs:0, forecasts:0 };
 </script>
 <script>
-var _sb=null,_u=null;
+var _sb=null, _u=null;
 
-/* ── UI functions defined immediately — all onclick handlers work instantly ── */
 function swTab(n,b){
   document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.tab-btn').forEach(function(t){t.classList.remove('active');});
@@ -552,7 +501,7 @@ function closeMo(id){
   var i=document.querySelector('#'+id+' input[type="text"]');if(i)i.value='';
 }
 function doLogout(){
-  if(window.supabaseClient){window.supabaseClient.auth.signOut().then(function(){window.location.href='login.html';});}
+  if(_sb){_sb.auth.signOut().then(function(){window.location.href='login.html';});}
   else{window.location.href='login.html';}
 }
 function closeSb(){
@@ -560,19 +509,14 @@ function closeSb(){
   var o=document.getElementById('sbOverlay');if(o)o.style.display='none';
 }
 
-document.addEventListener('DOMContentLoaded',async function(){
-  try{
-    /* Small delay to let supabase.js assign window.supabaseClient */
-    await new Promise(function(r){setTimeout(r,120);});
-    _sb = window.supabaseClient || null;
+/* ── FIX: use window.supabaseReady instead of setTimeout hack ── */
+document.addEventListener('DOMContentLoaded', async function(){
+  try {
+    _sb = await window.supabaseReady;
 
-    /* Get session */
-    if(_sb){
-      var sess = await _sb.auth.getSession();
-      if(sess && sess.data && sess.data.session) _u = sess.data.session.user;
-    }
+    var sess = await _sb.auth.getSession();
+    if(sess && sess.data && sess.data.session) _u = sess.data.session.user;
 
-    /* Load plan from Supabase user_plans table */
     if(_sb && _u){
       try{
         var res = await _sb.from('user_plans').select('*').eq('user_id',_u.id).single();
@@ -584,7 +528,7 @@ document.addEventListener('DOMContentLoaded',async function(){
             forecasts: res.data.forecasts_used  || 0
           };
         }
-      }catch(e){ /* no plan row yet — stay on analyst */ }
+      }catch(e){ /* no plan row yet */ }
     }
 
     populateSidebar();
@@ -614,13 +558,12 @@ function pickAvatar(emoji,btn){
   _selectedAvatar=emoji;
   var a=document.getElementById('avPrev');if(a)a.textContent=emoji;
   var s=document.getElementById('sidebarAvatar');if(s)s.textContent=emoji;
-  // Highlight selected
   document.querySelectorAll('.av-opt').forEach(function(b){b.classList.remove('selected');});
   if(btn)btn.classList.add('selected');
 }
 
 function refreshAv(){
-  if(_selectedAvatar)return; // Don't override emoji selection
+  if(_selectedAvatar)return;
   var f=document.getElementById('firstName').value.trim();
   var l=f?f[0].toUpperCase():(_u?(_u.email||'U')[0].toUpperCase():'U');
   var a=document.getElementById('avPrev');if(a)a.textContent=l;
@@ -632,12 +575,10 @@ function loadProfile(){
   var e=_u.email||'';
   var ce=document.getElementById('curEmail');if(ce)ce.value=e;
   var m=_u.user_metadata||{};
-  // Restore avatar
   if(m.avatar_emoji){
     _selectedAvatar=m.avatar_emoji;
     var ap=document.getElementById('avPrev');if(ap)ap.textContent=m.avatar_emoji;
     var sa=document.getElementById('sidebarAvatar');if(sa)sa.textContent=m.avatar_emoji;
-    // Highlight the correct button
     document.querySelectorAll('.av-opt').forEach(function(b){
       if(b.textContent===m.avatar_emoji)b.classList.add('selected');
     });
@@ -692,10 +633,8 @@ async function changePassword(){
   if(p0===p1){showSt('st-pw','✕ New password must be different from current','err');return;}
   showSt('st-pw','Verifying…','');
   try{
-    // Re-authenticate with current password first
     var{error:signInErr}=await _sb.auth.signInWithPassword({email:_u.email,password:p0});
     if(signInErr){showSt('st-pw','✕ Current password is incorrect','err');return;}
-    // Now update to new password
     var{error}=await _sb.auth.updateUser({password:p1});
     if(error)throw error;
     document.getElementById('pw0').value='';
@@ -756,7 +695,7 @@ async function populateStorage(){
       '<div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;"><div style="font-family:JetBrains Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:3px;">Records Stored</div><div style="font-family:Syne,sans-serif;font-weight:700;font-size:15px;">'+(count||0)+' months</div></div>'+
       '<div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;"><div style="font-family:JetBrains Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:3px;">Data Limit</div><div style="font-family:Syne,sans-serif;font-weight:700;font-size:15px;">'+(config.dataMonths===Infinity?'Unlimited':(config.dataMonths||1)+' months')+'</div></div>'+
     '</div><p style="font-size:10px;font-family:JetBrains Mono,monospace;color:var(--text-muted);">Encrypted at rest · Supabase EU-West · GDPR compliant.</p>';
-  }catch(e){el.innerHTML='<span style="font-family:JetBrains\ Mono,monospace;font-size:10px;color:var(--text-muted);">Could not load storage info.</span>';}
+  }catch(e){el.innerHTML='<span style="font-size:10px;color:var(--text-muted);">Could not load storage info.</span>';}
 }
 
 async function svNotif(k,v){if(!_sb||!_u)return;try{var p=(_u.user_metadata||{}).notification_prefs||{};p[k]=v;await _sb.auth.updateUser({data:{notification_prefs:p}});}catch(e){}}
