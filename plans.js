@@ -92,17 +92,14 @@ window.aiMemoryContext = "";
 
 /* Usage counters (loaded from Supabase) */
 window.usageThisMonth = { entries: 0, analyses: 0, pdfs: 0, forecasts: 0 };
-window.usagePeriodStart = null;
+window.usagePeriodStart = null; /* rolling 30-day start */
 
 /* ================================================================
-   MAIN INIT — waits for Supabase client via promise
+   MAIN INIT
 ================================================================ */
 async function initPlanSystem() {
   try {
-    /* FIX: wait for the client instead of grabbing window.supabaseClient directly */
-    const supabase = await window.supabaseReady;
-
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await window.supabaseClient.auth.getSession();
     if (!session) return;
 
     window.currentUser = session.user;
@@ -119,14 +116,14 @@ async function initPlanSystem() {
     }
 
     /* ── Load or create user plan row ── */
-    let { data: planRow } = await supabase
+    let { data: planRow } = await window.supabaseClient
       .from("user_plans")
       .select("*")
       .eq("user_id", session.user.id)
       .single();
 
     if (!planRow) {
-      planRow = await createUserPlanRow(session.user.id, supabase);
+      planRow = await createUserPlanRow(session.user.id);
     }
 
     window.currentPlan      = planRow.plan || "analyst";
@@ -135,14 +132,15 @@ async function initPlanSystem() {
       : new Date();
 
     /* ── Check if 30-day usage period has rolled over ── */
-    const now       = new Date();
-    const periodEnd = new Date(window.usagePeriodStart);
+    const now        = new Date();
+    const periodEnd  = new Date(window.usagePeriodStart);
     periodEnd.setDate(periodEnd.getDate() + 30);
 
     if (now > periodEnd) {
-      window.usageThisMonth   = { entries: 0, analyses: 0, pdfs: 0, forecasts: 0 };
-      window.usagePeriodStart = now;
-      await supabase.from("user_plans").update({
+      /* Reset usage counters */
+      window.usageThisMonth    = { entries: 0, analyses: 0, pdfs: 0, forecasts: 0 };
+      window.usagePeriodStart  = now;
+      await window.supabaseClient.from("user_plans").update({
         entries_used:       0,
         analyses_used:      0,
         pdfs_used:          0,
@@ -172,9 +170,7 @@ async function initPlanSystem() {
 /* ================================================================
    CREATE USER PLAN ROW
 ================================================================ */
-async function createUserPlanRow(userId, supabase) {
-  /* Allow passing supabase client or fall back to window */
-  const sb = supabase || window.supabaseClient;
+async function createUserPlanRow(userId) {
   const now = new Date().toISOString();
   const row = {
     user_id:            userId,
@@ -185,7 +181,7 @@ async function createUserPlanRow(userId, supabase) {
     forecasts_used:     0,
     usage_period_start: now
   };
-  const { data } = await sb
+  const { data } = await window.supabaseClient
     .from("user_plans")
     .insert(row)
     .select()
@@ -194,7 +190,7 @@ async function createUserPlanRow(userId, supabase) {
 }
 
 /* ================================================================
-   USAGE TRACKING
+   USAGE TRACKING — check and increment
 ================================================================ */
 function getLimit(type) {
   const config = PLAN_CONFIG[window.currentPlan];
@@ -227,6 +223,7 @@ async function incrementUsage(type) {
 
   window.usageThisMonth[type] = (window.usageThisMonth[type] || 0) + 1;
 
+  /* Persist to Supabase */
   const update = {};
   update[type + "_used"] = window.usageThisMonth[type];
   await window.supabaseClient
@@ -234,6 +231,7 @@ async function incrementUsage(type) {
     .update(update)
     .eq("user_id", window.currentUser.id);
 
+  /* Update usage bar in UI */
   updateUsageBar();
 }
 
@@ -269,7 +267,7 @@ function closeLimitModal() {
 }
 
 /* ================================================================
-   USAGE BAR
+   USAGE BAR — shows in sidebar
 ================================================================ */
 function updateUsageBar() {
   const bar = document.getElementById("usageBar");
@@ -305,11 +303,12 @@ function showTrialBannerIfNeeded(planRow) {
   const banner = document.getElementById("trialBanner");
   if (!banner) return;
 
+  /* Show for professional/enterprise if within trial period */
   if (window.currentPlan === "professional" || window.currentPlan === "enterprise") {
-    const createdAt = new Date(planRow.created_at || Date.now());
-    const trialEnd  = new Date(createdAt);
+    const createdAt  = new Date(planRow.created_at || Date.now());
+    const trialEnd   = new Date(createdAt);
     trialEnd.setDate(trialEnd.getDate() + 30);
-    const daysLeft  = Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24));
+    const daysLeft   = Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24));
 
     if (daysLeft > 0 && daysLeft <= 30) {
       document.getElementById("trialDaysLeft").textContent = daysLeft;
@@ -325,12 +324,14 @@ function applyPlanUI() {
   const config = PLAN_CONFIG[window.currentPlan];
   if (!config) return;
 
+  /* Plan badge */
   const badge = document.getElementById("planBadge");
   if (badge) {
-    badge.textContent = config.label;
-    badge.className   = "plan-badge plan-" + window.currentPlan;
+    badge.textContent   = config.label;
+    badge.className     = "plan-badge plan-" + window.currentPlan;
   }
 
+  /* User email + avatar */
   const emailEl = document.getElementById("sidebarUserEmail");
   if (emailEl && window.currentUser) {
     emailEl.textContent = window.currentUser.email;
@@ -340,11 +341,13 @@ function applyPlanUI() {
     avatarEl.textContent = window.currentUser.email[0].toUpperCase();
   }
 
+  /* File import */
   const importSection = document.getElementById("fileImportSection");
   if (importSection) {
     importSection.style.display = config.fileImport ? "block" : "none";
   }
 
+  /* Performance matrix tab */
   const matrixLinks = document.querySelectorAll("[data-section='matrix']");
   matrixLinks.forEach(function(el) {
     if (!config.matrix) {
@@ -353,11 +356,13 @@ function applyPlanUI() {
     }
   });
 
+  /* PDF button */
   const pdfBtn = document.getElementById("pdfExportBtn");
   if (pdfBtn) {
     pdfBtn.onclick = function() { handlePDFClick(); };
   }
 
+  /* Update usage bars */
   updateUsageBar();
 }
 
@@ -379,12 +384,14 @@ async function saveUserData() {
       updated_at:    new Date().toISOString()
     };
 
+    console.log("Saving data for user:", window.currentUser.id, "rows:", (window.businessData||[]).length);
+
     const { error } = await window.supabaseClient
       .from("user_data")
       .upsert(payload, { onConflict: "user_id" });
 
     if (error) {
-      console.error("Save error:", error.message);
+      console.error("Save error:", error.message, error.details, error.hint);
     } else {
       console.log("Data saved successfully");
       showSaveBadge();
@@ -401,6 +408,8 @@ async function loadUserData() {
   if (!window.currentUser) return;
 
   try {
+    console.log("Loading data for user:", window.currentUser.id);
+
     const { data, error } = await window.supabaseClient
       .from("user_data")
       .select("*")
@@ -421,32 +430,33 @@ async function loadUserData() {
     const parsed = JSON.parse(data.data);
     if (!parsed || !parsed.length) return;
 
-    window.businessData = parsed.map(function(d) {
-      return {
+    // ── Splice in-place so ALL references stay valid (script.js businessData, window.businessData are the SAME array) ──
+    if (!window.businessData) window.businessData = [];
+    window.businessData.length = 0;
+    parsed.forEach(function(d) {
+      window.businessData.push({
         date:     new Date(d.date),
         revenue:  Number(d.revenue),
         expenses: Number(d.expenses),
         profit:   Number(d.profit)
-      };
+      });
     });
 
     console.log("Loaded", window.businessData.length, "months of data");
 
+    /* Restore currency — both local var and window stay in sync via the defineProperty proxy */
     if (data.currency) {
       window.currentCurrency = data.currency;
       const sel = document.getElementById("currencySelector");
       if (sel) sel.value = data.currency;
     }
 
+    /* Restore business type */
     if (data.business_type) {
       const bt = document.getElementById("businessType");
       if (bt) bt.value = data.business_type;
     }
 
-    if (typeof businessData !== "undefined") {
-      businessData.length = 0;
-      (window.businessData || []).forEach(function(d){ businessData.push(d); });
-    }
     if (typeof updateAll === "function") updateAll();
     if (typeof renderRecordsPanel === "function") renderRecordsPanel();
     showAIMemoryGreeting();
@@ -559,7 +569,7 @@ async function renderReportHistory() {
             '<div style="font-size:9px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);">HEALTH SCORE</div>' +
           '</div>' +
         '</div>' +
-        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:' + (r.ai_insights ? "12px" : "0") + ';">' +
           '<div style="text-align:center;padding:8px;background:rgba(6,8,15,0.4);border-radius:6px;">' +
             '<div style="font-size:11px;color:#2dd4a0;font-family:\'JetBrains Mono\',monospace;font-weight:600;">£' + Number(r.total_revenue||0).toLocaleString() + '</div>' +
             '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Revenue</div>' +
@@ -573,6 +583,7 @@ async function renderReportHistory() {
             '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">Profit</div>' +
           '</div>' +
         '</div>' +
+        (r.ai_insights ? '<div style="font-size:11px;color:var(--text-secondary);font-family:\'JetBrains Mono\',monospace;line-height:1.65;padding:10px 12px;background:rgba(200,169,110,0.05);border:1px solid rgba(200,169,110,0.1);border-radius:6px;">' + r.ai_insights.substring(0,280) + (r.ai_insights.length>280?"...":"") + '</div>' : '') +
       '</div>';
     }).join("");
 
@@ -644,7 +655,7 @@ function closeUpgradeModal() {
 }
 
 /* ================================================================
-   HANDLE PDF CLICK
+   HANDLE PDF CLICK — check limit first
 ================================================================ */
 async function handlePDFClick() {
   const allowed = await canUse("pdfs");
@@ -675,7 +686,7 @@ window.STRIPE_LINKS        = STRIPE_LINKS;
 window.PLAN_CONFIG         = PLAN_CONFIG;
 
 /* ================================================================
-   PDF STORAGE
+   PDF STORAGE — save and retrieve PDFs per user
 ================================================================ */
 async function savePDFToAccount(pdfBase64, metadata) {
   if (!window.currentUser) return;
@@ -683,6 +694,7 @@ async function savePDFToAccount(pdfBase64, metadata) {
   try {
     const limit = PLAN_CONFIG[window.currentPlan].reportHistory;
 
+    /* Check how many PDFs already saved */
     if (limit !== Infinity) {
       const { count } = await window.supabaseClient
         .from("user_pdfs")
@@ -690,6 +702,7 @@ async function savePDFToAccount(pdfBase64, metadata) {
         .eq("user_id", window.currentUser.id);
 
       if (count >= limit) {
+        /* Delete oldest to make room */
         const { data: oldest } = await window.supabaseClient
           .from("user_pdfs")
           .select("id")
@@ -730,6 +743,9 @@ async function savePDFToAccount(pdfBase64, metadata) {
   }
 }
 
+/* ================================================================
+   RENDER SAVED PDFs in Reports section
+================================================================ */
 async function renderSavedPDFs() {
   const container = document.getElementById("savedPDFsList");
   if (!container || !window.currentUser) return;
@@ -761,7 +777,9 @@ async function renderSavedPDFs() {
           '<div style="width:42px;height:42px;border-radius:10px;background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⊡</div>' +
           '<div style="flex:1;min-width:0;">' +
             '<div style="font-family:\'Syne\',sans-serif;font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.filename || "Report") + '</div>' +
-            '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);margin-top:2px;">' + date + ' · ' + time + ' · ' + (p.months_count||0) + ' months</div>' +
+            '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);margin-top:2px;">' +
+              date + ' · ' + time + ' · ' + (p.months_count||0) + ' months' +
+            '</div>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">' +
             '<div style="text-align:center;">' +
@@ -779,6 +797,9 @@ async function renderSavedPDFs() {
   }
 }
 
+/* ================================================================
+   DOWNLOAD A SAVED PDF
+================================================================ */
 async function downloadSavedPDF(pdfId) {
   try {
     const btn = event.target;
@@ -799,6 +820,7 @@ async function downloadSavedPDF(pdfId) {
       return;
     }
 
+    /* Convert base64 back to blob and download */
     var binary = atob(data.pdf_data);
     var bytes  = new Uint8Array(binary.length);
     for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -818,6 +840,7 @@ async function downloadSavedPDF(pdfId) {
   }
 }
 
+/* Expose new functions */
 window.savePDFToAccount  = savePDFToAccount;
 window.renderSavedPDFs   = renderSavedPDFs;
 window.downloadSavedPDF  = downloadSavedPDF;
