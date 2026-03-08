@@ -135,7 +135,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background var(--t-mid), color var(--t-mid);
-  overflow-x: hidden;
+  /* NO overflow-x:hidden here — it breaks position:sticky on sidebar */
 }
 
 /* Subtle diagonal rule pattern in bg */
@@ -175,10 +175,9 @@ body.dark-mode::after {
 
 /* ─── LAYOUT ────────────────────────────────────────────────── */
 .app-layout {
-  display: flex;
+  display: block;
   min-height: 100vh;
   position: relative;
-  z-index: 1;
 }
 
 /* ─── SIDEBAR ───────────────────────────────────────────────── */
@@ -189,16 +188,20 @@ body.dark-mode::after {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
   height: 100vh;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: width var(--t-slow), background var(--t-mid), border-color var(--t-mid);
   box-shadow: var(--shadow-sm);
   z-index: 10;
 }
 
 .sidebar.collapsed { width: 64px; }
+.sidebar.collapsed ~ .main-content,
+.sidebar.collapsed + .main-content { margin-left: 64px; }
 .sidebar.collapsed nav,
 .sidebar.collapsed .sidebar-theme-row,
 .sidebar.collapsed .sidebar-logout-btn,
@@ -420,7 +423,9 @@ body.dark-mode .plan-analyst { background: rgba(255,255,255,0.05); border-color:
   min-width: 0;
   padding-bottom: 60px;
   background: var(--bg);
-  transition: background var(--t-mid);
+  transition: background var(--t-mid), margin-left var(--t-slow);
+  margin-left: var(--sidebar-w);
+  /* offset for fixed sidebar */
 }
 
 /* ─── DASHBOARD HEADER ──────────────────────────────────────── */
@@ -1283,16 +1288,13 @@ body.dark-mode .modal-box {
   }
 
   .app-layout, #app { padding-top: 58px; }
+  .main-content { padding-top: 0; }
 
   .sidebar {
-    position: fixed;
-    top: 0; left: 0;
-    height: 100vh;
-    z-index: 400;
     transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1) !important;
     width: 280px !important;
-    padding: 28px 18px;
+    z-index: 400;
   }
 
   .sidebar.mob-open {
@@ -1312,7 +1314,10 @@ body.dark-mode .modal-box {
     box-shadow: 0 -2px 14px rgba(8,16,42,0.09);
   }
 
-  .main-content { padding-bottom: 80px !important; }
+  .main-content {
+    padding-bottom: 80px !important;
+    margin-left: 0 !important;
+  }
 
   .mob-nav-btn {
     flex: 1;
