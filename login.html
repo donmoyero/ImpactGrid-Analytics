@@ -7,521 +7,314 @@
   <link rel="icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
   <script src="supabase.js"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-97XD9941FC"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-97XD9941FC');</script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;}
     :root{
-      --gold:#c8a96e;--gold-l:#e2c98a;
-      --surface:rgba(10,13,24,0.82);--border:rgba(200,169,110,0.18);
-      --mid:rgba(34,43,66,0.9);--text:#edf0f7;--sec:#a0b8d8;
-      --muted:#6b7fa0;--success:#2dd4a0;--danger:#ff4d6d;
+      --bg:#f0f2f8;--surface:#ffffff;--border:#e2e5f0;--border-mid:#cdd2e8;
+      --text:#08102a;--text2:#3e4f72;--muted:#8898b8;
+      --gold:#a07828;--gold-l:#c49a3a;--gold-pale:#fdf6e3;
+      --blue:#1847c4;--success:#0a7c5c;--danger:#c41830;--ink:#08102a;
+      --sh:0 4px 24px rgba(8,16,42,0.10),0 1px 4px rgba(8,16,42,0.06);
+      --sh-lg:0 16px 48px rgba(8,16,42,0.13),0 4px 12px rgba(8,16,42,0.07);
     }
-    html{height:100%;}body{min-height:100%;overflow-y:auto;font-family:'Manrope',sans-serif;background:#030508;color:var(--text);}
-
-    #starsCanvas,#earthCanvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;}
-
-    .space-overlay{
-      position:fixed;inset:0;z-index:1;pointer-events:none;
+    body.dark-mode{
+      --bg:#05070f;--surface:#0d1020;--border:#1a2038;--border-mid:#243050;
+      --text:#eef2ff;--text2:#8898c0;--muted:#3a4a70;
+      --gold:#c49a3a;--gold-l:#e0b84a;--gold-pale:rgba(196,154,58,0.09);
+      --blue:#4a80ff;--success:#0ecf9c;--danger:#f03050;--ink:#eef2ff;
+      --sh:0 4px 24px rgba(0,0,0,0.45);
+      --sh-lg:0 16px 48px rgba(0,0,0,0.60);
+    }
+    body{
+      font-family:'Plus Jakarta Sans',sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      padding:20px;transition:background .2s,color .2s;-webkit-font-smoothing:antialiased;
+    }
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:radial-gradient(circle at 1px 1px,var(--border) 1px,transparent 0);
+      background-size:28px 28px;opacity:.55;pointer-events:none;z-index:0;
+    }
+    body.dark-mode::before{opacity:.15;}
+    body::after{
+      content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
       background:
-        radial-gradient(ellipse 80% 60% at 50% 50%,rgba(3,5,8,0) 30%,rgba(3,5,8,0.5) 100%),
-        radial-gradient(ellipse 40% 40% at 80% 20%,rgba(61,127,255,0.06) 0%,transparent 70%),
-        radial-gradient(ellipse 35% 35% at 20% 80%,rgba(200,169,110,0.04) 0%,transparent 70%);
+        radial-gradient(ellipse 55% 45% at 15% 10%,rgba(160,120,40,0.07) 0%,transparent 60%),
+        radial-gradient(ellipse 45% 40% at 85% 90%,rgba(24,71,196,0.05) 0%,transparent 60%);
     }
-
-    .page{
-      position:relative;z-index:10;min-height:100vh;
-      display:flex;align-items:center;justify-content:center;padding:20px;
+    .theme-btn{
+      position:fixed;top:16px;right:16px;z-index:100;
+      width:38px;height:38px;background:var(--surface);border:1px solid var(--border-mid);
+      border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:16px;box-shadow:var(--sh);transition:all .14s;
     }
-    .login-wrap{width:100%;max-width:420px;}
-
-    .login-logo{display:flex;align-items:center;gap:14px;margin-bottom:26px;justify-content:center;}
-    .login-logo img{height:40px;width:auto;filter:drop-shadow(0 0 12px rgba(200,169,110,0.5));}
-    .login-logo-text{
-      font-family:'Syne',sans-serif;font-size:22px;font-weight:800;
-      background:linear-gradient(135deg,var(--gold),var(--gold-l));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    }
-    .login-logo-badge{
-      font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--gold);
-      letter-spacing:0.14em;text-transform:uppercase;opacity:0.7;margin-top:3px;
-    }
-
-    .login-card{
-      background:var(--surface);border:1px solid var(--border);border-radius:20px;
-      padding:34px 30px 30px;position:relative;overflow:visible;
-      backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-      box-shadow:0 32px 80px rgba(0,0,0,0.65),0 0 0 1px rgba(200,169,110,0.07),inset 0 1px 0 rgba(255,255,255,0.04);
-    }
-    .login-card::before{
-      content:'';position:absolute;top:0;left:8%;right:8%;height:2px;
-      background:linear-gradient(to right,transparent,var(--gold-l),transparent);opacity:0.6;
-      border-radius:2px;z-index:1;
-    }
-
-    .auth-tabs{
-      display:flex;background:rgba(6,8,15,0.6);border:1px solid rgba(34,43,66,0.8);
-      border-radius:10px;padding:4px;margin-bottom:24px;gap:4px;
-    }
-    .auth-tab{
-      flex:1;padding:9px;border:none;border-radius:7px;font-family:'Manrope',sans-serif;
-      font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;
-      background:transparent;color:var(--muted);letter-spacing:0.01em;
-    }
-    .auth-tab.active{
-      background:linear-gradient(135deg,rgba(200,169,110,0.15),rgba(226,201,138,0.1));
-      color:var(--gold-l);border:1px solid rgba(200,169,110,0.22);
-      box-shadow:0 2px 8px rgba(200,169,110,0.1);
-    }
-
-    .login-subtitle{
-      font-size:12px;color:var(--sec);font-family:'JetBrains Mono',monospace;
-      letter-spacing:0.04em;margin-bottom:22px;line-height:1.65;
-    }
-
-    .field{margin-bottom:14px;}
-    .field label{
-      display:block;font-size:10px;font-family:'JetBrains Mono',monospace;
-      text-transform:uppercase;letter-spacing:0.1em;color:var(--sec);margin-bottom:6px;
-    }
-    .field input{
-      width:100%;padding:11px 14px;background:rgba(6,8,15,0.7);
-      border:1px solid rgba(34,43,66,0.9);border-radius:9px;color:var(--text);
-      font-size:14px;font-family:'Manrope',sans-serif;outline:none;
-      transition:border-color 0.18s,box-shadow 0.18s;
-    }
-    .field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,169,110,0.1);}
-    .field input::placeholder{color:rgba(107,127,160,0.55);}
-
-    #signupExtra{display:none;}
-
-    .btn-main{
-      width:100%;padding:13px;background:linear-gradient(135deg,#b8923e,var(--gold-l));
-      color:#06080f;font-weight:700;font-size:14px;font-family:'Manrope',sans-serif;
-      border:none;border-radius:9px;cursor:pointer;margin-top:8px;
-      transition:opacity 0.15s,transform 0.15s,box-shadow 0.15s;letter-spacing:0.02em;
+    .theme-btn:hover{border-color:var(--gold);transform:scale(1.06);}
+    .wrap{position:relative;z-index:1;width:100%;max-width:420px;}
+    .live-badge{display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:16px;}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);animation:pulse 2.5s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.65);}}
+    .live-text{font-family:'JetBrains Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
+    .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:26px;justify-content:center;}
+    .logo-row img{width:34px;height:34px;object-fit:contain;}
+    .logo-name{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.4px;}
+    .logo-name span{color:var(--gold);}
+    .logo-tag{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-top:1px;}
+    .card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:20px;padding:32px 28px 26px;box-shadow:var(--sh-lg);
       position:relative;overflow:hidden;
     }
-    .btn-main:hover{opacity:0.94;transform:translateY(-1px);box-shadow:0 8px 24px rgba(200,169,110,0.25);}
-
-    .btn-google{
-      width:100%;padding:12px;background:rgba(255,255,255,0.04);
-      border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:var(--sec);
-      font-size:13px;font-family:'Manrope',sans-serif;font-weight:600;cursor:pointer;
-      margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px;
-      transition:border-color 0.15s,color 0.15s,background 0.15s;
+    .card::before{
+      content:'';position:absolute;top:0;left:10%;right:10%;height:2px;
+      background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.55;
     }
-    .btn-google:hover{border-color:rgba(200,169,110,0.35);color:var(--gold-l);background:rgba(200,169,110,0.04);}
-
-    .divider{display:flex;align-items:center;gap:12px;margin:16px 0;}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(34,43,66,0.9);}
-    .divider span{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:0.1em;}
-
-    #errorMessage{
-      margin-top:13px;font-size:12px;font-family:'JetBrains Mono',monospace;
-      padding:10px 13px;border-radius:7px;display:none;line-height:1.5;
+    .tabs{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:20px;gap:3px;}
+    .tab{flex:1;padding:8px 10px;border:none;border-radius:7px;background:transparent;color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .14s;}
+    .tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 5px rgba(8,16,42,0.10);}
+    body.dark-mode .tab.active{box-shadow:0 1px 6px rgba(0,0,0,.4);}
+    .subtitle{font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.5;}
+    .field{margin-bottom:13px;}
+    .field label{display:block;font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.10em;color:var(--muted);font-weight:600;margin-bottom:5px;}
+    .field input{
+      width:100%;padding:11px 14px;border:1.5px solid var(--border-mid);border-radius:9px;
+      background:var(--surface);color:var(--text);font-size:13.5px;
+      font-family:'Plus Jakarta Sans',sans-serif;outline:none;
+      transition:border-color .14s,box-shadow .14s;
     }
-    #errorMessage.error{background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.25);color:var(--danger);}
-    #errorMessage.success{background:rgba(45,212,160,0.08);border:1px solid rgba(45,212,160,0.25);color:var(--success);}
-
-    .login-footer{
-      text-align:center;margin-top:20px;font-size:11px;
-      color:rgba(107,127,160,0.45);font-family:'JetBrains Mono',monospace;letter-spacing:0.04em;
-    }
-
-    .float-stat{
-      position:fixed;background:rgba(10,13,24,0.75);backdrop-filter:blur(12px);
-      -webkit-backdrop-filter:blur(12px);border:1px solid rgba(200,169,110,0.14);
-      border-radius:12px;padding:12px 16px;z-index:5;
-    }
-    .float-stat .fs-label{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:4px;}
-    .float-stat .fs-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--gold-l);line-height:1;}
-    .float-stat .fs-sub{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;}
-    .fs-1{bottom:18%;left:4%;}
-    .fs-2{top:22%;right:4%;}
-
-    .password-wrap{position:relative;display:flex;align-items:center;}
-    .password-wrap input{padding-right:42px;}
-    .eye-btn{
-      position:absolute;right:12px;background:none;border:none;cursor:pointer;
-      color:var(--muted);padding:0;display:flex;align-items:center;transition:color 0.15s;
-    }
+    .field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(160,120,40,0.13);}
+    .field input::placeholder{color:var(--muted);}
+    body.dark-mode .field input{background:rgba(255,255,255,0.04);}
+    .pw-wrap{position:relative;}
+    .pw-wrap input{padding-right:42px;}
+    .eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);padding:0;display:flex;align-items:center;transition:color .14s;}
     .eye-btn:hover{color:var(--gold);}
-
-    @media(max-width:700px){
-      .float-stat{display:none;}
-      .login-card{padding:26px 20px 22px;}
+    .btn-main{
+      width:100%;padding:13px;margin-top:6px;
+      background:var(--ink);color:#fff;border:none;border-radius:10px;
+      font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;
+      cursor:pointer;letter-spacing:.02em;
+      transition:opacity .15s,transform .15s,box-shadow .15s;
+      box-shadow:0 4px 14px rgba(8,16,42,0.20);
     }
+    .btn-main:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 6px 20px rgba(8,16,42,0.25);}
+    body.dark-mode .btn-main{background:var(--gold);color:var(--ink);}
+    .divider{display:flex;align-items:center;gap:10px;margin:16px 0;font-size:11.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+    .btn-google{
+      width:100%;padding:11px;background:var(--surface);border:1.5px solid var(--border-mid);
+      border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;
+      color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;
+      transition:all .14s;
+    }
+    .btn-google:hover{border-color:var(--gold);box-shadow:0 2px 10px rgba(8,16,42,0.08);}
+    #msg{margin-top:14px;padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.5;display:none;}
+    #msg.error{background:rgba(196,24,48,0.08);color:var(--danger);border:1px solid rgba(196,24,48,0.22);}
+    #msg.success{background:rgba(10,124,92,0.08);color:var(--success);border:1px solid rgba(10,124,92,0.22);}
+    .footer{text-align:center;margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;}
   </style>
-
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-97XD9941FC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-97XD9941FC');
-  </script>
 </head>
 <body>
 
-<canvas id="starsCanvas"></canvas>
-<canvas id="earthCanvas"></canvas>
-<div class="space-overlay"></div>
+<button class="theme-btn" onclick="toggleDark()" id="themeBtn">🌙</button>
 
-<div class="float-stat fs-1">
-  <div class="fs-label">Platform Status</div>
-  <div class="fs-val" style="font-size:13px;color:#2dd4a0;">&#9679; LIVE</div>
-  <div class="fs-sub">IFSRM v3.0 Active</div>
-</div>
-<div class="float-stat fs-2">
-  <div class="fs-label">Intelligence Engine</div>
-  <div class="fs-val">17</div>
-  <div class="fs-sub">Analysis Modules</div>
-</div>
-
-<div class="page">
-  <div class="login-wrap">
-
-    <div class="login-logo">
-      <img src="logo.png" alt="ImpactGrid">
-      <div>
-        <div class="login-logo-text">ImpactGrid</div>
-        <div class="login-logo-badge">Financial Intelligence &middot; IFSRM v3.0</div>
-      </div>
-    </div>
-
-    <div class="login-card">
-
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tabSignup" onclick="setMode(false)">Create Account</button>
-        <button class="auth-tab" id="tabSignin" onclick="setMode(true)">Sign In</button>
-      </div>
-
-      <div class="login-subtitle" id="modeSubtitle">
-        Create a free account to access ImpactGrid Financial Intelligence.
-      </div>
-
-      <div id="signupExtra" style="display:block;">
-        <div class="field">
-          <label>Full Name</label>
-          <input type="text" id="fullName" placeholder="Your full name" autocomplete="name">
-        </div>
-        <div class="field">
-          <label>Business Name</label>
-          <input type="text" id="businessName" placeholder="Your business name">
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Email Address</label>
-        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
-      </div>
-
-      <div class="field">
-        <label>Password</label>
-        <div class="password-wrap">
-          <input type="password" id="password" placeholder="Min. 8 characters"
-            autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuth()">
-          <button type="button" class="eye-btn" onclick="togglePassword('password','eyeIcon1')" tabindex="-1">
-            <svg id="eyeIcon1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="field" id="confirmPasswordField">
-        <label>Confirm Password</label>
-        <div class="password-wrap">
-          <input type="password" id="confirmPassword" placeholder="Re-enter your password"
-            autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuth()">
-          <button type="button" class="eye-btn" onclick="togglePassword('confirmPassword','eyeIcon2')" tabindex="-1">
-            <svg id="eyeIcon2" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <button class="btn-main" id="authButton" onclick="handleAuth()">Create Account</button>
-
-      <div class="divider"><span>or continue with</span></div>
-
-      <button class="btn-google" onclick="handleGoogle()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        Continue with Google
-      </button>
-
-      <div id="errorMessage"></div>
-    </div>
-
-    <div class="login-footer">&copy; 2026 ImpactGrid Analytics &middot; impactgridanalytics.com</div>
+<div class="wrap">
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    <span class="live-text">IFSRM v3.0 &middot; Live Intelligence Platform</span>
   </div>
+
+  <div class="logo-row">
+    <img src="logo.png" alt="ImpactGrid">
+    <div>
+      <div class="logo-name">Impact<span>Grid</span></div>
+      <div class="logo-tag">Financial Analytics</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab" id="tabSignin" onclick="setMode(true)">Sign In</button>
+      <button class="tab active" id="tabSignup" onclick="setMode(false)">Create Account</button>
+    </div>
+
+    <div class="subtitle" id="subtitle">Create your free account to access the analytics platform.</div>
+
+    <div id="signupExtra">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="fullName" placeholder="Your full name" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Business Name</label>
+        <input type="text" id="businessName" placeholder="Your business name">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="password" placeholder="Min. 8 characters"
+          autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuth()">
+        <button type="button" class="eye-btn" onclick="togglePw('password','eye1')" tabindex="-1">
+          <svg id="eye1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="field" id="confirmField">
+      <label>Confirm Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="confirmPassword" placeholder="Re-enter password"
+          autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuth()">
+        <button type="button" class="eye-btn" onclick="togglePw('confirmPassword','eye2')" tabindex="-1">
+          <svg id="eye2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <button class="btn-main" id="authBtn" onclick="handleAuth()">Create Account</button>
+
+    <div class="divider"><span>or</span></div>
+
+    <button class="btn-google" onclick="handleGoogle()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div id="msg"></div>
+  </div>
+
+  <div class="footer">&copy; 2026 ImpactGrid Analytics &middot; impactgridanalytics.com</div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-/* === STARS === */
 (function(){
-  var c=document.getElementById('starsCanvas'),ctx=c.getContext('2d'),stars=[];
-  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}
-  resize();window.addEventListener('resize',resize);
-  for(var i=0;i<300;i++) stars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.1+0.2,a:Math.random()*0.65+0.15,sp:Math.random()*0.0004+0.0001,ph:Math.random()*Math.PI*2});
-  function draw(t){
-    ctx.clearRect(0,0,c.width,c.height);
-    stars.forEach(function(s){
-      var al=s.a*(0.6+0.4*Math.sin(t*s.sp*1000+s.ph));
-      ctx.beginPath();ctx.arc(s.x*c.width,s.y*c.height,s.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(200,215,245,'+al+')';ctx.fill();
-    });
-    requestAnimationFrame(draw);
-  }
-  requestAnimationFrame(draw);
+  var t = localStorage.getItem('ig-theme');
+  if (t === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('themeBtn').textContent = '\u2600\uFE0F'; }
 })();
 
-/* === ROTATING EARTH === */
-(function(){
-  var W=window.innerWidth,H=window.innerHeight;
-  var renderer=new THREE.WebGLRenderer({canvas:document.getElementById('earthCanvas'),alpha:true,antialias:true});
-  renderer.setSize(W,H);renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  var scene=new THREE.Scene();
-  var camera=new THREE.PerspectiveCamera(45,W/H,0.1,1000);
-  camera.position.z=2.8;
+function toggleDark() {
+  var dark = document.body.classList.toggle('dark-mode');
+  document.getElementById('themeBtn').textContent = dark ? '\u2600\uFE0F' : '\uD83C\uDF19';
+  try { localStorage.setItem('ig-theme', dark ? 'dark' : 'light'); } catch(e){}
+}
 
-  var geo=new THREE.SphereGeometry(1,64,64);
-  var loader=new THREE.TextureLoader();
-  var mat=new THREE.MeshPhongMaterial({specular:new THREE.Color(0x222222),shininess:15});
-
-  loader.load('Earth.png',function(tex){
-    mat.map=tex;mat.needsUpdate=true;
-  },undefined,function(){
-    mat.color=new THREE.Color(0x1a4a8a);
-  });
-
-  var earth=new THREE.Mesh(geo,mat);
-  earth.rotation.x=0.41;
-  scene.add(earth);
-
-  /* Atmosphere */
-  var atm=new THREE.Mesh(
-    new THREE.SphereGeometry(1.045,64,64),
-    new THREE.MeshPhongMaterial({color:0x4488ff,transparent:true,opacity:0.09,side:THREE.FrontSide,depthWrite:false})
-  );
-  atm.rotation.x=0.41;scene.add(atm);
-
-  /* Lights */
-  var sun=new THREE.DirectionalLight(0xfff8f0,1.5);sun.position.set(5,3,4);scene.add(sun);
-  scene.add(new THREE.AmbientLight(0x0a0d20,0.7));
-  var rim=new THREE.DirectionalLight(0x2244cc,0.25);rim.position.set(-4,-2,-3);scene.add(rim);
-
-  function pos(){
-    if(window.innerWidth>900){earth.position.x=1.3;atm.position.x=1.3;}
-    else{earth.position.x=0;atm.position.x=0;earth.scale.setScalar(0.82);atm.scale.setScalar(0.82);}
-  }
-  pos();
-
-  var t=0;
-  (function animate(){
-    requestAnimationFrame(animate);
-    t+=0.00018; /* very slow rotation */
-    earth.rotation.y+=0.0018;
-    atm.rotation.y+=0.0018;
-    renderer.render(scene,camera);
-  })();
-
-  window.addEventListener('resize',function(){
-    W=window.innerWidth;H=window.innerHeight;
-    camera.aspect=W/H;camera.updateProjectionMatrix();
-    renderer.setSize(W,H);pos();
-  });
-})();
-
-/* === AUTH === */
 var isLogin = false;
 
-/* Handle OAuth redirect + session check — waits for supabase to be ready */
-function waitForSupabase(cb, attempts) {
-  attempts = attempts || 0;
-  if (attempts > 50) { console.warn('Supabase never loaded'); return; }
-  if (window.supabaseClient) { cb(); }
-  else { setTimeout(function(){ waitForSupabase(cb, attempts+1); }, 100); }
+function setMode(login) {
+  isLogin = login;
+  document.getElementById('tabSignin').classList.toggle('active', login);
+  document.getElementById('tabSignup').classList.toggle('active', !login);
+  document.getElementById('signupExtra').style.display  = login ? 'none' : 'block';
+  document.getElementById('confirmField').style.display = login ? 'none' : 'block';
+  document.getElementById('authBtn').textContent = login ? 'Sign In' : 'Create Account';
+  document.getElementById('subtitle').textContent = login
+    ? 'Welcome back — sign in to your account.'
+    : 'Create your free account to access the analytics platform.';
+  showMsg('', '');
+}
+
+function togglePw(id, iconId) {
+  var inp = document.getElementById(id);
+  var ico = document.getElementById(iconId);
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    ico.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    inp.type = 'password';
+    ico.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+function showMsg(text, type) {
+  var el = document.getElementById('msg');
+  el.className = type; el.textContent = text;
+  el.style.display = text ? 'block' : 'none';
+}
+
+function waitForSupabase(cb, n) {
+  n = n || 0;
+  if (n > 60) return;
+  if (window.supabaseClient) cb();
+  else setTimeout(function(){ waitForSupabase(cb, n+1); }, 100);
 }
 
 waitForSupabase(async function() {
   try {
-    window.supabaseClient.auth.onAuthStateChange(function(event, session) {
-      if (event === 'SIGNED_IN' && session) {
-        window.location.href = 'index.html';
-      }
+    window.supabaseClient.auth.onAuthStateChange(function(e, s) {
+      if (e === 'SIGNED_IN' && s) window.location.href = 'index.html';
     });
     var s = await window.supabaseClient.auth.getSession();
     if (s.data && s.data.session) window.location.href = 'index.html';
-  } catch(e) { console.error('Session check error:', e); }
+  } catch(e) { console.error('Session:', e); }
 });
 
-/* Toggle password visibility */
-function togglePassword(inputId, iconId) {
-  var input = document.getElementById(inputId);
-  var icon  = document.getElementById(iconId);
-  if (!input) return;
-  if (input.type === 'password') {
-    input.type = 'text';
-    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-  } else {
-    input.type = 'password';
-    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-  }
-}
-
-/* Switch between Sign In and Create Account */
-function setMode(login) {
-  isLogin = login;
-
-  document.getElementById('tabSignin').classList.toggle('active', login);
-  document.getElementById('tabSignup').classList.toggle('active', !login);
-  document.getElementById('signupExtra').style.display          = login ? 'none' : 'block';
-  document.getElementById('confirmPasswordField').style.display = login ? 'none' : 'block';
-  document.getElementById('authButton').textContent             = login ? 'Sign In' : 'Create Account';
-  document.getElementById('modeSubtitle').textContent           = login
-    ? 'Sign in to access your ImpactGrid Financial Intelligence dashboard.'
-    : 'Create your free account to access the IFSRM analytics platform.';
-  document.getElementById('password').placeholder    = login ? 'Enter your password' : 'Min. 8 characters';
-  document.getElementById('password').autocomplete   = login ? 'current-password' : 'new-password';
-
-  showMsg('', '');
-}
-
-/* Main auth handler */
 async function handleAuth() {
-  var email    = document.getElementById('email').value.trim();
-  var password = document.getElementById('password').value;
-
-  if (!email || !password) {
-    showMsg('Please enter your email address and password.', 'error');
-    return;
-  }
-
-  if (!isLogin) {
-    /* Signup validations */
-    if (password.length < 8) {
-      showMsg('Password must be at least 8 characters.', 'error');
-      return;
-    }
-    var confirm = document.getElementById('confirmPassword').value;
-    if (password !== confirm) {
-      showMsg('Passwords do not match. Please try again.', 'error');
-      return;
-    }
-  }
-
-  var btn = document.getElementById('authButton');
-  btn.textContent  = 'Please wait…';
-  btn.style.opacity = '0.7';
-
-  if (!window.supabaseClient) {
-    showMsg('Authentication service not ready. Please refresh the page.', 'error');
-    btn.textContent = isLogin ? 'Sign In' : 'Create Account';
-    btn.style.opacity = '1';
-    return;
-  }
-
+  var email = (document.getElementById('email').value||''). trim();
+  var pwd   = document.getElementById('password').value||''
+  if (!email || !pwd) { showMsg('Please enter your email and password.', 'error'); return; }
+  if (!window.supabaseClient) { showMsg('Auth service not ready — refresh the page.', 'error'); return; }
+  var btn = document.getElementById('authBtn');
+  btn.textContent = 'Please wait…'; btn.style.opacity = '.65';
   try {
     var result;
-
     if (isLogin) {
-      result = await window.supabaseClient.auth.signInWithPassword({ email, password });
+      result = await window.supabaseClient.auth.signInWithPassword({ email:email, password:pwd });
     } else {
-      var meta = {};
-      var fn = (document.getElementById('fullName') || {}).value || '';
-      var bn = (document.getElementById('businessName') || {}).value || '';
-      if (fn) meta.full_name    = fn.trim();
-      if (bn) meta.business_name = bn.trim();
-
-      result = await window.supabaseClient.auth.signUp({
-        email,
-        password,
-        options: { data: meta }
-      });
+      if (pwd.length < 8) { showMsg('Password must be at least 8 characters.', 'error'); btn.textContent='Create Account'; btn.style.opacity='1'; return; }
+      var confirm = document.getElementById('confirmPassword').value||'';
+      if (pwd !== confirm) { showMsg('Passwords do not match.', 'error'); btn.textContent='Create Account'; btn.style.opacity='1'; return; }
+      var meta={};
+      var fn=(document.getElementById('fullName').value||''). trim();
+      var bn=(document.getElementById('businessName').value||''). trim();
+      if(fn) meta.full_name=fn; if(bn) meta.business_name=bn;
+      result = await window.supabaseClient.auth.signUp({ email:email, password:pwd, options:{data:meta} });
     }
-
     if (result.error) {
-      /* Make Supabase errors more human-readable */
-      var msg = result.error.message;
-      if (msg.includes('already registered')) msg = 'An account with this email already exists. Please sign in.';
-      if (msg.includes('Invalid login'))       msg = 'Incorrect email or password. Please try again.';
-      if (msg.includes('Email not confirmed')) msg = 'Please confirm your email address before signing in.';
-      showMsg(msg, 'error');
-
+      var m = result.error.message;
+      if (m.includes('already registered')) m='An account with this email already exists. Please sign in.';
+      if (m.includes('Invalid login'))       m='Incorrect email or password.';
+      if (m.includes('Email not confirmed')) m='Please confirm your email before signing in.';
+      showMsg(m, 'error');
     } else if (!isLogin) {
-      /* Check if email confirmation is required */
-      var needsConfirm = result.data && result.data.user && !result.data.session;
-      if (needsConfirm) {
-        showMsg('Account created! Please check your email and click the confirmation link, then sign in.', 'success');
-      } else {
-        /* Auto-confirmed — go straight to dashboard */
-        window.location.href = 'index.html';
-      }
-      setTimeout(function() { setMode(true); }, 4000);
-
-    } else {
-      window.location.href = 'index.html';
-    }
-
-  } catch(e) {
-    showMsg('Something went wrong. Please try again.', 'error');
-  }
-
-  btn.textContent   = isLogin ? 'Sign In' : 'Create Account';
-  btn.style.opacity = '1';
+      if (result.data && result.data.user && !result.data.session) {
+        showMsg('Account created! Check your email to confirm, then sign in.', 'success');
+        setTimeout(function(){ setMode(true); }, 3500);
+      } else { window.location.href='index.html'; }
+    } else { window.location.href='index.html'; }
+  } catch(e) { showMsg('Something went wrong. Please try again.', 'error'); }
+  btn.textContent = isLogin ? 'Sign In' : 'Create Account'; btn.style.opacity='1';
 }
 
-/* Google OAuth */
 async function handleGoogle() {
-  /* Check supabase is ready */
-  if (!window.supabaseClient) {
-    showMsg('Authentication not ready. Please refresh the page.', 'error');
-    return;
-  }
-
+  if (!window.supabaseClient) { showMsg('Auth service not ready.', 'error'); return; }
   var btn = document.querySelector('.btn-google');
-  if (btn) { btn.textContent = 'Connecting to Google...'; btn.style.opacity = '0.7'; }
-
+  if (btn) { btn.textContent='Connecting…'; btn.style.opacity='.65'; }
   try {
-    var result = await window.supabaseClient.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: 'https://impactgridanalytics.com'
-      }
-    });
-
-    if (result.error) {
-      showMsg('Google sign-in failed: ' + result.error.message, 'error');
-      if (btn) { btn.innerHTML = googleBtnHTML; btn.style.opacity = '1'; }
-    }
-    /* If no error, browser will redirect to Google automatically */
-
-  } catch(e) {
-    console.error('Google OAuth error:', e);
-    showMsg('Google sign-in failed: ' + (e.message || 'Unknown error'), 'error');
-    if (btn) { btn.innerHTML = googleBtnHTML; btn.style.opacity = '1'; }
-  }
-}
-
-var googleBtnHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Continue with Google';
-
-/* Message helper */
-function showMsg(text, type) {
-  var el = document.getElementById('errorMessage');
-  el.className   = type;
-  el.textContent = text;
-  el.style.display = text ? 'block' : 'none';
+    var r = await window.supabaseClient.auth.signInWithOAuth({ provider:'google', options:{ redirectTo:'https://impactgridanalytics.com' } });
+    if (r.error) { showMsg('Google sign-in failed: '+r.error.message, 'error'); if(btn){btn.textContent='Continue with Google';btn.style.opacity='1';} }
+  } catch(e) { showMsg('Google sign-in failed.', 'error'); if(btn){btn.textContent='Continue with Google';btn.style.opacity='1';} }
 }
 </script>
 </body>
