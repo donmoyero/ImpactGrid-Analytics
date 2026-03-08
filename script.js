@@ -22,10 +22,17 @@ let lastAIInsightText = "";
 document.addEventListener("DOMContentLoaded", function() {
   bindGlobalFunctions();
 
-  /* Restore theme preference */
+  /* Light mode is DEFAULT — only switch to dark if user previously chose dark */
   try {
-    if (localStorage.getItem("ig-theme") === "light") toggleTheme(true);
-  } catch(e) {}
+    var savedTheme = localStorage.getItem("ig-theme");
+    if (savedTheme === "dark") {
+      toggleTheme(false); // go dark
+    } else {
+      toggleTheme(true);  // default: light mode
+    }
+  } catch(e) {
+    toggleTheme(true); // fallback to light
+  }
 
   renderAIInsights();
 
@@ -1775,7 +1782,7 @@ function toggleTheme(isLight) {
   var icon  = document.getElementById("themeModeIcon");
   var label = document.getElementById("themeModeLabel");
   if (icon)  icon.textContent  = isLight ? "☀️" : "🌙";
-  if (label) label.textContent = isLight ? "Light Mode" : "Dark Mode";
+  if (label) label.textContent = isLight ? "Light" : "Dark";
 
   /* Persist preference */
   try { localStorage.setItem("ig-theme", isLight ? "light" : "dark"); } catch(e) {}
