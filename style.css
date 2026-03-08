@@ -177,7 +177,6 @@ body.dark-mode::after {
 .app-layout {
   display: block;
   min-height: 100vh;
-  position: relative;
 }
 
 /* ─── SIDEBAR ───────────────────────────────────────────────── */
@@ -187,7 +186,6 @@ body.dark-mode::after {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
   position: fixed;
   top: 0;
   left: 0;
@@ -417,14 +415,19 @@ body.dark-mode .plan-analyst { background: rgba(255,255,255,0.05); border-color:
 
 /* ─── MAIN CONTENT ──────────────────────────────────────────── */
 .main-content {
-  min-width: 0;
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
   padding-bottom: 60px;
   background: var(--bg);
   transition: background var(--t-mid), margin-left var(--t-slow);
-  margin-left: 260px;
+  overflow-x: hidden;
 }
 
-.sidebar.collapsed ~ 
+.sidebar.collapsed ~ .main-content {
+  margin-left: 64px;
+}
+
+
 
 /* ─── DASHBOARD HEADER ──────────────────────────────────────── */
 .dashboard-header {
