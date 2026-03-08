@@ -200,8 +200,6 @@ body.dark-mode::after {
 }
 
 .sidebar.collapsed { width: 64px; }
-.sidebar.collapsed ~ .main-content,
-.sidebar.collapsed + .main-content { margin-left: 64px; }
 .sidebar.collapsed nav,
 .sidebar.collapsed .sidebar-theme-row,
 .sidebar.collapsed .sidebar-logout-btn,
@@ -419,14 +417,14 @@ body.dark-mode .plan-analyst { background: rgba(255,255,255,0.05); border-color:
 
 /* ─── MAIN CONTENT ──────────────────────────────────────────── */
 .main-content {
-  flex: 1;
   min-width: 0;
   padding-bottom: 60px;
   background: var(--bg);
   transition: background var(--t-mid), margin-left var(--t-slow);
-  margin-left: var(--sidebar-w);
-  /* offset for fixed sidebar */
+  margin-left: 260px;
 }
+
+.sidebar.collapsed ~ 
 
 /* ─── DASHBOARD HEADER ──────────────────────────────────────── */
 .dashboard-header {
