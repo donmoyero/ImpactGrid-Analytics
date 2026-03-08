@@ -4,14 +4,7 @@
 // Always access through window.businessData so data persists across login
 if (!window.businessData) window.businessData = [];
 var businessData = window.businessData; // reference, not copy
-// currentCurrency — always sync to window so plans.js loadUserData() can restore it
-if (!window.currentCurrency) window.currentCurrency = "GBP";
-var currentCurrency = "GBP";
-Object.defineProperty(window, "currentCurrency", {
-  get: function() { return currentCurrency; },
-  set: function(v) { currentCurrency = v; },
-  configurable: true
-});
+let currentCurrency   = "GBP";
 
 let revenueChart      = null;
 let profitChart       = null;
@@ -33,9 +26,9 @@ document.addEventListener("DOMContentLoaded", function() {
   try {
     var savedTheme = localStorage.getItem("ig-theme");
     if (savedTheme === "dark") {
-      toggleTheme(false); // user explicitly chose dark
+      toggleTheme(false); // go dark
     } else {
-      toggleTheme(true); // default: light mode
+      toggleTheme(true);  // default: light mode
     }
   } catch(e) {
     toggleTheme(true); // fallback to light
@@ -69,25 +62,20 @@ document.addEventListener("DOMContentLoaded", function() {
 
 function setCurrency(currency) {
   currentCurrency = currency;
-  window.currentCurrency = currency;
   updateAll();
 }
 
 function formatCurrency(val) {
-  var cur = window.currentCurrency || currentCurrency || "GBP";
-  try {
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: cur }).format(val);
-  } catch(e) {
-    return cur + Number(val).toFixed(2);
-  }
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: currentCurrency
+  }).format(val);
 }
 
 
 /* ================= ADD DATA ================= */
 
 async function addData() {
-  /* Data entry is always free and unlimited */
-
   var monthValue = document.getElementById("month").value;
   var revenue    = parseFloat(document.getElementById("revenue").value);
   var expenses   = parseFloat(document.getElementById("expenses").value);
@@ -97,7 +85,6 @@ async function addData() {
     return;
   }
 
-  // Duplicate month guard
   var exists = businessData.some(function(d) {
     return d.date.toISOString().slice(0, 7) === monthValue;
   });
@@ -115,8 +102,6 @@ async function addData() {
   businessData.sort(function(a, b) { return a.date - b.date; });
   window.businessData = businessData;
 
-
-  // Clear form
   document.getElementById("month").value    = "";
   document.getElementById("revenue").value  = "";
   document.getElementById("expenses").value = "";
@@ -128,13 +113,12 @@ async function addData() {
 }
 
 
-/* ================= DUPLICATE CHECK (live on month change) ================= */
+/* ================= DUPLICATE CHECK ================= */
 
 function checkDuplicate() {
   var monthValue = document.getElementById("month").value;
   var warn = document.getElementById("duplicateWarning");
   if (!warn || !monthValue) return;
-
   var exists = businessData.some(function(d) {
     return d.date.toISOString().slice(0, 7) === monthValue;
   });
@@ -148,16 +132,13 @@ function parseMonthString(str) {
   if (!str) return null;
   str = String(str).trim();
 
-  // ISO format: 2024-01
   var iso = str.match(/^(20\d{2})[-\/](0?[1-9]|1[0-2])$/);
   if (iso) return iso[1] + "-" + iso[2].padStart(2,"0");
 
-  // "January 2024" or "Jan 2024"
   var months = {jan:"01",feb:"02",mar:"03",apr:"04",may:"05",jun:"06",jul:"07",aug:"08",sep:"09",oct:"10",nov:"11",dec:"12"};
   var named = str.match(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b[\s\-\/]*(20\d{2})\b/i);
   if (named) { return named[2] + "-" + months[named[1].toLowerCase().slice(0,3)]; }
 
-  // "2024 January"
   var yearFirst = str.match(/\b(20\d{2})\b[\s\-\/]*(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i);
   if (yearFirst) { return yearFirst[1] + "-" + months[yearFirst[2].toLowerCase().slice(0,3)]; }
 
@@ -173,10 +154,7 @@ function handleFileImport(event) {
   if (!file) return;
 
   var name = file.name.toLowerCase();
-  if (status) {
-    status.textContent = "Reading file…";
-    status.style.color = "var(--text-secondary)";
-  }
+  if (status) { status.textContent = "Reading file…"; status.style.color = "var(--text-secondary)"; }
 
   if (name.endsWith(".csv") || name.endsWith(".xlsx") || name.endsWith(".xls")) {
     importSpreadsheet(file, status);
@@ -185,16 +163,11 @@ function handleFileImport(event) {
   } else if (name.endsWith(".pdf")) {
     importPDF(file, status);
   } else {
-    if (status) {
-      status.textContent = "Unsupported file type. Use .xlsx, .csv, .docx, or .pdf";
-      status.style.color = "var(--danger)";
-    }
+    if (status) { status.textContent = "Unsupported file type. Use .xlsx, .csv, .docx, or .pdf"; status.style.color = "var(--danger)"; }
   }
-  /* Reset input so same file can be re-imported */
   event.target.value = "";
 }
 
-/* ── Shared: parse a row of data into businessData ── */
 function tryImportRow(month, rev, exp) {
   var parsed = parseMonthString(String(month).trim());
   if (!parsed) return false;
@@ -209,7 +182,6 @@ function tryImportRow(month, rev, exp) {
   return true;
 }
 
-/* ── Spreadsheet import (CSV / XLSX) ── */
 function importSpreadsheet(file, statusEl) {
   var reader = new FileReader();
   reader.onload = function(e) {
@@ -225,7 +197,7 @@ function importSpreadsheet(file, statusEl) {
         var exp   = findCol(row, ["expenses","costs","expenditure","outgoings","total expenses","spend"]);
         if (!month || rev === undefined || exp === undefined) return;
         var result = tryImportRow(month, rev, exp);
-        if (result === true)          imported++;
+        if (result === true)             imported++;
         else if (result === "duplicate") skipped++;
       });
 
@@ -241,7 +213,6 @@ function importSpreadsheet(file, statusEl) {
   reader.readAsBinaryString(file);
 }
 
-/* ── Word import using mammoth.js ── */
 function importWordMammoth(file, statusEl) {
   if (typeof mammoth === "undefined") {
     if (statusEl) { statusEl.textContent = "Word import library not loaded. Please refresh."; statusEl.style.color = "var(--danger)"; }
@@ -254,12 +225,10 @@ function importWordMammoth(file, statusEl) {
         var text = result.value;
         var imported = 0, skipped = 0;
 
-        /* Strategy 1: line-by-line structured table rows */
         var lines = text.split(/\n/);
         lines.forEach(function(line) {
           line = line.trim();
           if (!line) return;
-          /* Match: "January 2024   12,500   8,200" or tab-separated */
           var monthRx = /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*[\s\-\/]?\s*(20\d{2})\b/i;
           var isoRx   = /\b(20\d{2})[-\/](0?[1-9]|1[0-2])\b/;
           var mMatch  = line.match(monthRx) || line.match(isoRx);
@@ -267,17 +236,16 @@ function importWordMammoth(file, statusEl) {
           var nums = line.replace(mMatch[0],"").match(/[\d,]+(?:\.\d+)?/g);
           if (!nums || nums.length < 2) return;
           var result = tryImportRow(mMatch[0], nums[0], nums[1]);
-          if (result === true)          imported++;
+          if (result === true)             imported++;
           else if (result === "duplicate") skipped++;
         });
 
-        /* Strategy 2: if nothing found, try consecutive number pairs near month names */
         if (imported === 0) {
           var fullRx = /\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+20\d{2}|20\d{2}[-\/]\d{1,2})\b[^\d]*([\d,]+(?:\.\d+)?)[^\d]+([\d,]+(?:\.\d+)?)/gi;
           var m;
           while ((m = fullRx.exec(text)) !== null) {
             var result = tryImportRow(m[1], m[2], m[3]);
-            if (result === true)          imported++;
+            if (result === true)             imported++;
             else if (result === "duplicate") skipped++;
           }
         }
@@ -295,71 +263,83 @@ function importWordMammoth(file, statusEl) {
   reader.readAsArrayBuffer(file);
 }
 
-/* ── PDF import using PDF.js ── */
+/* ── PDF import — single unified function, no duplicate ── */
 function importPDF(file, statusEl) {
-  if (typeof pdfjsLib === "undefined") {
-    if (statusEl) { statusEl.textContent = "PDF import library not loaded. Please refresh."; statusEl.style.color = "var(--danger)"; }
-    return;
-  }
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var loadingTask = pdfjsLib.getDocument({ data: e.target.result });
-    loadingTask.promise.then(function(pdf) {
-      var allText = "";
-      var pagePromises = [];
-      for (var p = 1; p <= pdf.numPages; p++) {
-        pagePromises.push(
-          pdf.getPage(p).then(function(page) {
-            return page.getTextContent().then(function(tc) {
-              return tc.items.map(function(i){ return i.str; }).join(" ");
-            });
-          })
-        );
-      }
-      Promise.all(pagePromises).then(function(pages) {
-        allText = pages.join("\n");
-        var imported = 0, skipped = 0;
+  if (statusEl) { statusEl.textContent = "Reading PDF..."; statusEl.style.color = "var(--text-secondary)"; }
 
-        /* Try same two strategies as Word */
-        var lines = allText.split(/\n/);
-        lines.forEach(function(line) {
-          line = line.trim();
-          if (!line) return;
-          var monthRx = /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*[\s\-\/]?\s*(20\d{2})\b/i;
-          var isoRx   = /\b(20\d{2})[-\/](0?[1-9]|1[0-2])\b/;
-          var mMatch  = line.match(monthRx) || line.match(isoRx);
-          if (!mMatch) return;
-          var nums = line.replace(mMatch[0],"").match(/[\d,]+(?:\.\d+)?/g);
-          if (!nums || nums.length < 2) return;
-          var result = tryImportRow(mMatch[0], nums[0], nums[1]);
-          if (result === true)          imported++;
-          else if (result === "duplicate") skipped++;
-        });
-
-        if (imported === 0) {
-          var fullRx = /\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+20\d{2}|20\d{2}[-\/]\d{1,2})\b[^\d]*([\d,]+(?:\.\d+)?)[^\d]+([\d,]+(?:\.\d+)?)/gi;
-          var m;
-          while ((m = fullRx.exec(allText)) !== null) {
-            var result = tryImportRow(m[1], m[2], m[3]);
-            if (result === true)          imported++;
-            else if (result === "duplicate") skipped++;
-          }
+  var doProcess = function() {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var typedArray = new Uint8Array(e.target.result);
+      window.pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+        var pagePromises = [];
+        for (var p = 1; p <= pdf.numPages; p++) {
+          pagePromises.push(
+            pdf.getPage(p).then(function(page) {
+              return page.getTextContent().then(function(tc) {
+                return tc.items.map(function(i){ return i.str; }).join(" ");
+              });
+            })
+          );
         }
+        Promise.all(pagePromises).then(function(pages) {
+          var allText = pages.join("\n");
+          var imported = 0, skipped = 0;
 
-        businessData.sort(function(a,b){ return a.date - b.date; });
-        window.businessData = businessData;
-        updateAll();
-        if (typeof saveUserData === "function") saveUserData();
-        setImportStatus(statusEl, imported, skipped, "PDF");
+          var lines = allText.split(/\n/);
+          lines.forEach(function(line) {
+            line = line.trim();
+            if (!line) return;
+            var monthRx = /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*[\s\-\/]?\s*(20\d{2})\b/i;
+            var isoRx   = /\b(20\d{2})[-\/](0?[1-9]|1[0-2])\b/;
+            var mMatch  = line.match(monthRx) || line.match(isoRx);
+            if (!mMatch) return;
+            var nums = line.replace(mMatch[0],"").match(/[\d,]+(?:\.\d+)?/g);
+            if (!nums || nums.length < 2) return;
+            var result = tryImportRow(mMatch[0], nums[0], nums[1]);
+            if (result === true)             imported++;
+            else if (result === "duplicate") skipped++;
+          });
+
+          if (imported === 0) {
+            var fullRx = /\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+20\d{2}|20\d{2}[-\/]\d{1,2})\b[^\d]*([\d,]+(?:\.\d+)?)[^\d]+([\d,]+(?:\.\d+)?)/gi;
+            var m;
+            while ((m = fullRx.exec(allText)) !== null) {
+              var result = tryImportRow(m[1], m[2], m[3]);
+              if (result === true)             imported++;
+              else if (result === "duplicate") skipped++;
+            }
+          }
+
+          businessData.sort(function(a,b){ return a.date - b.date; });
+          window.businessData = businessData;
+          updateAll();
+          if (typeof saveUserData === "function") saveUserData();
+          setImportStatus(statusEl, imported, skipped, "PDF");
+        });
+      }).catch(function(err) {
+        if (statusEl) { statusEl.textContent = "Error reading PDF: " + err.message; statusEl.style.color = "var(--danger)"; }
       });
-    }).catch(function(err) {
-      if (statusEl) { statusEl.textContent = "Error reading PDF: " + err.message; statusEl.style.color = "var(--danger)"; }
-    });
+    };
+    reader.readAsArrayBuffer(file);
   };
-  reader.readAsArrayBuffer(file);
+
+  if (typeof pdfjsLib !== "undefined" && window.pdfjsLib) {
+    doProcess();
+  } else {
+    var script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    script.onload = function() {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      doProcess();
+    };
+    script.onerror = function() {
+      if (statusEl) { statusEl.textContent = "PDF support unavailable. Please use Excel or CSV format."; statusEl.style.color = "var(--danger)"; }
+    };
+    document.head.appendChild(script);
+  }
 }
 
-/* ── Status message helper ── */
 function setImportStatus(statusEl, imported, skipped, source) {
   if (!statusEl) return;
   if (imported > 0) {
@@ -373,7 +353,6 @@ function setImportStatus(statusEl, imported, skipped, source) {
   }
 }
 
-/* ── Column finder helper ── */
 function findCol(row, keys) {
   var rowKeys = Object.keys(row);
   for (var k = 0; k < keys.length; k++) {
@@ -401,8 +380,6 @@ function openEditModal(index) {
   var modal = document.getElementById("editModal");
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
-
-  // Focus first input
   setTimeout(function() { document.getElementById("editRevenue").focus(); }, 50);
 }
 
@@ -460,7 +437,6 @@ function updateAll() {
     renderRiskAssessment();
   }
 
-  // Keep records panel in sync if open
   var panel = document.getElementById("recordsPanel");
   if (panel && panel.classList.contains("open")) {
     renderRecordsPanel();
@@ -507,9 +483,7 @@ function renderRecordsTable() {
 function updateProgressIndicator() {
   var progress = document.getElementById("dataProgress");
   if (!progress) return;
-
   var count = businessData.length;
-
   if (count < 3) {
     progress.innerHTML = count + " / 3 months entered &nbsp;&middot;&nbsp; Add " + (3 - count) + " more month" + (3 - count !== 1 ? "s" : "") + " to activate ImpactGrid Insights";
   } else {
@@ -543,7 +517,6 @@ function renderCoreCharts() {
 function createStyledChart(id, type, labels, data, label, color, fillColor) {
   var canvas = document.getElementById(id);
   if (!canvas) return null;
-
   var isBar = (type === "bar");
 
   return new Chart(canvas, {
@@ -569,37 +542,16 @@ function createStyledChart(id, type, labels, data, label, color, fillColor) {
       maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: {
-          labels: {
-            color: "rgba(122,139,168,0.9)",
-            font: { family: "monospace", size: 11 }
-          }
-        },
+        legend: { labels: { color: "rgba(122,139,168,0.9)", font: { family: "monospace", size: 11 } } },
         tooltip: {
-          backgroundColor: "#121729",
-          borderColor: "#222b42",
-          borderWidth: 1,
-          titleColor: "#edf0f7",
-          bodyColor: "#7a8ba8",
-          padding: 12,
-          callbacks: {
-            label: function(ctx) { return " " + formatCurrency(ctx.raw); }
-          }
+          backgroundColor: "#121729", borderColor: "#222b42", borderWidth: 1,
+          titleColor: "#edf0f7", bodyColor: "#7a8ba8", padding: 12,
+          callbacks: { label: function(ctx) { return " " + formatCurrency(ctx.raw); } }
         }
       },
       scales: {
-        x: {
-          ticks: { color: "#3d4e68", font: { family: "monospace", size: 10 } },
-          grid:  { color: "rgba(26,32,53,0.8)" }
-        },
-        y: {
-          ticks: {
-            color: "#3d4e68",
-            font: { family: "monospace", size: 10 },
-            callback: function(val) { return formatCurrency(val); }
-          },
-          grid: { color: "rgba(26,32,53,0.8)" }
-        }
+        x: { ticks: { color: "#3d4e68", font: { family: "monospace", size: 10 } }, grid: { color: "rgba(26,32,53,0.8)" } },
+        y: { ticks: { color: "#3d4e68", font: { family: "monospace", size: 10 }, callback: function(val) { return formatCurrency(val); } }, grid: { color: "rgba(26,32,53,0.8)" } }
       }
     }
   });
@@ -611,7 +563,6 @@ function createStyledChart(id, type, labels, data, label, color, fillColor) {
 async function generateAIProjection(years) {
   if (businessData.length < 3) return;
 
-  /* Check forecast plan limit */
   if (typeof canUse === "function") {
     var ok = await canUse("forecasts");
     if (!ok) { if (typeof showLimitModal === "function") showLimitModal("forecasts"); return; }
@@ -651,78 +602,25 @@ async function generateAIProjection(years) {
     data: {
       labels: labels,
       datasets: [
-        {
-          label: "Optimistic (+15%)",
-          data: optimistic,
-          borderColor: "rgba(45,212,160,0.55)",
-          backgroundColor: "transparent",
-          borderDash: [5, 5],
-          tension: 0.4,
-          pointRadius: 3,
-          borderWidth: 1.5
-        },
-        {
-          label: "Base Projection",
-          data: base,
-          borderColor: "rgba(200,169,110,1)",
-          backgroundColor: "rgba(200,169,110,0.06)",
-          tension: 0.4,
-          fill: true,
-          pointBackgroundColor: "rgba(200,169,110,1)",
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          borderWidth: 2.5
-        },
-        {
-          label: "Conservative (-15%)",
-          data: conservative,
-          borderColor: "rgba(255,77,109,0.55)",
-          backgroundColor: "transparent",
-          borderDash: [5, 5],
-          tension: 0.4,
-          pointRadius: 3,
-          borderWidth: 1.5
-        }
+        { label: "Optimistic (+15%)", data: optimistic, borderColor: "rgba(45,212,160,0.55)", backgroundColor: "transparent", borderDash: [5,5], tension: 0.4, pointRadius: 3, borderWidth: 1.5 },
+        { label: "Base Projection", data: base, borderColor: "rgba(200,169,110,1)", backgroundColor: "rgba(200,169,110,0.06)", tension: 0.4, fill: true, pointBackgroundColor: "rgba(200,169,110,1)", pointRadius: 5, pointHoverRadius: 7, borderWidth: 2.5 },
+        { label: "Conservative (-15%)", data: conservative, borderColor: "rgba(255,77,109,0.55)", backgroundColor: "transparent", borderDash: [5,5], tension: 0.4, pointRadius: 3, borderWidth: 1.5 }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: {
-          labels: {
-            color: "rgba(122,139,168,0.9)",
-            font: { family: "monospace", size: 11 },
-            boxWidth: 14,
-            padding: 16
-          }
-        },
+        legend: { labels: { color: "rgba(122,139,168,0.9)", font: { family: "monospace", size: 11 }, boxWidth: 14, padding: 16 } },
         tooltip: {
-          backgroundColor: "#121729",
-          borderColor: "#222b42",
-          borderWidth: 1,
-          titleColor: "#edf0f7",
-          bodyColor: "#7a8ba8",
-          padding: 12,
-          callbacks: {
-            label: function(ctx) { return " " + ctx.dataset.label + ": " + formatCurrency(ctx.raw); }
-          }
+          backgroundColor: "#121729", borderColor: "#222b42", borderWidth: 1,
+          titleColor: "#edf0f7", bodyColor: "#7a8ba8", padding: 12,
+          callbacks: { label: function(ctx) { return " " + ctx.dataset.label + ": " + formatCurrency(ctx.raw); } }
         }
       },
       scales: {
-        x: {
-          ticks: { color: "#3d4e68", font: { family: "monospace", size: 10 } },
-          grid:  { color: "rgba(26,32,53,0.8)" }
-        },
-        y: {
-          ticks: {
-            color: "#3d4e68",
-            font: { family: "monospace", size: 10 },
-            callback: function(val) { return formatCurrency(val); }
-          },
-          grid: { color: "rgba(26,32,53,0.8)" }
-        }
+        x: { ticks: { color: "#3d4e68", font: { family: "monospace", size: 10 } }, grid: { color: "rgba(26,32,53,0.8)" } },
+        y: { ticks: { color: "#3d4e68", font: { family: "monospace", size: 10 }, callback: function(val) { return formatCurrency(val); } }, grid: { color: "rgba(26,32,53,0.8)" } }
       }
     }
   });
@@ -805,16 +703,13 @@ function renderPerformanceMatrix() {
   var growth     = calculateMonthlyGrowth();
   var margin     = getMargin();
 
-  // Clean 0–100 scores
   var stabilityScore = Math.min(100, Math.max(0, parseFloat((100 - volatility).toFixed(1))));
   var growthScore    = Math.min(100, Math.max(0, parseFloat(Math.min(growth, 100).toFixed(1))));
   var profitScore    = Math.min(100, Math.max(0, parseFloat(Math.min(margin * 2, 100).toFixed(1))));
 
-  // Destroy old charts safely
   if (performanceBarChart)  { performanceBarChart.destroy();  performanceBarChart  = null; }
   if (distributionPieChart) { distributionPieChart.destroy(); distributionPieChart = null; }
 
-  // ── HORIZONTAL BAR CHART ──
   var barCanvas = document.getElementById("performanceBarChart");
   if (barCanvas) {
     performanceBarChart = new Chart(barCanvas, {
@@ -822,73 +717,30 @@ function renderPerformanceMatrix() {
       data: {
         labels: ["Stability Index", "Growth Score", "Profit Score"],
         datasets: [
-          {
-            label: "Score",
-            data: [stabilityScore, growthScore, profitScore],
-            backgroundColor: ["rgba(45,212,160,0.85)", "rgba(200,169,110,0.85)", "rgba(61,127,255,0.85)"],
-            borderWidth: 0,
-            borderRadius: 6,
-            barThickness: 28
-          },
-          {
-            label: "Remaining",
-            data: [100 - stabilityScore, 100 - growthScore, 100 - profitScore],
-            backgroundColor: "rgba(26,32,53,0.6)",
-            borderWidth: 0,
-            borderRadius: 6,
-            barThickness: 28
-          }
+          { label: "Score", data: [stabilityScore, growthScore, profitScore], backgroundColor: ["rgba(45,212,160,0.85)", "rgba(200,169,110,0.85)", "rgba(61,127,255,0.85)"], borderWidth: 0, borderRadius: 6, barThickness: 28 },
+          { label: "Remaining", data: [100 - stabilityScore, 100 - growthScore, 100 - profitScore], backgroundColor: "rgba(26,32,53,0.6)", borderWidth: 0, borderRadius: 6, barThickness: 28 }
         ]
       },
       options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
+        indexAxis: "y", responsive: true, maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
-          tooltip: {
-            backgroundColor: "#121729",
-            borderColor: "#222b42",
-            borderWidth: 1,
-            titleColor: "#edf0f7",
-            bodyColor: "#7a8ba8",
-            padding: 12,
-            filter: function(item) { return item.datasetIndex === 0; },
-            callbacks: {
-              label: function(ctx) { return " Score: " + ctx.raw.toFixed(1) + " / 100"; }
-            }
-          }
+          tooltip: { backgroundColor: "#121729", borderColor: "#222b42", borderWidth: 1, titleColor: "#edf0f7", bodyColor: "#7a8ba8", padding: 12, filter: function(item) { return item.datasetIndex === 0; }, callbacks: { label: function(ctx) { return " Score: " + ctx.raw.toFixed(1) + " / 100"; } } }
         },
         scales: {
-          x: {
-            stacked: true,
-            max: 100,
-            ticks: {
-              color: "#3d4e68",
-              font: { family: "monospace", size: 10 },
-              callback: function(val) { return val + "%"; }
-            },
-            grid: { color: "rgba(26,32,53,0.8)" }
-          },
-          y: {
-            stacked: true,
-            ticks: { color: "#7a8ba8", font: { size: 12 } },
-            grid: { display: false }
-          }
+          x: { stacked: true, max: 100, ticks: { color: "#3d4e68", font: { family: "monospace", size: 10 }, callback: function(val) { return val + "%"; } }, grid: { color: "rgba(26,32,53,0.8)" } },
+          y: { stacked: true, ticks: { color: "#7a8ba8", font: { size: 12 } }, grid: { display: false } }
         }
       }
     });
   }
 
-  // ── GAUGE CANVASES (replace pie) ──
   var pieCanvas = document.getElementById("distributionPieChart");
   if (pieCanvas) {
     var container = pieCanvas.parentElement;
     pieCanvas.style.display = "none";
-
     var existing = container.querySelector(".gauge-grid");
     if (existing) existing.remove();
-
     container.insertAdjacentHTML("beforeend",
       '<div class="gauge-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:8px 0;">' +
         gaugeCard("stability", "Stability", stabilityScore, "#2dd4a0") +
@@ -896,8 +748,6 @@ function renderPerformanceMatrix() {
         gaugeCard("profit",    "Profit",    profitScore,    "#3d7fff") +
       "</div>"
     );
-
-    // Small delay to ensure DOM is painted before drawing on canvas
     setTimeout(function() {
       drawGauge("gauge-stability", stabilityScore, "#2dd4a0");
       drawGauge("gauge-growth",    growthScore,    "#c8a96e");
@@ -905,7 +755,6 @@ function renderPerformanceMatrix() {
     }, 50);
   }
 
-  // ── HEALTH SCORE ──
   var health = Math.min(100, Math.max(0, Math.round((stabilityScore + growthScore + profitScore) / 3)));
   var healthColor  = health >= 70 ? "#2dd4a0" : health >= 40 ? "#c8a96e" : "#ff4d6d";
   var healthBorder = health >= 70 ? "rgba(45,212,160,0.3)" : health >= 40 ? "rgba(200,169,110,0.3)" : "rgba(255,77,109,0.3)";
@@ -934,35 +783,22 @@ function gaugeCard(id, label, score, color) {
 function drawGauge(canvasId, value, color) {
   var canvas = document.getElementById(canvasId);
   if (!canvas) return;
-
   var ctx = canvas.getContext("2d");
-  var w   = canvas.width;
-  var h   = canvas.height;
-  var cx  = w / 2;
-  var cy  = h * 0.9;
-  var r   = w * 0.38;
+  var w = canvas.width, h = canvas.height;
+  var cx = w / 2, cy = h * 0.9, r = w * 0.38;
 
   ctx.clearRect(0, 0, w, h);
-
-  // Track
   ctx.beginPath();
   ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
   ctx.strokeStyle = "rgba(26,32,53,0.9)";
-  ctx.lineWidth   = 10;
-  ctx.lineCap     = "round";
-  ctx.stroke();
+  ctx.lineWidth = 10; ctx.lineCap = "round"; ctx.stroke();
 
-  // Value arc
   var endAngle = Math.PI + (value / 100) * Math.PI;
   ctx.beginPath();
   ctx.arc(cx, cy, r, Math.PI, endAngle);
-  ctx.strokeStyle = color;
-  ctx.lineWidth   = 10;
-  ctx.lineCap     = "round";
-  ctx.shadowColor = color;
-  ctx.shadowBlur  = 10;
-  ctx.stroke();
-  ctx.shadowBlur  = 0;
+  ctx.strokeStyle = color; ctx.lineWidth = 10; ctx.lineCap = "round";
+  ctx.shadowColor = color; ctx.shadowBlur = 10; ctx.stroke();
+  ctx.shadowBlur = 0;
 }
 
 
@@ -1004,7 +840,6 @@ function renderRiskAssessment() {
 /* ================= AI CHAT ================= */
 
 async function askImpactGridAI() {
-  /* Check analyses limit */
   if (typeof canUse === "function") {
     var ok = await canUse("analyses");
     if (!ok) { showLimitModal("analyses"); return; }
@@ -1019,14 +854,12 @@ async function askImpactGridAI() {
   output.innerHTML += '<div class="ai-user">' + question + "</div>";
   input.value = "";
   output.scrollTop = output.scrollHeight;
-
   aiChatHistory.push({ role: "user", content: question });
 
   var typingId = "typing-" + Date.now();
   output.innerHTML += '<div class="ai-response" id="' + typingId + '"><span class="ai-typing">ImpactGrid AI is thinking<span class="dots">...</span></span></div>';
   output.scrollTop = output.scrollHeight;
 
-  /* Build AI memory from past reports */
   var memoryPrefix = window.aiMemoryContext ? window.aiMemoryContext + "\n\nCURRENT SESSION:\n" : "";
   var questionWithMemory = memoryPrefix ? memoryPrefix + question : question;
   var response = await ImpactGridAI.analyze(questionWithMemory, businessData, currentCurrency, aiChatHistory);
@@ -1058,7 +891,6 @@ function fillAIChat(text) {
 /* ================= PDF ENGINE ================= */
 
 function generatePDF() {
-  /* Collect metadata */
   var _totalRev = businessData.reduce(function(s,d){return s+d.revenue;},0);
   var _totalExp = businessData.reduce(function(s,d){return s+d.expenses;},0);
   var _totalPro = businessData.reduce(function(s,d){return s+d.profit;},0);
@@ -1084,42 +916,22 @@ function generatePDF() {
   var W = 210, H = 297, mg = 16;
   var cur = currentCurrency || "£";
 
-  /* ── Helpers ── */
-  function rgb(hex) {
-    var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-    return [r,g,b];
-  }
   var C = {
-    bg:       [6,8,15],
-    bgMid:    [10,13,24],
-    bgCard:   [14,18,32],
-    bgCard2:  [18,23,42],
-    gold:     [200,169,110],
-    goldLt:   [226,201,138],
-    green:    [45,212,160],
-    red:      [255,77,109],
-    blue:     [68,136,255],
-    textPri:  [237,240,247],
-    textSec:  [160,176,204],
-    textMut:  [61,78,104],
-    border:   [26,32,53]
+    bg:[6,8,15], bgMid:[10,13,24], bgCard:[14,18,32], bgCard2:[18,23,42],
+    gold:[200,169,110], goldLt:[226,201,138], green:[45,212,160], red:[255,77,109],
+    blue:[68,136,255], textPri:[237,240,247], textSec:[160,176,204], textMut:[61,78,104], border:[26,32,53]
   };
 
   function setF(col) { doc.setFillColor(col[0],col[1],col[2]); }
   function setD(col) { doc.setDrawColor(col[0],col[1],col[2]); }
   function setT(col) { doc.setTextColor(col[0],col[1],col[2]); }
-
-  function rect(x,y,w,h,col,mode) {
-    setF(col); doc.rect(x,y,w,h,mode||"F");
-  }
+  function rect(x,y,w,h,col) { setF(col); doc.rect(x,y,w,h,"F"); }
   function rrect(x,y,w,h,col,r,stroke) {
     setF(col);
     if(stroke){ setD(stroke); doc.setLineWidth(0.2); doc.roundedRect(x,y,w,h,r||2,r||2,"FD"); }
     else doc.roundedRect(x,y,w,h,r||2,r||2,"F");
   }
-  function rule(y,col,lw) {
-    setD(col||C.border); doc.setLineWidth(lw||0.2); doc.line(mg,y,W-mg,y);
-  }
+  function rule(y,col,lw) { setD(col||C.border); doc.setLineWidth(lw||0.2); doc.line(mg,y,W-mg,y); }
   function label(txt,x,y,sz,col,style) {
     doc.setFontSize(sz||8); doc.setFont("helvetica",style||"normal"); setT(col||C.textSec);
     doc.text(txt,x,y);
@@ -1129,244 +941,150 @@ function generatePDF() {
     if(Math.abs(n)>=1000) return cur+(n/1000).toFixed(1)+"K";
     return cur+Math.round(n).toLocaleString();
   }
-  function wrap(txt,maxW) {
-    return doc.splitTextToSize(txt, maxW);
-  }
+  function wrap(txt,maxW) { return doc.splitTextToSize(txt, maxW); }
 
-  /* ── PAGE 1: Cover ── */
-  rect(0,0,W,H,C.bg);
-  // Gold top bar
-  rect(0,0,W,1.5,C.gold);
-  // Left accent stripe
-  rect(0,0,4,H,C.bgCard);
-  rect(0,0,4,60,C.gold);
-
-  // Big background text watermark
-  doc.setFontSize(95); doc.setFont("helvetica","bold");
-  setT([10,14,26]); doc.text("IG",W-60,H-20);
-
-  // Logo area
+  /* PAGE 1 */
+  rect(0,0,W,H,C.bg); rect(0,0,W,1.5,C.gold); rect(0,0,4,H,C.bgCard); rect(0,0,4,60,C.gold);
+  doc.setFontSize(95); doc.setFont("helvetica","bold"); setT([10,14,26]); doc.text("IG",W-60,H-20);
   rrect(mg+6,18,52,14,C.bgCard2,2,C.border);
-  label("IMPACTGRID",mg+10,27,11,C.gold,"bold");
-  label("ANALYTICS",mg+10,32,6,C.textMut,"normal");
-
-  // Divider
+  label("IMPACTGRID",mg+10,27,11,C.gold,"bold"); label("ANALYTICS",mg+10,32,6,C.textMut);
   setD(C.gold); doc.setLineWidth(0.4); doc.line(mg+6,38,90,38);
-
-  // Main title
-  doc.setFontSize(26); doc.setFont("helvetica","bold"); setT(C.textPri);
-  doc.text("Financial",mg+6,54);
-  doc.setFontSize(26); setT(C.gold);
-  doc.text("Intelligence",mg+6,63);
-  doc.setFontSize(26); setT(C.textPri);
-  doc.text("Report",mg+6,72);
-
+  doc.setFontSize(26); doc.setFont("helvetica","bold"); setT(C.textPri); doc.text("Financial",mg+6,54);
+  doc.setFontSize(26); setT(C.gold); doc.text("Intelligence",mg+6,63);
+  doc.setFontSize(26); setT(C.textPri); doc.text("Report",mg+6,72);
   label("IFSRM v3.0  ·  Regime-Dependent Stability Modelling for SMEs",mg+6,80,7,C.textMut);
 
-  // Cover metrics cards
   var cards = [
-    { label:"HEALTH SCORE", value:_healthScore+"/100", col:_healthScore>=70?C.green:_healthScore>=40?C.gold:C.red },
-    { label:"TOTAL REVENUE", value:fmt(_totalRev), col:C.blue },
-    { label:"NET PROFIT",    value:fmt(_totalPro),  col:_totalPro>=0?C.green:C.red },
-    { label:"MONTHS",        value:businessData.length, col:C.goldLt }
+    {label:"HEALTH SCORE",val:_healthScore+"/100",col:_healthScore>=70?C.green:_healthScore>=40?C.gold:C.red},
+    {label:"TOTAL REVENUE",val:fmt(_totalRev),col:C.blue},
+    {label:"NET PROFIT",val:fmt(_totalPro),col:_totalPro>=0?C.green:C.red},
+    {label:"MONTHS",val:businessData.length,col:C.goldLt}
   ];
-  var cardY = 96, cardW = (W-mg*2-12)/4, cardH = 22;
+  var cardY=96, cardW=(W-mg*2-12)/4, cardH=22;
   cards.forEach(function(c,i){
-    var cx = mg + i*(cardW+4);
+    var cx=mg+i*(cardW+4);
     rrect(cx,cardY,cardW,cardH,C.bgCard2,3,C.border);
-    // top accent line
     setF(c.col); doc.roundedRect(cx,cardY,cardW,1,0.5,0.5,"F");
     label(c.label,cx+4,cardY+7,6,C.textMut,"bold");
-    doc.setFontSize(11); doc.setFont("helvetica","bold"); setT(c.col);
-    doc.text(String(c.value),cx+4,cardY+16);
+    doc.setFontSize(11); doc.setFont("helvetica","bold"); setT(c.col); doc.text(String(c.value||c.val),cx+4,cardY+16);
   });
 
-  // Report meta
-  var metaY = 128;
+  var metaY=128;
   rrect(mg,metaY,W-mg*2,32,C.bgCard,3,C.border);
-  label("REPORT DETAILS",mg+6,metaY+8,7,C.gold,"bold");
-  rule(metaY+11,C.border,0.15);
-  var metaItems = [
-    ["Generated",   new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})],
-    ["Currency",    cur],
-    ["Data Period", businessData.length > 0 ? businessData[0].date.toISOString().slice(0,7)+" – "+businessData[businessData.length-1].date.toISOString().slice(0,7) : "—"],
-    ["Plan",        (window.currentPlan||"analyst").charAt(0).toUpperCase()+(window.currentPlan||"analyst").slice(1)],
-    ["Platform",    "impactgridanalytics.com"]
+  label("REPORT DETAILS",mg+6,metaY+8,7,C.gold,"bold"); rule(metaY+11,C.border,0.15);
+  var metaItems=[
+    ["Generated",new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})],
+    ["Currency",cur],
+    ["Data Period",businessData.length>0?businessData[0].date.toISOString().slice(0,7)+" – "+businessData[businessData.length-1].date.toISOString().slice(0,7):"—"],
+    ["Plan",(window.currentPlan||"analyst").charAt(0).toUpperCase()+(window.currentPlan||"analyst").slice(1)],
+    ["Platform","impactgridanalytics.com"]
   ];
   metaItems.forEach(function(m,i){
-    var col = i < 3 ? mg+6 : mg+90;
-    var row = i < 3 ? metaY+17+(i*6) : metaY+17+((i-3)*6);
-    label(m[0]+":",col,row,7,C.textMut);
-    label(m[1],col+30,row,7,C.textPri,"bold");
+    var col=i<3?mg+6:mg+90, row=i<3?metaY+17+(i*6):metaY+17+((i-3)*6);
+    label(m[0]+":",col,row,7,C.textMut); label(m[1],col+30,row,7,C.textPri,"bold");
   });
 
-  // AI Insight teaser on cover
-  if (_insightText.length > 10) {
-    var insY = 170;
+  if(_insightText.length>10){
+    var insY=170;
     rrect(mg,insY,W-mg*2,38,C.bgCard2,3,C.border);
     setF(C.gold); doc.roundedRect(mg,insY,3,38,1.5,1.5,"F");
-    label("AI ANALYSIS SUMMARY",mg+8,insY+8,7,C.gold,"bold");
-    rule(insY+11,[26,32,53],0.15);
-    var teaser = _insightText.substring(0,280)+"...";
-    var tLines = wrap(teaser, W-mg*2-14);
+    label("AI ANALYSIS SUMMARY",mg+8,insY+8,7.5,C.gold,"bold"); rule(insY+11,[26,32,53],0.15);
+    var tLines=wrap(_insightText.substring(0,280)+"...",W-mg*2-14);
     doc.setFontSize(7.5); doc.setFont("helvetica","normal"); setT(C.textSec);
     tLines.slice(0,4).forEach(function(l,i){ doc.text(l,mg+8,insY+18+(i*5.5)); });
   }
-
-  // Footer
-  rect(0,H-12,W,12,C.bgCard);
-  rule(H-12,C.border,0.15);
+  rect(0,H-12,W,12,C.bgCard); rule(H-12,C.border,0.15);
   label("ImpactGrid Analytics  ·  IFSRM v3.0  ·  Confidential Financial Report",mg,H-5,7,C.textMut);
   label("Page 1",W-mg-8,H-5,7,C.textMut);
 
-  /* ── PAGE 2: Executive Summary + Monthly Table ── */
-  doc.addPage();
-  rect(0,0,W,H,C.bg);
-  rect(0,0,W,1.5,C.gold);
-  rect(0,0,4,H,C.bgCard);
-
-  // Page header
+  /* PAGE 2 */
+  doc.addPage(); rect(0,0,W,H,C.bg); rect(0,0,W,1.5,C.gold); rect(0,0,4,H,C.bgCard);
   rrect(mg,8,W-mg*2,14,C.bgCard,2,C.border);
   label("IMPACTGRID",mg+5,17,8,C.gold,"bold");
   label("  ·  FINANCIAL INTELLIGENCE REPORT  ·  IFSRM v3.0",mg+30,17,7,C.textMut);
   label(new Date().toLocaleDateString("en-GB"),W-mg-28,17,7,C.textMut);
-
-  // Section: Executive Summary
-  var y2 = 30;
-  label("01  EXECUTIVE SUMMARY",mg,y2,9,C.goldLt,"bold");
-  rule(y2+2,C.gold,0.3);
-  y2 += 8;
-
-  // KPI row
-  var kpis = [
-    {label:"Total Revenue",   val:fmt(_totalRev),  sub:"Gross inflow",  col:C.blue},
-    {label:"Total Expenses",  val:fmt(_totalExp),  sub:"Gross outflow", col:C.red},
-    {label:"Net Profit",      val:fmt(_totalPro),  sub:_totalPro>=0?"Surplus":"Deficit", col:_totalPro>=0?C.green:C.red},
-    {label:"Profit Margin",   val:(_totalRev>0?((_totalPro/_totalRev)*100).toFixed(1):0)+"%", sub:"Net margin", col:C.goldLt},
-    {label:"Avg Monthly Rev", val:fmt(_totalRev/Math.max(1,businessData.length)), sub:"Per month", col:C.blue},
-    {label:"Health Score",    val:_healthScore+"/100", sub:_healthScore>=70?"Stable":_healthScore>=40?"Moderate":"At Risk", col:_healthScore>=70?C.green:_healthScore>=40?C.gold:C.red}
+  var y2=30;
+  label("01  EXECUTIVE SUMMARY",mg,y2,9,C.goldLt,"bold"); rule(y2+2,C.gold,0.3); y2+=8;
+  var kpis=[
+    {label:"Total Revenue",val:fmt(_totalRev),sub:"Gross inflow",col:C.blue},
+    {label:"Total Expenses",val:fmt(_totalExp),sub:"Gross outflow",col:C.red},
+    {label:"Net Profit",val:fmt(_totalPro),sub:_totalPro>=0?"Surplus":"Deficit",col:_totalPro>=0?C.green:C.red},
+    {label:"Profit Margin",val:(_totalRev>0?((_totalPro/_totalRev)*100).toFixed(1):0)+"%",sub:"Net margin",col:C.goldLt},
+    {label:"Avg Monthly Rev",val:fmt(_totalRev/Math.max(1,businessData.length)),sub:"Per month",col:C.blue},
+    {label:"Health Score",val:_healthScore+"/100",sub:_healthScore>=70?"Stable":_healthScore>=40?"Moderate":"At Risk",col:_healthScore>=70?C.green:_healthScore>=40?C.gold:C.red}
   ];
-  var kw=(W-mg*2-10)/3, kh=18, kpadsY=y2;
+  var kw=(W-mg*2-10)/3,kh=18,kpadsY=y2;
   kpis.forEach(function(k,i){
-    var kx=mg+(i%3)*(kw+5), ky=kpadsY+Math.floor(i/3)*(kh+3);
+    var kx=mg+(i%3)*(kw+5),ky=kpadsY+Math.floor(i/3)*(kh+3);
     rrect(kx,ky,kw,kh,C.bgCard2,2,C.border);
     setF(k.col); doc.roundedRect(kx,ky,kw,0.8,0.4,0.4,"F");
     label(k.label,kx+4,ky+6,6,C.textMut,"bold");
-    doc.setFontSize(10); doc.setFont("helvetica","bold"); setT(k.col);
-    doc.text(String(k.val),kx+4,ky+13);
+    doc.setFontSize(10); doc.setFont("helvetica","bold"); setT(k.col); doc.text(String(k.val),kx+4,ky+13);
     label(k.sub,kx+kw-doc.getTextWidth(k.sub)-3,ky+13,6,C.textMut);
   });
-  y2 += kh*2 + 10;
-
-  // Monthly data table
-  label("02  MONTHLY BREAKDOWN",mg,y2,9,C.goldLt,"bold");
-  rule(y2+2,C.gold,0.3);
-  y2 += 8;
-
-  // Table header
-  var cols = [
-    {label:"MONTH",    x:mg+2,   w:36},
-    {label:"REVENUE",  x:mg+40,  w:32},
-    {label:"EXPENSES", x:mg+74,  w:32},
-    {label:"PROFIT",   x:mg+108, w:30},
-    {label:"MARGIN",   x:mg+140, w:22},
-    {label:"TREND",    x:mg+164, w:18}
+  y2+=kh*2+10;
+  label("02  MONTHLY BREAKDOWN",mg,y2,9,C.goldLt,"bold"); rule(y2+2,C.gold,0.3); y2+=8;
+  var cols=[
+    {label:"MONTH",x:mg+2,w:36},{label:"REVENUE",x:mg+40,w:32},{label:"EXPENSES",x:mg+74,w:32},
+    {label:"PROFIT",x:mg+108,w:30},{label:"MARGIN",x:mg+140,w:22},{label:"TREND",x:mg+164,w:18}
   ];
   rect(mg,y2,W-mg*2,8,C.bgCard2);
-  setD(C.border); doc.setLineWidth(0.2);
-  doc.rect(mg,y2,W-mg*2,8,"S");
-  cols.forEach(function(c){ label(c.label,c.x,y2+5.5,6.5,C.gold,"bold"); });
-  y2 += 8;
-
+  setD(C.border); doc.setLineWidth(0.2); doc.rect(mg,y2,W-mg*2,8,"S");
+  cols.forEach(function(c){ label(c.label,c.x,y2+5.5,6.5,C.gold,"bold"); }); y2+=8;
   businessData.forEach(function(d,i){
-    var rowH = 7;
-    if(y2 + rowH > H-15){ 
-      // new page
-      doc.addPage(); rect(0,0,W,H,C.bg); rect(0,0,W,1.5,C.gold); rect(0,0,4,H,C.bgCard);
-      y2 = 20;
-    }
-    var rowBg = i%2===0 ? C.bgCard : C.bg;
-    rect(mg,y2,W-mg*2,rowH,rowBg);
-    var margin = d.revenue > 0 ? ((d.profit/d.revenue)*100).toFixed(1) : "0.0";
-    var profCol = d.profit>=0 ? C.green : C.red;
-    var trend = i===0 ? "—" : (d.revenue > businessData[i-1].revenue ? "▲" : d.revenue < businessData[i-1].revenue ? "▼" : "–");
-    var trendCol = i===0 ? C.textMut : (d.revenue > businessData[i-1].revenue ? C.green : d.revenue < businessData[i-1].revenue ? C.red : C.textMut);
-
-    label(d.date.toISOString().slice(0,7), cols[0].x, y2+5, 7.5, C.textPri, "bold");
-    label(fmt(d.revenue),   cols[1].x, y2+5, 7.5, C.blue);
-    label(fmt(d.expenses),  cols[2].x, y2+5, 7.5, C.red);
-    label(fmt(d.profit),    cols[3].x, y2+5, 7.5, profCol, "bold");
-    label(margin+"%",       cols[4].x, y2+5, 7.5, C.textSec);
-    label(trend,            cols[5].x, y2+5, 8,   trendCol, "bold");
-    y2 += rowH;
+    if(y2+7>H-15){ doc.addPage(); rect(0,0,W,H,C.bg); rect(0,0,W,1.5,C.gold); rect(0,0,4,H,C.bgCard); y2=20; }
+    rect(mg,y2,W-mg*2,7,i%2===0?C.bgCard:C.bg);
+    var marg=d.revenue>0?((d.profit/d.revenue)*100).toFixed(1):"0.0";
+    var profCol=d.profit>=0?C.green:C.red;
+    var trend=i===0?"—":(d.revenue>businessData[i-1].revenue?"▲":d.revenue<businessData[i-1].revenue?"▼":"–");
+    var tCol=i===0?C.textMut:(d.revenue>businessData[i-1].revenue?C.green:d.revenue<businessData[i-1].revenue?C.red:C.textMut);
+    label(d.date.toISOString().slice(0,7),cols[0].x,y2+5,7.5,C.textPri,"bold");
+    label(fmt(d.revenue),cols[1].x,y2+5,7.5,C.blue);
+    label(fmt(d.expenses),cols[2].x,y2+5,7.5,C.red);
+    label(fmt(d.profit),cols[3].x,y2+5,7.5,profCol,"bold");
+    label(marg+"%",cols[4].x,y2+5,7.5,C.textSec);
+    label(trend,cols[5].x,y2+5,8,tCol,"bold");
+    y2+=7;
   });
-
-  // Totals row
   rect(mg,y2,W-mg*2,8,C.bgCard2);
   setF(C.gold); doc.roundedRect(mg,y2,W-mg*2,0.5,0,0,"F");
-  var totMargin = _totalRev>0 ? ((_totalPro/_totalRev)*100).toFixed(1) : "0.0";
-  label("TOTAL / AVERAGE", cols[0].x, y2+5.5, 7, C.gold, "bold");
-  label(fmt(_totalRev),   cols[1].x, y2+5.5, 7, C.blue,  "bold");
-  label(fmt(_totalExp),   cols[2].x, y2+5.5, 7, C.red,   "bold");
-  label(fmt(_totalPro),   cols[3].x, y2+5.5, 7, _totalPro>=0?C.green:C.red, "bold");
-  label(totMargin+"%",    cols[4].x, y2+5.5, 7, C.goldLt,"bold");
-  y2 += 14;
-
-  // Footer pg2
+  var totMarg=_totalRev>0?((_totalPro/_totalRev)*100).toFixed(1):"0.0";
+  label("TOTAL / AVERAGE",cols[0].x,y2+5.5,7,C.gold,"bold");
+  label(fmt(_totalRev),cols[1].x,y2+5.5,7,C.blue,"bold"); label(fmt(_totalExp),cols[2].x,y2+5.5,7,C.red,"bold");
+  label(fmt(_totalPro),cols[3].x,y2+5.5,7,_totalPro>=0?C.green:C.red,"bold"); label(totMarg+"%",cols[4].x,y2+5.5,7,C.goldLt,"bold");
   rect(0,H-12,W,12,C.bgCard); rule(H-12,C.border,0.15);
   label("ImpactGrid Analytics  ·  IFSRM v3.0  ·  Confidential Financial Report",mg,H-5,7,C.textMut);
   label("Page 2",W-mg-8,H-5,7,C.textMut);
 
-  /* ── PAGE 3: AI Insights + Risk Analysis ── */
-  doc.addPage();
-  rect(0,0,W,H,C.bg);
-  rect(0,0,W,1.5,C.gold);
-  rect(0,0,4,H,C.bgCard);
-
+  /* PAGE 3 */
+  doc.addPage(); rect(0,0,W,H,C.bg); rect(0,0,W,1.5,C.gold); rect(0,0,4,H,C.bgCard);
   rrect(mg,8,W-mg*2,14,C.bgCard,2,C.border);
-  label("IMPACTGRID",mg+5,17,8,C.gold,"bold");
-  label("  ·  AI INTELLIGENCE & RISK ANALYSIS",mg+30,17,7,C.textMut);
-
-  var y3 = 30;
-  label("03  AI FINANCIAL ANALYSIS",mg,y3,9,C.goldLt,"bold");
-  rule(y3+2,C.gold,0.3);
-  y3 += 8;
-
-  // AI insights box
-  if (_insightText.length > 10) {
-    var insBoxH = Math.min(90, 16 + Math.ceil(_insightText.length/85)*5);
+  label("IMPACTGRID",mg+5,17,8,C.gold,"bold"); label("  ·  AI INTELLIGENCE & RISK ANALYSIS",mg+30,17,7,C.textMut);
+  var y3=30;
+  label("03  AI FINANCIAL ANALYSIS",mg,y3,9,C.goldLt,"bold"); rule(y3+2,C.gold,0.3); y3+=8;
+  if(_insightText.length>10){
+    var insBoxH=Math.min(90,16+Math.ceil(_insightText.length/85)*5);
     rrect(mg,y3,W-mg*2,insBoxH,C.bgCard2,3,C.border);
     setF(C.gold); doc.roundedRect(mg,y3,3,insBoxH,1.5,1.5,"F");
-    label("ImpactGrid AI  ·  IFSRM Analysis",mg+7,y3+8,7.5,C.gold,"bold");
-    rule(y3+11,[26,32,53],0.15);
-    var insLines = wrap(_insightText, W-mg*2-14);
+    label("ImpactGrid AI  ·  IFSRM Analysis",mg+7,y3+8,7.5,C.gold,"bold"); rule(y3+11,[26,32,53],0.15);
+    var insLines=wrap(_insightText,W-mg*2-14);
     doc.setFontSize(7.5); doc.setFont("helvetica","normal"); setT(C.textSec);
-    var lineY = y3+17;
-    insLines.forEach(function(l){
-      if(lineY < y3+insBoxH-4){ doc.text(l,mg+7,lineY); lineY+=5; }
-    });
-    y3 += insBoxH + 6;
+    var lineY=y3+17;
+    insLines.forEach(function(l){ if(lineY<y3+insBoxH-4){ doc.text(l,mg+7,lineY); lineY+=5; } });
+    y3+=insBoxH+6;
   }
-
-  // Risk Assessment
-  label("04  RISK ASSESSMENT",mg,y3,9,C.goldLt,"bold");
-  rule(y3+2,C.gold,0.3);
-  y3 += 8;
-
-  var avgRev = _totalRev / Math.max(1,businessData.length);
-  var avgExp = _totalExp / Math.max(1,businessData.length);
-  var volatility = 0;
-  if(businessData.length > 1){
-    var mean = avgRev;
-    var variance = businessData.reduce(function(s,d){return s+Math.pow(d.revenue-mean,2);},0)/businessData.length;
-    volatility = Math.round(Math.sqrt(variance)/Math.max(1,mean)*100);
+  label("04  RISK ASSESSMENT",mg,y3,9,C.goldLt,"bold"); rule(y3+2,C.gold,0.3); y3+=8;
+  var avgRev2=_totalRev/Math.max(1,businessData.length), vol2=0;
+  if(businessData.length>1){
+    var mean2=avgRev2;
+    var var2=businessData.reduce(function(s,d){return s+Math.pow(d.revenue-mean2,2);},0)/businessData.length;
+    vol2=Math.round(Math.sqrt(var2)/Math.max(1,mean2)*100);
   }
-  var burnRate = avgExp > 0 ? Math.round(_totalPro>0 ? 0 : Math.abs(_totalPro/avgExp)*30) : 0;
-  var risks = [
-    {label:"Revenue Volatility",  val:volatility+"%", level:volatility<15?"LOW":volatility<35?"MEDIUM":"HIGH", col:volatility<15?C.green:volatility<35?C.gold:C.red},
-    {label:"Expense Ratio",       val:(_totalRev>0?((_totalExp/_totalRev)*100).toFixed(0):100)+"%", level:_totalExp/_totalRev<0.7?"LOW":_totalExp/_totalRev<0.9?"MEDIUM":"HIGH", col:_totalExp/_totalRev<0.7?C.green:_totalExp/_totalRev<0.9?C.gold:C.red},
-    {label:"Profitability",       val:_totalPro>=0?"POSITIVE":"NEGATIVE", level:_totalPro>=0?"LOW":"HIGH", col:_totalPro>=0?C.green:C.red},
-    {label:"Cash Flow Pressure",  val:_totalPro>=0?"Stable":"Monitor", level:_totalPro>=0?"LOW":"MEDIUM", col:_totalPro>=0?C.green:C.gold}
+  var risks=[
+    {label:"Revenue Volatility",val:vol2+"%",level:vol2<15?"LOW":vol2<35?"MEDIUM":"HIGH",col:vol2<15?C.green:vol2<35?C.gold:C.red},
+    {label:"Expense Ratio",val:(_totalRev>0?((_totalExp/_totalRev)*100).toFixed(0):100)+"%",level:_totalExp/_totalRev<0.7?"LOW":_totalExp/_totalRev<0.9?"MEDIUM":"HIGH",col:_totalExp/_totalRev<0.7?C.green:_totalExp/_totalRev<0.9?C.gold:C.red},
+    {label:"Profitability",val:_totalPro>=0?"POSITIVE":"NEGATIVE",level:_totalPro>=0?"LOW":"HIGH",col:_totalPro>=0?C.green:C.red},
+    {label:"Cash Flow Pressure",val:_totalPro>=0?"Stable":"Monitor",level:_totalPro>=0?"LOW":"MEDIUM",col:_totalPro>=0?C.green:C.gold}
   ];
   var rw=(W-mg*2-6)/4;
   risks.forEach(function(r,i){
@@ -1374,189 +1092,68 @@ function generatePDF() {
     rrect(rx,y3,rw,24,C.bgCard2,2,C.border);
     setF(r.col); doc.roundedRect(rx,y3,rw,1,0.5,0.5,"F");
     label(r.label,rx+3,y3+7,6,C.textMut,"bold");
-    doc.setFontSize(9); doc.setFont("helvetica","bold"); setT(r.col);
-    doc.text(r.val,rx+3,y3+14);
+    doc.setFontSize(9); doc.setFont("helvetica","bold"); setT(r.col); doc.text(r.val,rx+3,y3+14);
     rrect(rx+3,y3+17,rw-6,5,r.col===C.green?[8,40,28]:r.col===C.gold?[40,32,8]:[40,8,20],1.5);
     label(r.level,rx+5,y3+20.5,6,[255,255,255],"bold");
   });
-  y3 += 30;
-
-  // Stability regime
-  label("05  STABILITY REGIME",mg,y3,9,C.goldLt,"bold");
-  rule(y3+2,C.gold,0.3);
-  y3 += 8;
-
-  var regime = _healthScore >= 70 ? "STABLE" : _healthScore >= 40 ? "TRANSITIONAL" : "DISTRESSED";
-  var regimeCol = _healthScore >= 70 ? C.green : _healthScore >= 40 ? C.gold : C.red;
-  var regimeDesc = _healthScore >= 70
-    ? "Business demonstrates strong financial health. Revenue exceeds expenses with consistent profitability. Continue current strategy while exploring growth opportunities."
-    : _healthScore >= 40
-    ? "Business is in a transitional phase. Profitability is moderate with some volatility detected. Focus on expense optimisation and revenue diversification."
-    : "Business shows signs of financial distress. Immediate action required to reduce expenses, improve cash flow, and strengthen revenue streams.";
-
+  y3+=30;
+  label("05  STABILITY REGIME",mg,y3,9,C.goldLt,"bold"); rule(y3+2,C.gold,0.3); y3+=8;
+  var regime=_healthScore>=70?"STABLE":_healthScore>=40?"TRANSITIONAL":"DISTRESSED";
+  var regimeCol=_healthScore>=70?C.green:_healthScore>=40?C.gold:C.red;
+  var regimeDesc=_healthScore>=70?"Business demonstrates strong financial health. Revenue exceeds expenses with consistent profitability. Continue current strategy while exploring growth opportunities.":_healthScore>=40?"Business is in a transitional phase. Profitability is moderate with some volatility detected. Focus on expense optimisation and revenue diversification.":"Business shows signs of financial distress. Immediate action required to reduce expenses, improve cash flow, and strengthen revenue streams.";
   rrect(mg,y3,W-mg*2,30,C.bgCard2,3,C.border);
   setF(regimeCol); doc.roundedRect(mg,y3,W-mg*2,1,1.5,1.5,"F");
-  doc.setFontSize(14); doc.setFont("helvetica","bold"); setT(regimeCol);
-  doc.text(regime+" REGIME",mg+6,y3+11);
+  doc.setFontSize(14); doc.setFont("helvetica","bold"); setT(regimeCol); doc.text(regime+" REGIME",mg+6,y3+11);
   label("IFSRM Classification  ·  Health Score: "+_healthScore+"/100",mg+6,y3+17,7,C.textMut);
-  var descLines = wrap(regimeDesc, W-mg*2-12);
-  doc.setFontSize(7.5); doc.setFont("helvetica","normal"); setT(C.textSec);
-  descLines.forEach(function(l,i){ doc.text(l,mg+6,y3+22+(i*5)); });
-  y3 += 36;
-
-  // Recommendations
-  label("06  STRATEGIC RECOMMENDATIONS",mg,y3,9,C.goldLt,"bold");
-  rule(y3+2,C.gold,0.3);
-  y3 += 8;
-
-  var recs = _healthScore >= 70 ? [
-    "Maintain current cost discipline — expense ratio is healthy.",
-    "Explore reinvestment opportunities to compound revenue growth.",
-    "Build a cash reserve of 3–6 months operating expenses.",
-    "Consider scaling highest-margin products or services."
-  ] : _healthScore >= 40 ? [
-    "Identify and reduce the top 3 expense categories immediately.",
-    "Set a monthly revenue target 10–15% above current average.",
-    "Review pricing strategy — consider value-based pricing.",
-    "Diversify revenue streams to reduce single-source dependency."
-  ] : [
-    "Conduct urgent expense audit — cut all non-essential costs.",
-    "Prioritise cash-generating activities over growth investments.",
-    "Seek financial advisory support or business mentorship.",
-    "Model a break-even scenario and work backwards to achieve it."
-  ];
-
+  wrap(regimeDesc,W-mg*2-12).forEach(function(l,i){ doc.setFontSize(7.5); doc.setFont("helvetica","normal"); setT(C.textSec); doc.text(l,mg+6,y3+22+(i*5)); });
+  y3+=36;
+  label("06  STRATEGIC RECOMMENDATIONS",mg,y3,9,C.goldLt,"bold"); rule(y3+2,C.gold,0.3); y3+=8;
+  var recs=_healthScore>=70?["Maintain current cost discipline — expense ratio is healthy.","Explore reinvestment opportunities to compound revenue growth.","Build a cash reserve of 3–6 months operating expenses.","Consider scaling highest-margin products or services."]:_healthScore>=40?["Identify and reduce the top 3 expense categories immediately.","Set a monthly revenue target 10–15% above current average.","Review pricing strategy — consider value-based pricing.","Diversify revenue streams to reduce single-source dependency."]:["Conduct urgent expense audit — cut all non-essential costs.","Prioritise cash-generating activities over growth investments.","Seek financial advisory support or business mentorship.","Model a break-even scenario and work backwards to achieve it."];
   recs.forEach(function(rec,i){
-    if(y3+9 > H-15){ doc.addPage(); rect(0,0,W,H,C.bg); rect(0,0,W,1.5,C.gold); rect(0,0,4,H,C.bgCard); y3=20; }
+    if(y3+9>H-15){ doc.addPage(); rect(0,0,W,H,C.bg); rect(0,0,W,1.5,C.gold); rect(0,0,4,H,C.bgCard); y3=20; }
     rrect(mg,y3,W-mg*2,8,C.bgCard,2,C.border);
     setF(C.gold); doc.roundedRect(mg,y3,2,8,1,1,"F");
-    label(String(i+1),mg+4,y3+5.5,7,C.gold,"bold");
-    label(rec,mg+10,y3+5.5,7.5,C.textPri);
-    y3 += 10;
+    label(String(i+1),mg+4,y3+5.5,7,C.gold,"bold"); label(rec,mg+10,y3+5.5,7.5,C.textPri); y3+=10;
   });
-
-  // Footer pg3
   rect(0,H-12,W,12,C.bgCard); rule(H-12,C.border,0.15);
   label("ImpactGrid Analytics  ·  IFSRM v3.0  ·  Confidential — For Authorised Use Only",mg,H-5,7,C.textMut);
   label("Page 3",W-mg-8,H-5,7,C.textMut);
 
-  /* ── PAGE 4: Back Cover ── */
-  doc.addPage();
-  rect(0,0,W,H,C.bg);
-  rect(0,W/2,W/2,H,C.bgCard);
-  rect(0,0,W,1.5,C.gold);
-  rect(W/2,0,0.5,H,C.gold);
-
-  // Left side
-  doc.setFontSize(32); doc.setFont("helvetica","bold"); setT(C.gold);
-  doc.text("Impact",mg,60);
-  setT(C.textPri);
-  doc.text("Grid",mg,75);
+  /* PAGE 4 */
+  doc.addPage(); rect(0,0,W,H,C.bg); rect(0,W/2,W/2,H,C.bgCard); rect(0,0,W,1.5,C.gold); rect(W/2,0,0.5,H,C.gold);
+  doc.setFontSize(32); doc.setFont("helvetica","bold"); setT(C.gold); doc.text("Impact",mg,60);
+  setT(C.textPri); doc.text("Grid",mg,75);
   label("Financial Intelligence · IFSRM v3.0",mg,85,8,C.textMut);
-
   setD(C.gold); doc.setLineWidth(0.4); doc.line(mg,92,80,92);
-
   label("This report was generated by the ImpactGrid",mg,102,8,C.textSec);
   label("Financial Stability Engine using regime-dependent",mg,109,8,C.textSec);
   label("modelling for SME financial analysis.",mg,116,8,C.textSec);
-
   label("impactgridanalytics.com",mg,135,9,C.gold,"bold");
   label("Powered by IFSRM v3.0 · Secured by Supabase",mg,143,7,C.textMut);
   label("© 2026 ImpactGrid Analytics",mg,151,7,C.textMut);
-
-  // Right side
-  var rx2 = W/2+mg;
-  label("REPORT SUMMARY",rx2,40,8,C.gold,"bold");
-  setD(C.gold); doc.setLineWidth(0.3); doc.line(rx2,43,W-mg,43);
-
-  var sumItems = [
-    ["Health Score",   _healthScore+"/100"],
-    ["Total Revenue",  fmt(_totalRev)],
-    ["Total Expenses", fmt(_totalExp)],
-    ["Net Profit",     fmt(_totalPro)],
-    ["Months Analysed",String(businessData.length)],
-    ["Stability Regime", regime],
-    ["Generated",      new Date().toLocaleDateString("en-GB")]
+  var rx2=W/2+mg;
+  label("REPORT SUMMARY",rx2,40,8,C.gold,"bold"); setD(C.gold); doc.setLineWidth(0.3); doc.line(rx2,43,W-mg,43);
+  var sumItems=[
+    ["Health Score",_healthScore+"/100"],["Total Revenue",fmt(_totalRev)],["Total Expenses",fmt(_totalExp)],
+    ["Net Profit",fmt(_totalPro)],["Months Analysed",String(businessData.length)],
+    ["Stability Regime",regime],["Generated",new Date().toLocaleDateString("en-GB")]
   ];
-  sumItems.forEach(function(s,i){
-    label(s[0],rx2,53+(i*10),7.5,C.textMut);
-    label(s[1],rx2+40,53+(i*10),7.5,C.textPri,"bold");
-  });
-
-  // QR placeholder
+  sumItems.forEach(function(s,i){ label(s[0],rx2,53+(i*10),7.5,C.textMut); label(s[1],rx2+40,53+(i*10),7.5,C.textPri,"bold"); });
   rrect(rx2,H-55,30,30,C.bgCard2,2,C.border);
-  label("VISIT",rx2+7,H-28,7,C.textMut,"bold");
-  label("ONLINE",rx2+5,H-23,7,C.textMut,"bold");
-
+  label("VISIT",rx2+7,H-28,7,C.textMut,"bold"); label("ONLINE",rx2+5,H-23,7,C.textMut,"bold");
   label("impactgridanalytics.com",rx2+34,H-40,7,C.gold);
   label("Access your full dashboard,",rx2+34,H-34,6.5,C.textMut);
   label("AI insights, and report history",rx2+34,H-29,6.5,C.textMut);
   label("at any time online.",rx2+34,H-24,6.5,C.textMut);
-
-  // Bottom gold bar
-  rect(0,H-8,W,8,C.bgCard);
-  rule(H-8,C.border,0.15);
+  rect(0,H-8,W,8,C.bgCard); rule(H-8,C.border,0.15);
   label("CONFIDENTIAL  ·  Generated by ImpactGrid IFSRM v3.0  ·  © 2026 ImpactGrid Analytics",mg,H-3,6.5,C.textMut);
 
-  /* ── Save PDF to account ── */
   if (typeof savePDFToAccount === "function") {
-    try {
-      var _pdfBase64 = doc.output("datauristring").split(",")[1];
-      savePDFToAccount(_pdfBase64, _pdfMeta);
-    } catch(e) { console.error("PDF account save error:", e); }
+    try { var b64=doc.output("datauristring").split(",")[1]; savePDFToAccount(b64, _pdfMeta); } catch(e) { console.error("PDF save error:", e); }
   }
-
   doc.save("ImpactGrid_Report_" + new Date().toISOString().slice(0,10) + ".pdf");
 }
 
-
-
-
-function parsePDFText(text, statusEl) {
-  /* Try to extract financial data from PDF text */
-  var lines  = text.split(/[\n\r]+/);
-  var imported = 0, errors = 0;
-
-  /* Look for patterns like: "January 2024  12500  8200" or "Jan-24: Revenue 12500 Expenses 8200" */
-  var monthPattern = /(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)[\s\-,]+(?:20)?[0-9]{2}/gi;
-
-  lines.forEach(function(line) {
-    var monthMatch = line.match(monthPattern);
-    if (!monthMatch) return;
-
-    var nums = line.match(/[0-9]{3,}(?:[,\.][0-9]+)*/g);
-    if (!nums || nums.length < 2) return;
-
-    var rev = parseFloat(nums[0].replace(/,/g,""));
-    var exp = parseFloat(nums[1].replace(/,/g,""));
-    if (isNaN(rev) || isNaN(exp)) return;
-
-    var monthStr = monthMatch[0].replace(/[\-,]/g," ").replace(/\s+/g," ").trim();
-    var parsed = parseMonthString(monthStr);
-    if (!parsed) return;
-
-    /* Check duplicate */
-    var exists = businessData.some(function(d){ return d.date.toISOString().slice(0,7) === parsed; });
-    if (exists) return;
-
-    businessData.push({ date: new Date(parsed+"-01"), revenue: rev, expenses: exp, profit: rev - exp });
-    imported++;
-  });
-
-  if (imported > 0) {
-    businessData.sort(function(a,b){ return a.date - b.date; });
-    window.businessData = businessData;
-    updateAll();
-    if (typeof saveUserData === "function") saveUserData();
-    if (statusEl) { statusEl.textContent = "✓ Imported " + imported + " months from PDF."; statusEl.style.color = "var(--success)"; }
-    if (errors > 0 && statusEl) statusEl.textContent += " (" + errors + " rows skipped)";
-  } else {
-    if (statusEl) {
-      statusEl.textContent = "Could not detect financial data in this PDF. For best results, use our Excel template.";
-      statusEl.style.color = "var(--warning)";
-    }
-  }
-}
 
 /* ================= HELPERS ================= */
 
@@ -1598,43 +1195,30 @@ function showSection(section, event) {
     if (typeof renderSavedPDFs === 'function') setTimeout(renderSavedPDFs, 150);
   }
   if (section === 'settings') {
-    // Populate settings page with live user data
-    var email = window.currentUser ? window.currentUser.email : '';
-    var plan  = window.currentPlan || 'analyst';
-    var cfg   = window.planConfig  ? window.planConfig[plan] : null;
+    var email   = window.currentUser ? window.currentUser.email : '';
+    var plan    = window.currentPlan || 'analyst';
+    var cfg     = window.planConfig  ? window.planConfig[plan] : null;
     var initial = email ? email[0].toUpperCase() : 'U';
-
-    var sa = document.getElementById('settingsAvatar');
-    var se = document.getElementById('settingsEmail');
-    var spb = document.getElementById('settingsPlanBadge');
-    var spl = document.getElementById('settingsPlanLabel');
-
-    if (sa)  sa.textContent  = initial;
-    if (se)  se.textContent  = email;
-    if (spb) { spb.textContent = cfg ? cfg.label : 'Basic'; spb.className = 'plan-badge plan-' + plan; }
-    if (spl) spl.textContent = cfg ? cfg.label + (plan === 'analyst' ? ' (Free)' : plan === 'professional' ? ' — £8.99/mo' : ' — £13.99/mo') : 'Basic (Free)';
-
-    // Mirror usage bar into settings
-    var ub = document.getElementById('usageBar');
-    var sub = document.getElementById('settingsUsageBar');
+    var sa=document.getElementById('settingsAvatar'), se=document.getElementById('settingsEmail');
+    var spb=document.getElementById('settingsPlanBadge'), spl=document.getElementById('settingsPlanLabel');
+    if (sa) sa.textContent  = initial;
+    if (se) se.textContent  = email;
+    if (spb){ spb.textContent = cfg ? cfg.label : 'Basic'; spb.className = 'plan-badge plan-' + plan; }
+    if (spl) spl.textContent = cfg ? cfg.label + (plan==='analyst'?' (Free)':plan==='professional'?' — £8.99/mo':' — £13.99/mo') : 'Basic (Free)';
+    var ub=document.getElementById('usageBar'), sub=document.getElementById('settingsUsageBar');
     if (ub && sub) sub.innerHTML = ub.innerHTML;
   }
 
-  document.querySelectorAll(".page-section").forEach(function(s) {
-    s.classList.remove("active-section");
-  });
+  document.querySelectorAll(".page-section").forEach(function(s) { s.classList.remove("active-section"); });
   var target = document.getElementById(section);
   if (target) target.classList.add("active-section");
 
-  document.querySelectorAll(".sidebar li").forEach(function(li) {
-    li.classList.remove("active");
-  });
+  document.querySelectorAll(".sidebar li").forEach(function(li) { li.classList.remove("active"); });
   if (event) {
     var li = event.target.closest ? event.target.closest("li") : event.target;
     if (li) li.classList.add("active");
   }
 
-  // Sync bottom nav active state (settings=5, report=6)
   var sectionIndex = {"dashboard":0,"charts":1,"matrix":2,"risk":3,"ai":4,"settings":5,"report":6};
   var idx = sectionIndex[section];
   if (idx !== undefined) {
@@ -1643,44 +1227,29 @@ function showSection(section, event) {
     if (btns[idx]) btns[idx].classList.add("active");
   }
 
-  // Close mobile menu after navigation
   if (window.innerWidth <= 900) closeMobileMenu();
-
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 
-/* ================= SIDEBAR — DESKTOP ================= */
+/* ================= SIDEBAR ================= */
 
 function toggleSidebar() {
-  // Desktop only — on mobile we use the overlay system
   if (window.innerWidth <= 900) { toggleMobileMenu(); return; }
-
   var sidebar = document.getElementById("sidebar");
   if (!sidebar) return;
-
   sidebar.classList.toggle("collapsed");
   var isCollapsed = sidebar.classList.contains("collapsed");
-
-  // Update main content margin to match sidebar width
   var main = document.querySelector(".main-content");
   if (main) main.style.marginLeft = isCollapsed ? "64px" : "260px";
   document.body.classList.toggle("sidebar-collapsed", isCollapsed);
-
   var tab = document.getElementById("sidebar-reopen-tab");
-
   if (isCollapsed) {
     if (!tab) {
       tab = document.createElement("button");
       tab.id = "sidebar-reopen-tab";
-      tab.innerHTML = "&#9654;";
-      tab.title = "Open sidebar";
-      tab.style.cssText =
-        "position:fixed;left:0;top:50%;transform:translateY(-50%);" +
-        "width:22px;height:48px;background:var(--bg-surface,#fff);" +
-        "border:1px solid var(--border-mid,#cdd2e8);border-left:none;" +
-        "border-radius:0 6px 6px 0;color:var(--gold,#a07828);font-size:11px;" +
-        "cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;";
+      tab.innerHTML = "&#9654;"; tab.title = "Open sidebar";
+      tab.style.cssText = "position:fixed;left:0;top:50%;transform:translateY(-50%);width:22px;height:48px;background:var(--bg-surface,#fff);border:1px solid var(--border-mid,#cdd2e8);border-left:none;border-radius:0 6px 6px 0;color:var(--gold,#a07828);font-size:11px;cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;";
       tab.onclick = function() { toggleSidebar(); };
       document.body.appendChild(tab);
     }
@@ -1694,49 +1263,28 @@ function toggleSidebar() {
 /* ================= MOBILE MENU ================= */
 
 function toggleMobileMenu() {
-  var sidebar  = document.getElementById("sidebar");
-  var overlay  = document.getElementById("sbOverlay");
+  var sidebar = document.getElementById("sidebar");
+  var overlay = document.getElementById("sbOverlay");
   if (!sidebar) return;
-
-  var isOpen = sidebar.classList.contains("mob-open");
-  if (isOpen) {
-    closeMobileMenu();
-  } else {
-    sidebar.classList.add("mob-open");
-    if (overlay) overlay.style.display = "block";
-    document.body.style.overflow = "hidden";
-  }
+  if (sidebar.classList.contains("mob-open")) { closeMobileMenu(); }
+  else { sidebar.classList.add("mob-open"); if (overlay) overlay.style.display = "block"; document.body.style.overflow = "hidden"; }
 }
 
 function closeMobileMenu() {
-  var sidebar  = document.getElementById("sidebar");
-  var overlay  = document.getElementById("sbOverlay");
-
+  var sidebar = document.getElementById("sidebar");
+  var overlay = document.getElementById("sbOverlay");
   if (sidebar) sidebar.classList.remove("mob-open");
   if (overlay) overlay.style.display = "none";
   document.body.style.overflow = "";
 }
 
 function mobileNav(section, el) {
-  // Switch section
-  document.querySelectorAll(".page-section").forEach(function(s) {
-    s.classList.remove("active-section");
-  });
+  document.querySelectorAll(".page-section").forEach(function(s) { s.classList.remove("active-section"); });
   var target = document.getElementById(section);
   if (target) target.classList.add("active-section");
-
-  // Update bottom nav active state
-  document.querySelectorAll(".mob-nav-btn").forEach(function(b) {
-    b.classList.remove("active");
-  });
+  document.querySelectorAll(".mob-nav-btn").forEach(function(b) { b.classList.remove("active"); });
   if (el) el.classList.add("active");
-
-  // Also sync sidebar active state
-  document.querySelectorAll(".sidebar li").forEach(function(li) {
-    li.classList.remove("active");
-  });
-
-  // Scroll to top
+  document.querySelectorAll(".sidebar li").forEach(function(li) { li.classList.remove("active"); });
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1744,24 +1292,21 @@ function mobileNav(section, el) {
 /* ================= THEME ================= */
 
 function toggleTheme(isLight) {
-  /* isLight = true means showing light mode (default) */
+  /* CSS is light-first. .dark-mode class activates dark palette. */
   if (isLight === undefined) {
     isLight = document.body.classList.contains("dark-mode");
   }
   document.body.classList.toggle("dark-mode", !isLight);
-  document.body.classList.toggle("light-mode", false); // clear legacy class
+  document.body.classList.remove("light-mode"); // clear any legacy class
 
-  /* Sync all switches */
   var switches = document.querySelectorAll('.theme-switch input[type="checkbox"]');
   switches.forEach(function(sw) { sw.checked = isLight; });
 
-  /* Update sidebar label */
   var icon  = document.getElementById("themeModeIcon");
-  var label = document.getElementById("themeModeLabel");
-  if (icon)  icon.textContent  = isLight ? "☀️" : "🌙";
-  if (label) label.textContent = isLight ? "Light" : "Dark";
+  var lbl   = document.getElementById("themeModeLabel");
+  if (icon) icon.textContent = isLight ? "☀️" : "🌙";
+  if (lbl)  lbl.textContent  = isLight ? "Light" : "Dark";
 
-  /* Persist preference */
   try { localStorage.setItem("ig-theme", isLight ? "light" : "dark"); } catch(e) {}
 }
 
@@ -1776,7 +1321,6 @@ async function logout() {
 
 /* ================= BIND GLOBALS ================= */
 
-// Called immediately so inline onclick handlers work before DOMContentLoaded
 function bindGlobalFunctions() {
   window.addData              = addData;
   window.setCurrency          = setCurrency;
@@ -1814,15 +1358,12 @@ function closeUpgradeModal() {
 }
 
 
-
 /* ================= RECORDS PANEL ================= */
 
 function toggleRecordsPanel() {
   var panel = document.getElementById("recordsPanel");
   if (!panel) return;
-  var isOpen = panel.classList.contains("open");
-  if (isOpen) closeRecordsPanel();
-  else openRecordsPanel();
+  panel.classList.contains("open") ? closeRecordsPanel() : openRecordsPanel();
 }
 
 function openRecordsPanel() {
@@ -1833,7 +1374,6 @@ function openRecordsPanel() {
   panel.classList.add("open");
   if (overlay) overlay.style.display = "block";
   document.body.style.overflow = "hidden";
-  // Highlight nav item
   var nav = document.getElementById("navRecords");
   if (nav) nav.classList.add("active");
 }
@@ -1870,7 +1410,7 @@ function renderRecordsPanel() {
     return;
   }
 
-  // Sort by date ascending for display (oldest → newest, natural spreadsheet order)
+  // Oldest → newest (natural spreadsheet order)
   var sorted = data.slice().sort(function(a,b){ return a.date - b.date; });
 
   var html = "";
@@ -1880,7 +1420,6 @@ function renderRecordsPanel() {
     var margin   = record.revenue > 0 ? ((record.profit / record.revenue) * 100).toFixed(1) : "0.0";
     var profitCls = record.profit >= 0 ? "rp-pos" : "rp-neg";
 
-    // Trend vs previous row
     var trendHtml = "";
     if (i > 0) {
       var prev = sorted[i - 1];
@@ -1890,45 +1429,24 @@ function renderRecordsPanel() {
 
     html +=
       '<tr class="rp-data-row" data-idx="' + origIdx + '">' +
-
-        // Month (read-only)
-        '<td class="rp-cell rp-cell-month">' +
-          '<span class="rp-disp">' + monthStr + trendHtml + '</span>' +
-        '</td>' +
-
-        // Revenue (editable)
+        '<td class="rp-cell rp-cell-month"><span class="rp-disp">' + monthStr + trendHtml + '</span></td>' +
         '<td class="rp-cell rp-cell-edit" data-field="revenue" data-idx="' + origIdx + '">' +
           '<span class="rp-disp rp-rev">' + formatCurrency(record.revenue) + '</span>' +
           '<input class="rp-inp" type="number" step="0.01" value="' + record.revenue.toFixed(2) + '">' +
         '</td>' +
-
-        // Expenses (editable)
         '<td class="rp-cell rp-cell-edit" data-field="expenses" data-idx="' + origIdx + '">' +
           '<span class="rp-disp rp-exp">' + formatCurrency(record.expenses) + '</span>' +
           '<input class="rp-inp" type="number" step="0.01" value="' + record.expenses.toFixed(2) + '">' +
         '</td>' +
-
-        // Profit (calculated, read-only display)
-        '<td class="rp-cell rp-cell-profit">' +
-          '<span class="rp-disp ' + profitCls + '">' + formatCurrency(record.profit) + '</span>' +
-        '</td>' +
-
-        // Margin (calculated, read-only)
-        '<td class="rp-cell rp-cell-pct">' +
-          '<span class="rp-disp rp-muted">' + margin + '%</span>' +
-        '</td>' +
-
-        // Delete
-        '<td class="rp-cell rp-cell-del">' +
-          '<button class="rp-del" data-idx="' + origIdx + '" title="Delete row">✕</button>' +
-        '</td>' +
-
+        '<td class="rp-cell rp-cell-profit"><span class="rp-disp ' + profitCls + '">' + formatCurrency(record.profit) + '</span></td>' +
+        '<td class="rp-cell rp-cell-pct"><span class="rp-disp rp-muted">' + margin + '%</span></td>' +
+        '<td class="rp-cell rp-cell-del"><button class="rp-del" data-idx="' + origIdx + '" title="Delete">✕</button></td>' +
       '</tr>';
   });
 
   tbody.innerHTML = html;
 
-  // Totals footer row
+  // Totals footer
   var totalRev = data.reduce(function(s,d){ return s + d.revenue; }, 0);
   var totalExp = data.reduce(function(s,d){ return s + d.expenses; }, 0);
   var totalPro = data.reduce(function(s,d){ return s + d.profit; }, 0);
@@ -1938,7 +1456,7 @@ function renderRecordsPanel() {
   if (tfoot) {
     tfoot.innerHTML =
       '<tr class="rp-totals-row">' +
-        '<td class="rp-cell rp-cell-month"><span class="rp-disp" style="font-weight:700;">TOTAL</span></td>' +
+        '<td class="rp-cell rp-cell-month"><span class="rp-disp" style="font-weight:700;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);">TOTAL</span></td>' +
         '<td class="rp-cell"><span class="rp-disp rp-rev" style="font-weight:700;">' + formatCurrency(totalRev) + '</span></td>' +
         '<td class="rp-cell"><span class="rp-disp rp-exp" style="font-weight:700;">' + formatCurrency(totalExp) + '</span></td>' +
         '<td class="rp-cell"><span class="rp-disp ' + totCls + '" style="font-weight:700;">' + formatCurrency(totalPro) + '</span></td>' +
@@ -1947,61 +1465,48 @@ function renderRecordsPanel() {
       '</tr>';
   }
 
-  // ── Attach inline edit handlers ──────────────────────────────
+  // Inline edit handlers
   tbody.querySelectorAll(".rp-cell-edit").forEach(function(cell) {
     var disp  = cell.querySelector(".rp-disp");
     var inp   = cell.querySelector(".rp-inp");
     var field = cell.getAttribute("data-field");
     var idx   = parseInt(cell.getAttribute("data-idx"), 10);
 
-    // Click display → show input
     disp.addEventListener("click", function() {
       cell.classList.add("rp-editing");
-      inp.focus();
-      inp.select();
+      inp.focus(); inp.select();
     });
 
-    // Commit on blur or Enter
     function commitEdit() {
       var raw = parseFloat(inp.value);
       if (isNaN(raw) || raw < 0) raw = 0;
       cell.classList.remove("rp-editing");
-
       var record = data[idx];
       if (!record) return;
-
       record[field] = raw;
-      // Recalculate profit
       record.profit = record.revenue - record.expenses;
-
-      // Re-render panel (keeps cursor position naturally)
       renderRecordsPanel();
-
-      // Update ALL dashboard analysis live
       if (typeof updateAll === "function") updateAll();
       if (typeof saveUserData === "function") saveUserData();
-
-      // Flash sync dot
       var dot2 = document.querySelector(".rp-dot");
       if (dot2) { dot2.className = "rp-dot saving"; setTimeout(function(){ dot2.className = "rp-dot synced"; }, 1200); }
     }
 
     inp.addEventListener("blur", commitEdit);
     inp.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") { inp.blur(); }
+      if (e.key === "Enter")  { inp.blur(); }
       if (e.key === "Escape") { cell.classList.remove("rp-editing"); }
-      // Tab → move to next editable cell
       if (e.key === "Tab") {
         e.preventDefault();
-        var allEditable = Array.from(tbody.querySelectorAll(".rp-cell-edit"));
-        var pos = allEditable.indexOf(cell);
-        var next = allEditable[e.shiftKey ? pos - 1 : pos + 1];
-        if (next) { inp.blur(); next.querySelector(".rp-disp").click(); }
+        var all = Array.from(tbody.querySelectorAll(".rp-cell-edit"));
+        var pos = all.indexOf(cell);
+        var nxt = all[e.shiftKey ? pos - 1 : pos + 1];
+        if (nxt) { inp.blur(); nxt.querySelector(".rp-disp").click(); }
       }
     });
   });
 
-  // ── Delete row handlers ──────────────────────────────────────
+  // Delete handlers
   tbody.querySelectorAll(".rp-del").forEach(function(btn) {
     btn.addEventListener("click", function(e) {
       e.stopPropagation();
@@ -2014,5 +1519,5 @@ function renderRecordsPanel() {
   });
 }
 
-/* All functions now defined — bind to window so inline onclick handlers work */
+/* All functions defined — bind globals for inline onclick handlers */
 bindGlobalFunctions();
