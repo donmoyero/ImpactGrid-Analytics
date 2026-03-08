@@ -721,6 +721,7 @@
 <script src="plans.js"></script>
 <script src="impactgrid-ai.js"></script>
 <script src="script.js"></script>
+<script src="records-panel.js"></script>
 
 
 <!-- Upgrade Prompt Modal -->
@@ -746,29 +747,8 @@
   </div>
 </div>
 
-<!-- Records Panel -->
-<div id="recordsPanelOverlay" onclick="closeRecordsPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;backdrop-filter:blur(2px);"></div>
-
-<aside id="recordsPanel" class="records-panel">
-  <div class="rp-header">
-    <div>
-      <div class="rp-title">Financial Records</div>
-      <div class="rp-sub" id="rpSub">0 months stored</div>
-    </div>
-    <button class="rp-close" onclick="closeRecordsPanel()" title="Close">✕</button>
-  </div>
-  <div class="rp-status" id="rpSyncStatus">
-    <span class="rp-dot synced"></span>
-    <span id="rpSyncLabel">Synced to cloud</span>
-  </div>
-  <div class="rp-body" id="rpBody">
-    <div class="rp-empty">No records yet.<br>Add a month on the dashboard to get started.</div>
-  </div>
-  <div class="rp-footer">
-    <div class="rp-totals" id="rpTotals"></div>
-    <button class="rp-add-btn" onclick="closeRecordsPanel();showSection('dashboard',null);">+ Add Month</button>
-  </div>
-</aside>
+<!-- Records Panel — rendered dynamically by records-panel.js -->
+<aside id="recordsPanel" class="records-panel"></aside>
 
 </body>
 </html>
