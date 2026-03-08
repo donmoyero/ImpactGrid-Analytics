@@ -1,6 +1,9 @@
 /* ================= GLOBAL STATE ================= */
 
-let businessData      = [];
+// businessData is shared with plans.js via window.businessData
+// Always access through window.businessData so data persists across login
+if (!window.businessData) window.businessData = [];
+var businessData = window.businessData; // reference, not copy
 let currentCurrency   = "GBP";
 
 let revenueChart      = null;
@@ -93,6 +96,7 @@ async function addData() {
 
   businessData.push({ date: date, revenue: revenue, expenses: expenses, profit: profit });
   businessData.sort(function(a, b) { return a.date - b.date; });
+  window.businessData = businessData;
 
 
   // Clear form
@@ -209,7 +213,9 @@ function importSpreadsheet(file, statusEl) {
       });
 
       businessData.sort(function(a,b){ return a.date - b.date; });
+      window.businessData = businessData;
       updateAll();
+      if (typeof saveUserData === "function") saveUserData();
       setImportStatus(statusEl, imported, skipped, "spreadsheet");
     } catch(err) {
       if (statusEl) { statusEl.textContent = "Error reading file: " + err.message; statusEl.style.color = "var(--danger)"; }
@@ -260,7 +266,9 @@ function importWordMammoth(file, statusEl) {
         }
 
         businessData.sort(function(a,b){ return a.date - b.date; });
+        window.businessData = businessData;
         updateAll();
+        if (typeof saveUserData === "function") saveUserData();
         setImportStatus(statusEl, imported, skipped, "Word document");
       })
       .catch(function(err) {
@@ -322,7 +330,9 @@ function importPDF(file, statusEl) {
         }
 
         businessData.sort(function(a,b){ return a.date - b.date; });
+        window.businessData = businessData;
         updateAll();
+        if (typeof saveUserData === "function") saveUserData();
         setImportStatus(statusEl, imported, skipped, "PDF");
       });
     }).catch(function(err) {
@@ -398,9 +408,11 @@ function saveEdit() {
   businessData[index].revenue  = revenue;
   businessData[index].expenses = expenses;
   businessData[index].profit   = revenue - expenses;
+  window.businessData = businessData;
 
   closeEditModal();
   updateAll();
+  if (typeof saveUserData === "function") saveUserData();
 }
 
 function deleteRecord() {
@@ -410,8 +422,10 @@ function deleteRecord() {
 
   if (confirm("Delete record for " + record.date.toISOString().slice(0,7) + "? This cannot be undone.")) {
     businessData.splice(index, 1);
+    window.businessData = businessData;
     closeEditModal();
     updateAll();
+    if (typeof saveUserData === "function") saveUserData();
   }
 }
 
@@ -427,6 +441,12 @@ function updateAll() {
   if (businessData.length >= 3) {
     renderPerformanceMatrix();
     renderRiskAssessment();
+  }
+
+  // Keep records panel in sync if open
+  var panel = document.getElementById("recordsPanel");
+  if (panel && panel.classList.contains("open")) {
+    renderRecordsPanel();
   }
 }
 
@@ -1794,6 +1814,10 @@ function bindGlobalFunctions() {
   window.closeMobileMenu      = closeMobileMenu;
   window.mobileNav            = mobileNav;
   window.closeUpgradeModal    = closeUpgradeModal;
+  window.toggleRecordsPanel   = toggleRecordsPanel;
+  window.openRecordsPanel     = openRecordsPanel;
+  window.closeRecordsPanel    = closeRecordsPanel;
+  window.renderRecordsPanel   = renderRecordsPanel;
   window.showUpgradePrompt    = showUpgradePrompt;
   window.closeLimitModal      = closeLimitModal;
   window.handlePDFClick       = handlePDFClick;
@@ -1806,6 +1830,126 @@ function closeUpgradeModal() {
   } else {
     var modal = document.getElementById("upgradeModal");
     if (modal) modal.style.display = "none";
+  }
+}
+
+
+
+/* ================= RECORDS PANEL ================= */
+
+function toggleRecordsPanel() {
+  var panel = document.getElementById("recordsPanel");
+  if (!panel) return;
+  var isOpen = panel.classList.contains("open");
+  if (isOpen) closeRecordsPanel();
+  else openRecordsPanel();
+}
+
+function openRecordsPanel() {
+  var panel   = document.getElementById("recordsPanel");
+  var overlay = document.getElementById("recordsPanelOverlay");
+  if (!panel) return;
+  renderRecordsPanel();
+  panel.classList.add("open");
+  if (overlay) overlay.style.display = "block";
+  document.body.style.overflow = "hidden";
+  // Highlight nav item
+  var nav = document.getElementById("navRecords");
+  if (nav) nav.classList.add("active");
+}
+
+function closeRecordsPanel() {
+  var panel   = document.getElementById("recordsPanel");
+  var overlay = document.getElementById("recordsPanelOverlay");
+  if (panel)   panel.classList.remove("open");
+  if (overlay) overlay.style.display = "none";
+  document.body.style.overflow = "";
+  var nav = document.getElementById("navRecords");
+  if (nav) nav.classList.remove("active");
+}
+
+function renderRecordsPanel() {
+  var body    = document.getElementById("rpBody");
+  var sub     = document.getElementById("rpSub");
+  var totals  = document.getElementById("rpTotals");
+  var sync    = document.getElementById("rpSyncLabel");
+  var dot     = document.querySelector(".rp-dot");
+
+  if (!body) return;
+
+  var data = window.businessData || businessData || [];
+  var count = data.length;
+
+  // Update subtitle
+  if (sub) sub.textContent = count + " month" + (count !== 1 ? "s" : "") + " stored · auto-synced";
+
+  // Update sync status
+  if (sync) sync.textContent = window.currentUser ? "Synced to cloud — " + (window.currentUser.email || "") : "Not signed in";
+  if (dot) dot.className = "rp-dot " + (window.currentUser ? "synced" : "offline");
+
+  if (count === 0) {
+    body.innerHTML = '<div class="rp-empty">No records yet.<br><span style="color:var(--text-muted);font-size:11px;">Add a month on the dashboard to get started.</span></div>';
+    if (totals) totals.innerHTML = "";
+    return;
+  }
+
+  // Sort newest first for display
+  var sorted = data.slice().sort(function(a,b){ return b.date - a.date; });
+
+  var totalRev = data.reduce(function(s,d){ return s+d.revenue; }, 0);
+  var totalExp = data.reduce(function(s,d){ return s+d.expenses; }, 0);
+  var totalPro = data.reduce(function(s,d){ return s+d.profit; }, 0);
+  var avgMargin = totalRev > 0 ? ((totalPro/totalRev)*100).toFixed(1) : "0.0";
+
+  // Build rows
+  var html = '';
+  sorted.forEach(function(record, i) {
+    var origIdx = data.indexOf(record);
+    var profitColor = record.profit >= 0 ? "var(--success)" : "var(--danger)";
+    var profitSign  = record.profit >= 0 ? "+" : "";
+    var margin = record.revenue > 0 ? ((record.profit/record.revenue)*100).toFixed(1) : "0.0";
+    var monthStr = record.date.toISOString().slice(0,7);
+
+    // Month-over-month indicator
+    var trend = "";
+    if (i < sorted.length - 1) {
+      var prev = sorted[i+1];
+      if (record.revenue > prev.revenue) trend = '<span class="rp-trend up">▲</span>';
+      else if (record.revenue < prev.revenue) trend = '<span class="rp-trend down">▼</span>';
+      else trend = '<span class="rp-trend flat">–</span>';
+    }
+
+    html += '<div class="rp-row" onclick="openEditModal('+origIdx+');closeRecordsPanel();">' +
+      '<div class="rp-row-left">' +
+        '<div class="rp-month">' + monthStr + trend + '</div>' +
+        '<div class="rp-margin">' + margin + '% margin</div>' +
+      '</div>' +
+      '<div class="rp-row-right">' +
+        '<div class="rp-rev">' + formatCurrency(record.revenue) + '</div>' +
+        '<div class="rp-exp">− ' + formatCurrency(record.expenses) + '</div>' +
+        '<div class="rp-profit" style="color:' + profitColor + ';">' + profitSign + formatCurrency(record.profit) + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+
+  body.innerHTML = html;
+
+  // Totals bar
+  if (totals) {
+    var profitColor = totalPro >= 0 ? "var(--success)" : "var(--danger)";
+    totals.innerHTML =
+      '<div class="rp-total-row">' +
+        '<span class="rp-total-lbl">Total Revenue</span>' +
+        '<span class="rp-total-val" style="color:var(--gold-light);">' + formatCurrency(totalRev) + '</span>' +
+      '</div>' +
+      '<div class="rp-total-row">' +
+        '<span class="rp-total-lbl">Net Profit</span>' +
+        '<span class="rp-total-val" style="color:' + profitColor + ';">' + formatCurrency(totalPro) + '</span>' +
+      '</div>' +
+      '<div class="rp-total-row">' +
+        '<span class="rp-total-lbl">Avg Margin</span>' +
+        '<span class="rp-total-val" style="color:var(--text-secondary);">' + avgMargin + '%</span>' +
+      '</div>';
   }
 }
 
