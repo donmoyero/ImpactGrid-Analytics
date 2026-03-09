@@ -126,6 +126,9 @@ window.__igSessionConsumed = false;
    MAIN INIT
 ================================================================ */
 async function initPlanSystem() {
+  /* Synchronous guard — set BEFORE any await so double-calls are blocked immediately */
+  if (window.__igPlanInitDone) { console.log("[ImpactGrid] initPlanSystem already ran — skipping"); return; }
+  window.__igPlanInitDone = true;
   try {
     const supabase = await window.supabaseReady;
     const { data: { session } } = await supabase.auth.getSession();
