@@ -22,16 +22,17 @@ const PLAN_CONFIG = {
     price:          "Free",
     color:          "#a0b0cc",
     entries:        Infinity,
-    analyses:       3,
-    pdfs:           3,
-    forecasts:      3,
+    analyses:       3,          /* 3 AI analyses per 30-day period */
+    pdfs:           0,          /* No PDF export on free plan */
+    forecasts:      3,          /* 3 forecasts per 30-day period */
     reportHistory:  3,
-    forecastYears:  0.5,
+    forecastYears:  1,
     fileImport:     false,
     matrix:         false,
     benchmarking:   false,
     dataMonths:     1,
-    trialDays:      0
+    trialDays:      0,
+    sessionsPerMonth: 3         /* 3 full sessions per month */
   },
   professional: {
     label:          "Professional",
@@ -164,6 +165,11 @@ async function initPlanSystem() {
     await buildAIMemoryContext();
     renderReportHistory();
 
+    /* Track session for Basic plan users */
+    if (typeof window.trackAnalystSession === 'function') {
+      await window.trackAnalystSession();
+    }
+
   } catch(e) {
     console.error("Plan init error:", e);
   }
@@ -217,8 +223,50 @@ async function canUse(type) {
   if (window.isAdmin) return true;
   const limit = getLimit(type);
   if (limit === Infinity) return true;
+  if (limit === 0) return false;
   return getUsed(type) < limit;
 }
+
+/* ── Session tracking for Basic plan (3 sessions/month) ── */
+(function() {
+  if (typeof window.__igSessionTracked !== 'undefined') return;
+  window.__igSessionTracked = false;
+
+  /* Call this once when a logged-in analyst user loads the dashboard */
+  window.trackAnalystSession = async function() {
+    if (window.__igSessionTracked) return;
+    if (window.currentPlan !== 'analyst') return;
+    if (window.isAdmin) return;
+
+    window.__igSessionTracked = true;
+
+    /* Check current session count for this 30-day period */
+    const sessionsLimit = PLAN_CONFIG.analyst.sessionsPerMonth || 3;
+    const sessionsUsed  = window.usageThisMonth.analyses || 0;
+
+    if (sessionsUsed >= sessionsLimit) {
+      /* Show session limit modal */
+      const days = getDaysUntilReset();
+      const modal = document.getElementById("limitModal");
+      if (modal) {
+        document.getElementById("limitModalTitle").textContent = "Monthly Session Limit Reached";
+        document.getElementById("limitModalBody").innerHTML =
+          "You've used all <strong style='color:var(--gold)'>" + sessionsLimit + " free sessions</strong> for this month.<br><br>" +
+          "Upgrade to Professional for <strong style='color:var(--gold)'>unlimited sessions</strong> and full access to all features.<br><br>" +
+          "<span style='color:var(--success);font-size:13px;'>⟳ Free sessions reset in <strong>" + days + " day" + (days !== 1 ? "s" : "") + "</strong></span>";
+        document.getElementById("limitUpgradeBtn").style.display = "block";
+        document.getElementById("limitUpgradeBtn").href = STRIPE_LINKS.professional;
+        document.getElementById("limitUpgradeBtn").textContent = "Upgrade to Professional — £8.99/mo";
+        modal.style.display = "flex";
+      }
+      return false; /* session not allowed */
+    }
+
+    /* Count this as a session by incrementing analyses */
+    await incrementUsage("analyses");
+    return true;
+  };
+})();
 
 async function incrementUsage(type) {
   if (window.isAdmin) return;
