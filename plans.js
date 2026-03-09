@@ -143,10 +143,19 @@ async function initPlanSystem() {
       return;
     }
 
-    let { data: planRow } = await supabase
+    let { data: planRow, error: planErr } = await supabase
       .from("user_plans").select("*").eq("user_id", session.user.id).single();
 
-    if (!planRow) planRow = await createUserPlanRow(session.user.id, supabase);
+    if (planErr && planErr.code !== "PGRST116") {
+      console.error("[ImpactGrid] user_plans fetch error:", planErr.message);
+    }
+
+    if (!planRow) {
+      console.log("[ImpactGrid] No plan row found — creating new one");
+      planRow = await createUserPlanRow(session.user.id, supabase);
+    } else {
+      console.log("[ImpactGrid] Plan loaded:", planRow.plan, "| sessions_used:", planRow.sessions_used, "| period_start:", planRow.usage_period_start);
+    }
 
     /* Map "analyst" rows (old name) to "basic" */
     window.currentPlan = (planRow.plan === "analyst" ? "basic" : planRow.plan) || "basic";
@@ -244,8 +253,10 @@ async function incrementUsage(type) {
   if (!col || !window.currentUser) return;
   const update = {};
   update[col] = window.usageThisMonth[type];
-  await window.supabaseClient.from("user_plans")
+  const { error: usageErr } = await window.supabaseClient.from("user_plans")
     .update(update).eq("user_id", window.currentUser.id);
+  if (usageErr) console.error("[ImpactGrid] incrementUsage save error:", usageErr.message);
+  else console.log("[ImpactGrid] Usage saved:", type, "=", window.usageThisMonth[type]);
   updateUsageBar();
 }
 
@@ -574,9 +585,20 @@ function applyPlanUI() {
 async function saveUserData() {
   if (!window.currentUser) { console.warn("saveUserData: no user"); return; }
   try {
+    /* Trim to plan's dataDays before saving — keep newest records only */
+    let dataToSave = window.businessData || [];
+    const savePlanCfg = PLAN_CONFIG[window.currentPlan] || PLAN_CONFIG.basic;
+    const saveMaxDays = savePlanCfg.dataDays;
+    if (saveMaxDays !== Infinity && dataToSave.length > 0) {
+      const saveCutoff = new Date(Date.now() - saveMaxDays * 24 * 60 * 60 * 1000);
+      const trimmed    = dataToSave.filter(function(d) { return new Date(d.date) >= saveCutoff; });
+      /* Only trim if we have records within the window — don't wipe everything */
+      if (trimmed.length > 0) dataToSave = trimmed;
+    }
+
     const payload = {
       user_id:        window.currentUser.id,
-      data:           JSON.stringify(window.businessData || []),
+      data:           JSON.stringify(dataToSave),
       currency:       window.currentCurrency || "GBP",
       business_type:  (document.getElementById("businessType")      || {}).value || "other",
       start_date:     (document.getElementById("businessStartDate") || {}).value || "",
@@ -619,13 +641,9 @@ async function loadUserData() {
           return { date: new Date(d.date), revenue: Number(d.revenue), expenses: Number(d.expenses), profit: Number(d.profit) };
         });
 
-        /* Filter by plan's day retention window */
-        const planCfg = PLAN_CONFIG[window.currentPlan] || PLAN_CONFIG.basic;
-        const maxDays = planCfg.dataDays != null ? planCfg.dataDays : 7;
-        if (maxDays !== Infinity) {
-          const cutoff = new Date(Date.now() - maxDays * 24 * 60 * 60 * 1000);
-          loaded = loaded.filter(function(d) { return new Date(d.date) >= cutoff; });
-        }
+        /* No filtering here — retention is enforced at SAVE time only.
+           Users always see all their entered records within the session.
+           The save function trims to plan limit before writing to Supabase. */
 
         window.businessData = loaded;
 
