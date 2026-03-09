@@ -179,6 +179,8 @@ async function initPlanSystem() {
     await buildAIMemoryContext();
     renderReportHistory();
     checkDataExpiry();
+    /* Re-render usage bar AFTER all data loaded to show accurate DB counts */
+    updateUsageBar();
 
   } catch(e) { console.error("Plan init error:", e); }
 }
@@ -253,7 +255,31 @@ async function incrementUsage(type) {
 async function igSessionStart() {
   if (window.isAdmin) return true;
   if (window.currentPlan !== "basic") return true;
-  if (window.__igSessionConsumed) return true;
+
+  /* Re-fetch live count from Supabase so logout/login never resets it */
+  try {
+    const { data: planRow } = await window.supabaseClient
+      .from("user_plans").select("sessions_used, usage_period_start")
+      .eq("user_id", window.currentUser.id).single();
+    if (planRow) {
+      /* Respect 30-day reset window */
+      const periodStart = new Date(planRow.usage_period_start || Date.now());
+      const periodEnd   = new Date(periodStart);
+      periodEnd.setDate(periodEnd.getDate() + 30);
+      if (new Date() > periodEnd) {
+        /* Period expired — reset in Supabase and in memory */
+        window.usageThisMonth.sessions = 0;
+        window.usagePeriodStart = new Date();
+        await window.supabaseClient.from("user_plans").update({
+          sessions_used: 0, ai_questions_used: 0, forecasts_used: 0, pdfs_used: 0,
+          usage_period_start: new Date().toISOString()
+        }).eq("user_id", window.currentUser.id);
+      } else {
+        /* Always sync from DB — logout/login preserves real count */
+        window.usageThisMonth.sessions = planRow.sessions_used || 0;
+      }
+    }
+  } catch(e) { /* non-fatal — fall through to in-memory value */ }
 
   const limit = getLimit("sessions");
   const used  = getUsed("sessions");
@@ -262,17 +288,20 @@ async function igSessionStart() {
     _showSessionLimitModal(used, limit);
     return false;
   }
-  window.__igSessionOpen = true;
+
+  window.__igSessionOpen     = true;
+  window.__igSessionConsumed = false; /* reset so igSessionClose can fire */
   return true;
 }
 
 async function igSessionClose() {
   if (window.isAdmin) return;
-  if (window.currentPlan !== "basic") return;  /* only Basic has expiry */
-  if (window.__igSessionConsumed || !window.__igSessionOpen) return;
+  if (window.currentPlan !== "basic") return;
+  if (!window.__igSessionOpen) return;   /* no open session to close */
   window.__igSessionOpen     = false;
-  window.__igSessionConsumed = true;
+  window.__igSessionConsumed = true;     /* prevent double-fire within same page load */
   await incrementUsage("sessions");
+  updateUsageBar();
 }
 
 function _showSessionLimitModal(used, limit) {
