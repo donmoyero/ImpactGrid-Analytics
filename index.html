@@ -1561,6 +1561,11 @@ function _wrapAddData(orig) {
       }
     }
     orig.apply(this, arguments);
+    /* Stamp the newly added record with savedAt = now */
+    var bd = window.businessData || [];
+    if (bd.length > 0 && !bd[bd.length-1].savedAt) {
+      bd[bd.length-1].savedAt = new Date().toISOString();
+    }
     _igScheduleSave('addData', 800);
   };
 }
