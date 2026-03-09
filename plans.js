@@ -640,18 +640,20 @@ async function saveUserData() {
       updated_at:     new Date().toISOString()
     };
     const { error } = await window.supabaseClient.from("user_data").upsert(payload, { onConflict: "user_id" });
-    if (error) console.error("Save error:", error.message);
-    else showSaveBadge();
+    if (error) console.error("[ImpactGrid] Save error:", error.message);
+    else { console.log("[ImpactGrid] user_data saved — records:", (window.businessData||[]).length); showSaveBadge(); }
   } catch(e) { console.error("Save exception:", e); }
 }
 
 async function loadUserData() {
   if (!window.currentUser) return;
   try {
+    console.log("[ImpactGrid] loadUserData: fetching for", window.currentUser.id);
     const { data, error } = await window.supabaseClient.from("user_data")
       .select("*").eq("user_id", window.currentUser.id).maybeSingle();
-    if (error) { console.error("Load error:", error.message); return; }
-    if (!data) return;
+    if (error) { console.error("[ImpactGrid] Load error:", error.message); return; }
+    if (!data) { console.warn("[ImpactGrid] loadUserData: no row in user_data for this user"); return; }
+    console.log("[ImpactGrid] loadUserData: found row, data length=", (data.data||'').length, "currency=", data.currency);
 
     /* Restore profile fields regardless of whether there is financial data */
     if (data.currency) {
