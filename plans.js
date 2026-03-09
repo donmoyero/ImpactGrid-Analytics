@@ -6,7 +6,7 @@
    - aiQuestions : total AI chat messages per month — soft stop after limit
    - forecasts   : forecast generations per month
    - pdfs        : PDF exports per month
-   - dataMonths  : months of records retained; Basic warns at day 23, deletes at 30
+   - dataDays    : days of records retained; Basic=7d, Professional=180d, Enterprise=∞
 ================================================================ */
 
 const IMPACTGRID_ADMIN_ID = "303580e9-38c8-450b-90e0-82045e0b5c27";
@@ -21,7 +21,7 @@ const STRIPE_LINKS = {
 ================================================================ */
 const PLAN_CONFIG = {
 
-  analyst: {
+  basic: {
     label:         "Basic",
     price:         "Free",
     color:         "#a0b0cc",
@@ -37,7 +37,8 @@ const PLAN_CONFIG = {
     excelExport:   false,
     priorityAI:    false,
     multiProfile:  false,
-    dataMonths:    1,
+    dataMonths:    0,   /* unused — see dataDays */
+    dataDays:      7,
     dataWarnDays:  7,
     trialDays:     0
   },
@@ -58,7 +59,8 @@ const PLAN_CONFIG = {
     excelExport:   false,
     priorityAI:    false,
     multiProfile:  false,
-    dataMonths:    12,
+    dataMonths:    0,   /* unused — see dataDays */
+    dataDays:      180,
     dataWarnDays:  0,
     trialDays:     30
   },
@@ -101,13 +103,14 @@ const PLAN_CONFIG = {
     priorityAI:    true,
     multiProfile:  true,
     dataMonths:    Infinity,
+    dataDays:      Infinity,
     dataWarnDays:  0,
     trialDays:     0
   }
 };
 
 /* ── Global runtime state ── */
-window.currentPlan      = "analyst";
+window.currentPlan      = "basic";
 window.currentUser      = null;
 window.isAdmin          = false;
 window.planConfig       = PLAN_CONFIG;
@@ -145,7 +148,7 @@ async function initPlanSystem() {
 
     if (!planRow) planRow = await createUserPlanRow(session.user.id, supabase);
 
-    window.currentPlan      = planRow.plan || "analyst";
+    window.currentPlan      = planRow.plan || "basic";
     window.usagePeriodStart = planRow.usage_period_start
       ? new Date(planRow.usage_period_start) : new Date();
 
@@ -187,7 +190,7 @@ async function createUserPlanRow(userId, supabase) {
   const sb  = supabase || window.supabaseClient;
   const now = new Date().toISOString();
   const row = {
-    user_id: userId, plan: "analyst",
+    user_id: userId, plan: "basic",
     sessions_used: 0, ai_questions_used: 0, forecasts_used: 0, pdfs_used: 0,
     usage_period_start: now
   };
@@ -249,7 +252,7 @@ async function incrementUsage(type) {
 ================================================================ */
 async function igSessionStart() {
   if (window.isAdmin) return true;
-  if (window.currentPlan !== "analyst") return true;
+  if (window.currentPlan !== "basic") return true;
   if (window.__igSessionConsumed) return true;
 
   const limit = getLimit("sessions");
@@ -265,7 +268,7 @@ async function igSessionStart() {
 
 async function igSessionClose() {
   if (window.isAdmin) return;
-  if (window.currentPlan !== "analyst") return;
+  if (window.currentPlan !== "basic") return;  /* only Basic has expiry */
   if (window.__igSessionConsumed || !window.__igSessionOpen) return;
   window.__igSessionOpen     = false;
   window.__igSessionConsumed = true;
@@ -336,11 +339,11 @@ async function checkForecast() {
 ================================================================ */
 async function checkDataExpiry() {
   if (window.isAdmin) return;
-  if (window.currentPlan !== "analyst") return;
+  if (window.currentPlan !== "basic") return;  /* only Basic has expiry */
   if (!window.businessData || !window.businessData.length) return;
 
-  const retainDays = PLAN_CONFIG.analyst.dataMonths * 30;
-  const warnDays   = PLAN_CONFIG.analyst.dataWarnDays || 7;
+  const retainDays = PLAN_CONFIG.basic.dataDays || 7;
+  const warnDays   = PLAN_CONFIG.basic.dataWarnDays || 2;
   const graceDays  = 7;
 
   const dates    = window.businessData.map(function(d) { return new Date(d.date); });
@@ -415,8 +418,8 @@ function showLimitModal(type) {
       "<span style='color:var(--success);font-size:13px;'>⟳ Resets in <strong>" + days + " day" + (days !== 1 ? "s" : "") + "</strong></span>";
 
   document.getElementById("limitUpgradeBtn").style.display = (window.currentPlan === "enterprise") ? "none" : "block";
-  document.getElementById("limitUpgradeBtn").href = (window.currentPlan === "analyst") ? STRIPE_LINKS.professional : STRIPE_LINKS.enterprise;
-  document.getElementById("limitUpgradeBtn").textContent = (window.currentPlan === "analyst") ? "Upgrade to Professional — £8.99/mo" : "Upgrade to Enterprise — £13.99/mo";
+  document.getElementById("limitUpgradeBtn").href = (window.currentPlan === "basic") ? STRIPE_LINKS.professional : STRIPE_LINKS.enterprise;
+  document.getElementById("limitUpgradeBtn").textContent = (window.currentPlan === "basic") ? "Upgrade to Professional — £8.99/mo" : "Upgrade to Enterprise — £13.99/mo";
   modal.style.display = "flex";
 }
 
@@ -521,7 +524,7 @@ function applyPlanUI() {
   if (pdfBtn) pdfBtn.onclick = function() { handlePDFClick(); };
 
   /* Update pricing card CTAs */
-  var cardMap = { analyst:"pricingAnalyst", professional:"pricingProfessional", enterprise:"pricingEnterprise" };
+  var cardMap = { basic:"pricingBasic", professional:"pricingProfessional", enterprise:"pricingEnterprise" };
   Object.keys(cardMap).forEach(function(p) {
     var card = document.getElementById(cardMap[p]);
     var btn  = card ? card.querySelector(".plan-cta") : null;
@@ -577,12 +580,12 @@ async function loadUserData() {
       return { date: new Date(d.date), revenue: Number(d.revenue), expenses: Number(d.expenses), profit: Number(d.profit) };
     });
 
-    /* Apply plan retention window on load so user only gets what their plan allows */
-    const planCfg  = PLAN_CONFIG[window.currentPlan] || PLAN_CONFIG.analyst;
-    const maxMonths = planCfg.dataMonths;
-    if (maxMonths !== Infinity && loaded.length > maxMonths) {
-      loaded.sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
-      loaded = loaded.slice(0, maxMonths);
+    /* Apply plan retention window on load — filter records older than dataDays */
+    const planCfg = PLAN_CONFIG[window.currentPlan] || PLAN_CONFIG.basic;
+    const maxDays  = planCfg.dataDays != null ? planCfg.dataDays : 7;
+    if (maxDays !== Infinity) {
+      const cutoff = new Date(Date.now() - maxDays * 24 * 60 * 60 * 1000);
+      loaded = loaded.filter(function(d) { return new Date(d.date) >= cutoff; });
     }
 
     window.businessData = loaded;
@@ -679,7 +682,7 @@ async function renderReportHistory() {
         : '<span style="color:#ff4d6d;">−£' + Math.abs(Number(r.total_profit)).toLocaleString() + '</span>';
       return '<div class="report-history-card"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">' +
         '<div><div style="font-family:\'Syne\',sans-serif;font-size:14px;font-weight:700;color:var(--text-primary);">' + date + '</div>' +
-        '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);margin-top:3px;">' + (r.months_count||0) + ' months · ' + (r.plan||"analyst") + ' plan</div></div>' +
+        '<div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);margin-top:3px;">' + (r.months_count||0) + ' months · ' + (r.plan||"basic") + ' plan</div></div>' +
         '<div style="text-align:right;"><div style="font-family:\'Syne\',sans-serif;font-size:24px;font-weight:800;color:' + scoreColor + ';line-height:1;">' + score + '</div>' +
         '<div style="font-size:9px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);">HEALTH SCORE</div></div></div>' +
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">' +
