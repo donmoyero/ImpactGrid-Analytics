@@ -984,8 +984,8 @@ async function ggHandleGoogle() {
   } catch(e) { ggShowMsg('Google sign-in failed.', 'error'); }
 }
 
-/* Called when auth succeeds — unlock dashboard in-place */
-function ggOnAuthSuccess(user) {
+/* Called when auth succeeds — preserve guest data, unlock dashboard in-place */
+async function ggOnAuthSuccess(user) {
   window.__igLoggedIn = true;
   window.__igGuestUsed = false;
   closeGuestGate();
@@ -1002,17 +1002,72 @@ function ggOnAuthSuccess(user) {
     if (avatarEl) avatarEl.textContent = user.email.charAt(0).toUpperCase();
   }
 
-  /* Show a brief welcome toast */
+  /* ── Snapshot guest-entered data BEFORE plan system overwrites it ── */
+  var guestSnapshot = {
+    businessData: window.businessData ? JSON.parse(JSON.stringify(window.businessData)) : [],
+    startDate:    (document.getElementById('businessStartDate')  || {}).value || '',
+    reportDate:   (document.getElementById('reportingDate')      || {}).value || '',
+    bizType:      (document.getElementById('businessType')       || {}).value || '',
+    currency:     (document.getElementById('currencySelector')   || {}).value || 'GBP'
+  };
+
+  /* ── Show a "Saving your data…" toast while we persist ── */
   var toast = document.createElement('div');
-  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#0a7a5a,#059669);color:#fff;padding:12px 24px;border-radius:40px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 8px 28px rgba(5,150,105,0.35);animation:gg-modal-in 0.3s ease;white-space:nowrap;';
-  toast.textContent = '✓ Signed in — welcome to ImpactGrid!';
+  toast.id = 'ggToast';
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1a3a6a,#2563eb);color:#fff;padding:12px 24px;border-radius:40px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 8px 28px rgba(37,99,235,0.35);white-space:nowrap;transition:opacity 0.4s;';
+  toast.textContent = '⏳ Saving your data…';
   document.body.appendChild(toast);
-  setTimeout(function() { toast.remove(); }, 3500);
 
-  /* Init plan system now user is real */
-  if (typeof initPlanSystem === 'function') initPlanSystem();
+  /* ── Init plan system (loads user plan, may call loadUserData) ── */
+  if (typeof initPlanSystem === 'function') {
+    await initPlanSystem();
+  }
 
-  /* Re-intercept nav sections — now logged in, open all */
+  /* ── Merge guest data back in if account had no existing data ── */
+  var hasExistingData = window.businessData && window.businessData.length > 0;
+
+  if (!hasExistingData && guestSnapshot.businessData.length > 0) {
+    window.businessData = guestSnapshot.businessData;
+  }
+
+  /* Restore profile fields if they were filled in as guest */
+  if (guestSnapshot.startDate) {
+    var sd = document.getElementById('businessStartDate');
+    if (sd && !sd.value) sd.value = guestSnapshot.startDate;
+  }
+  if (guestSnapshot.reportDate) {
+    var rd = document.getElementById('reportingDate');
+    if (rd && !rd.value) rd.value = guestSnapshot.reportDate;
+  }
+  if (guestSnapshot.bizType) {
+    var bt = document.getElementById('businessType');
+    if (bt && !bt.value) bt.value = guestSnapshot.bizType;
+  }
+  if (guestSnapshot.currency) {
+    var cs = document.getElementById('currencySelector');
+    if (cs) { cs.value = guestSnapshot.currency; if (typeof setCurrency === 'function') setCurrency(guestSnapshot.currency); }
+  }
+
+  /* ── Persist merged data to Supabase ── */
+  try {
+    if (typeof saveUserData === 'function') {
+      await saveUserData();
+    }
+  } catch(e) { console.warn('[ImpactGrid] Guest data save failed:', e); }
+
+  /* ── Refresh all UI with the restored data ── */
+  if (typeof updateAll === 'function') updateAll();
+  if (typeof renderRecordsPanel === 'function') renderRecordsPanel();
+
+  /* ── Swap toast to success ── */
+  toast.style.background = 'linear-gradient(135deg,#0a7a5a,#059669)';
+  toast.style.boxShadow  = '0 8px 28px rgba(5,150,105,0.35)';
+  toast.textContent = guestSnapshot.businessData.length > 0
+    ? '✓ Signed in — your data has been saved!'
+    : '✓ Signed in — welcome to ImpactGrid!';
+  setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 400); }, 3200);
+
+  /* ── Unlock all nav sections ── */
   window.showSection = _origShowSection || window.showSection;
   window.mobileNav   = _origMobileNav   || window.mobileNav;
 }
