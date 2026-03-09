@@ -225,23 +225,36 @@ function closeRecordsPanel() {
   This means analysis always uses all entered months; only storage
   on the server respects the plan limit.
 */
-const _origSaveUserData = window.saveUserData;
+/* ================================================================
+   saveUserData override — trims payload to plan retention before
+   sending to Supabase. window.businessData is NEVER mutated.
+   Resolves _igCoreSave at call time (not load time) to avoid the
+   race condition where records-panel.js loads before plans.js.
+================================================================ */
+window.__igCoreSave = null; /* set by plans.js expose at bottom of that file */
+
 window.saveUserData = async function() {
-  const plan   = window.currentPlan || 'analyst';
-  const maxMo  = DATA_RETENTION_MONTHS[plan] ?? 1;
-  const full   = window.businessData || [];
+  /* Resolve the core save function at call time */
+  var coreSave = window.__igCoreSave;
+  if (!coreSave) {
+    console.warn('[ImpactGrid] saveUserData called before plans.js ready');
+    return;
+  }
+  if (!window.currentUser) return;
+
+  const plan  = window.currentPlan || 'analyst';
+  const maxMo = DATA_RETENTION_MONTHS[plan] ?? 1;
+  const full  = window.businessData || [];
 
   if (maxMo !== Infinity && full.length > maxMo) {
-    /* Build a trimmed copy — newest maxMo months only */
     const sorted  = full.slice().sort((a,b) => new Date(b.date)-new Date(a.date));
     const trimmed = sorted.slice(0, maxMo);
-    /* Temporarily swap so saveUserData sends trimmed payload */
-    const backup          = window.businessData;
-    window.businessData   = trimmed;
-    if (_origSaveUserData) await _origSaveUserData();
-    window.businessData   = backup; /* restore full array immediately */
+    const backup        = window.businessData;
+    window.businessData = trimmed;
+    await coreSave();
+    window.businessData = backup;
   } else {
-    if (_origSaveUserData) await _origSaveUserData();
+    await coreSave();
   }
 };
 
