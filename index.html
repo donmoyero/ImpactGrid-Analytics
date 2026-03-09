@@ -280,13 +280,166 @@
   <main class="main-content">
 
     <!-- 30-Day Free Trial Banner -->
-    <div id="trialBanner" style="display:none;align-items:center;gap:16px;padding:14px 20px;background:linear-gradient(135deg,rgba(200,169,110,0.12),rgba(226,201,138,0.06));border:1px solid rgba(200,169,110,0.3);border-radius:12px;margin-bottom:20px;">
-      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#b8923e,#e2c98a);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">⬡</div>
-      <div style="flex:1;">
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:800;color:var(--gold-light);margin-bottom:2px;">Free Trial Active</div>
-        <div style="font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;">Your 30-day free trial is active. <strong style="color:var(--gold);"><span id="trialDaysLeft">30</span> days remaining</strong> — no payment taken until your trial ends.</div>
+    <style>
+      #trialBanner {
+        display: none;
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        padding: 0;
+      }
+      #trialBanner .tb-inner {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 16px 22px;
+        position: relative;
+        z-index: 1;
+        flex-wrap: wrap;
+      }
+      #trialBanner::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(135deg, #0f1629 0%, #1a2540 50%, #0f1629 100%);
+        z-index: 0;
+      }
+      #trialBanner::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(105deg, transparent 40%, rgba(200,169,110,0.07) 60%, transparent 80%);
+        z-index: 0;
+        animation: tb-shimmer 4s ease-in-out infinite;
+      }
+      @keyframes tb-shimmer {
+        0%, 100% { opacity: 0; }
+        50% { opacity: 1; }
+      }
+      #trialBanner .tb-border {
+        position: absolute; inset: 0;
+        border-radius: 16px;
+        border: 1px solid rgba(200,169,110,0.3);
+        pointer-events: none;
+        z-index: 2;
+      }
+      #trialBanner.tb-urgent::before {
+        background: linear-gradient(135deg, #1a0f0f 0%, #2a1515 50%, #1a0f0f 100%);
+      }
+      #trialBanner.tb-urgent .tb-border {
+        border-color: rgba(255,77,109,0.4);
+      }
+
+      .tb-icon {
+        width: 44px; height: 44px; border-radius: 12px;
+        background: linear-gradient(135deg, rgba(200,169,110,0.2), rgba(200,169,110,0.08));
+        border: 1px solid rgba(200,169,110,0.25);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; flex-shrink: 0;
+      }
+      .tb-urgent .tb-icon {
+        background: linear-gradient(135deg, rgba(255,77,109,0.15), rgba(255,77,109,0.06));
+        border-color: rgba(255,77,109,0.3);
+      }
+
+      .tb-text { flex: 1; min-width: 200px; }
+      .tb-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px; font-weight: 700;
+        color: #fff; margin-bottom: 3px;
+        display: flex; align-items: center; gap: 8px;
+      }
+      .tb-pulse {
+        display: inline-block;
+        width: 7px; height: 7px; border-radius: 50%;
+        background: #2dd4a0;
+        box-shadow: 0 0 0 0 rgba(45,212,160,0.5);
+        animation: tb-pulse 1.8s ease-out infinite;
+      }
+      .tb-urgent .tb-pulse { background: #ff4d6d; box-shadow: 0 0 0 0 rgba(255,77,109,0.5); }
+      @keyframes tb-pulse {
+        0%   { box-shadow: 0 0 0 0 rgba(45,212,160,0.5); }
+        70%  { box-shadow: 0 0 0 7px rgba(45,212,160,0); }
+        100% { box-shadow: 0 0 0 0 rgba(45,212,160,0); }
+      }
+      .tb-sub {
+        font-size: 12px; font-family: 'DM Sans', sans-serif;
+        color: rgba(255,255,255,0.5); line-height: 1.5;
+      }
+      .tb-sub strong { color: rgba(255,255,255,0.85); }
+
+      .tb-days-block {
+        text-align: center; flex-shrink: 0;
+        padding: 0 4px;
+      }
+      .tb-days-number {
+        font-family: 'Fraunces', serif;
+        font-size: 36px; font-weight: 700; line-height: 1;
+        color: #d4a043; letter-spacing: -1px;
+      }
+      .tb-urgent .tb-days-number { color: #ff4d6d; }
+      .tb-days-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px; letter-spacing: 0.12em;
+        text-transform: uppercase; color: rgba(255,255,255,0.35);
+        margin-top: 2px;
+      }
+
+      .tb-divider {
+        width: 1px; height: 40px; flex-shrink: 0;
+        background: rgba(255,255,255,0.08);
+      }
+
+      .tb-meta {
+        flex-shrink: 0; display: flex; flex-direction: column; gap: 5px;
+      }
+      .tb-meta-row {
+        display: flex; align-items: center; gap: 7px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px; color: rgba(255,255,255,0.4);
+        letter-spacing: 0.04em;
+      }
+      .tb-meta-row::before { content: '✓'; color: #2dd4a0; font-weight: 700; }
+      .tb-urgent .tb-meta-row::before { content: '!'; color: #ff4d6d; }
+
+      .tb-progress-wrap {
+        position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+        background: rgba(255,255,255,0.06); z-index: 3;
+      }
+      .tb-progress-bar {
+        height: 100%;
+        background: linear-gradient(to right, #8a6020, #d4a043);
+        border-radius: 0 2px 2px 0;
+        transition: width 0.5s ease;
+      }
+      .tb-urgent .tb-progress-bar { background: linear-gradient(to right, #991b1b, #ff4d6d); }
+    </style>
+
+    <div id="trialBanner">
+      <div class="tb-border"></div>
+      <div class="tb-inner">
+        <div class="tb-icon">🎁</div>
+        <div class="tb-text">
+          <div class="tb-title">
+            <span class="tb-pulse"></span>
+            30-Day Free Trial Active
+          </div>
+          <div class="tb-sub">Full access to all <strong>ImpactGrid features</strong> — no payment taken until your trial ends.</div>
+        </div>
+        <div class="tb-divider"></div>
+        <div class="tb-days-block">
+          <div class="tb-days-number" id="trialDaysLeft">30</div>
+          <div class="tb-days-label">Days Left</div>
+        </div>
+        <div class="tb-divider"></div>
+        <div class="tb-meta">
+          <div class="tb-meta-row">No credit card charge yet</div>
+          <div class="tb-meta-row">Cancel anytime</div>
+          <div class="tb-meta-row">Full feature access</div>
+        </div>
       </div>
-      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);text-align:right;white-space:nowrap;">TRIAL ACTIVE<br><span style="color:var(--success);">● NO CHARGE YET</span></div>
+      <div class="tb-progress-wrap">
+        <div class="tb-progress-bar" id="trialProgressBar" style="width:100%;"></div>
+      </div>
     </div>
 
     <!-- Plan expired banner -->
@@ -1364,24 +1517,44 @@ function guestGateCheck(context) {
   showGuestGate(); return false;
 }
 
-/* Intercept addData */
+/* Intercept addData — guest gate + session start */
+function _wrapAddData(orig) {
+  return async function() {
+    /* 1. Guest gate */
+    if (!window.__igLoggedIn) {
+      if (!guestGateCheck('addData')) return;
+    } else {
+      /* 2. Logged-in: open a session slot (Basic plan only; others pass through) */
+      if (typeof igSessionStart === 'function') {
+        var ok = await igSessionStart();
+        if (!ok) return; /* session limit hit — modal shown inside igSessionStart */
+      }
+    }
+    orig.apply(this, arguments);
+  };
+}
+
 var _origAddData = window.addData;
 if (typeof _origAddData === 'function') {
-  window.addData = function() { if (!guestGateCheck('addData')) return; _origAddData.apply(this, arguments); };
+  window.addData = _wrapAddData(_origAddData);
 } else {
   document.addEventListener('DOMContentLoaded', function() {
     var orig = window.addData;
-    if (typeof orig === 'function') {
-      window.addData = function() { if (!guestGateCheck('addData')) return; orig.apply(this, arguments); };
-    }
+    if (typeof orig === 'function') window.addData = _wrapAddData(orig);
   });
 }
 
-/* Intercept section nav */
+/* Intercept section nav — guest gate + session close when results viewed */
 var _origShowSection = window.showSection;
 function _gatedShowSection(id, el) {
   var gated = ['charts','matrix','risk','ai','report','upgrade'];
+  /* Guest: block gated sections */
   if (!window.__igLoggedIn && gated.indexOf(id) !== -1) { showGuestGate(); return; }
+  /* Logged-in Basic: close/consume session when they view results */
+  var resultsSections = ['charts','ai','report','risk','matrix'];
+  if (window.__igLoggedIn && resultsSections.indexOf(id) !== -1) {
+    if (typeof igSessionClose === 'function') igSessionClose();
+  }
   if (_origShowSection) _origShowSection(id, el);
 }
 window.showSection = _gatedShowSection;
@@ -1390,6 +1563,10 @@ var _origMobileNav = window.mobileNav;
 window.mobileNav = function(id, el) {
   var gated = ['charts','matrix','risk','ai','report','upgrade'];
   if (!window.__igLoggedIn && gated.indexOf(id) !== -1) { showGuestGate(); return; }
+  var resultsSections = ['charts','ai','report','risk','matrix'];
+  if (window.__igLoggedIn && resultsSections.indexOf(id) !== -1) {
+    if (typeof igSessionClose === 'function') igSessionClose();
+  }
   if (_origMobileNav) _origMobileNav(id, el);
 };
 
