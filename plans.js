@@ -571,9 +571,21 @@ async function loadUserData() {
     if (!data || !data.data) return;
     const parsed = JSON.parse(data.data);
     if (!parsed || !parsed.length) return;
-    window.businessData = parsed.map(function(d) {
+
+    /* Map all records from Supabase */
+    let loaded = parsed.map(function(d) {
       return { date: new Date(d.date), revenue: Number(d.revenue), expenses: Number(d.expenses), profit: Number(d.profit) };
     });
+
+    /* Apply plan retention window on load so user only gets what their plan allows */
+    const planCfg  = PLAN_CONFIG[window.currentPlan] || PLAN_CONFIG.analyst;
+    const maxMonths = planCfg.dataMonths;
+    if (maxMonths !== Infinity && loaded.length > maxMonths) {
+      loaded.sort(function(a,b) { return new Date(b.date) - new Date(a.date); });
+      loaded = loaded.slice(0, maxMonths);
+    }
+
+    window.businessData = loaded;
     if (data.currency) {
       window.currentCurrency = data.currency;
       const sel = document.getElementById("currencySelector");
