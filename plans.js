@@ -208,13 +208,30 @@ async function initPlanSystem() {
 async function createUserPlanRow(userId, supabase) {
   const sb  = supabase || window.supabaseClient;
   const now = new Date().toISOString();
-  const row = {
+  const fallback = {
     user_id: userId, plan: "basic",
     sessions_used: 0, ai_questions_used: 0, forecasts_used: 0, pdfs_used: 0,
-    usage_period_start: now
+    usage_period_start: now, created_at: now
   };
-  const { data } = await sb.from("user_plans").insert(row).select().single();
-  return data || row;
+
+  /* Step 1: try to insert. If row already exists this will error — that's fine */
+  const { error: insertErr } = await sb.from("user_plans").insert(fallback);
+  if (insertErr && !insertErr.message.includes("duplicate")) {
+    console.error("[ImpactGrid] plan insert error:", insertErr.message);
+  }
+
+  /* Step 2: always fetch the row — whether we just created it or it already existed */
+  const { data: fetched, error: fetchErr } = await sb.from("user_plans")
+    .select("*").eq("user_id", userId).maybeSingle();
+
+  if (fetchErr) console.error("[ImpactGrid] plan fetch error:", fetchErr.message);
+
+  if (fetched) {
+    console.log("[ImpactGrid] Plan row ready:", fetched.plan, "| sessions:", fetched.sessions_used);
+    return fetched;
+  }
+
+  return fallback;
 }
 
 /* ================================================================
