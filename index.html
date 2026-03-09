@@ -1586,6 +1586,75 @@ document.addEventListener('DOMContentLoaded', function() {
 window.showGuestGate  = showGuestGate;
 window.closeGuestGate = closeGuestGate;
 window.guestGateCheck = guestGateCheck;
+
+/* ================================================================
+   AUTO-SAVE — fires after every businessData mutation
+   Wraps addData, deleteRecord, saveEdit, handleFileImport so every
+   change to the dataset is persisted to Supabase automatically.
+   Guests are skipped. 1.2s debounce prevents save spam on imports.
+================================================================ */
+(function() {
+  var _saveTimer = null;
+
+  function scheduleSave(label) {
+    if (!window.__igLoggedIn || !window.currentUser) return;
+    clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(function() {
+      if (typeof saveUserData === 'function') {
+        saveUserData();
+        console.log('[ImpactGrid] Auto-saved after:', label);
+      }
+    }, 1200);
+  }
+
+  /* Wait for DOMContentLoaded so script.js functions are defined */
+  document.addEventListener('DOMContentLoaded', function() {
+
+    function patchFn(name, delay) {
+      var orig = window[name];
+      if (typeof orig !== 'function' || orig.__igSavePatched) return;
+      window[name] = function() {
+        var r = orig.apply(this, arguments);
+        if (name === 'handleFileImport') {
+          /* imports are async — use longer delay */
+          if (window.__igLoggedIn && window.currentUser) {
+            clearTimeout(_saveTimer);
+            _saveTimer = setTimeout(function() {
+              if (typeof saveUserData === 'function') saveUserData();
+            }, 2500);
+          }
+        } else {
+          scheduleSave(name);
+        }
+        return r;
+      };
+      window[name].__igSavePatched = true;
+    }
+
+    /* Patch immediately */
+    ['addData','deleteRecord','saveEdit','handleFileImport'].forEach(function(fn) { patchFn(fn); });
+
+    /* Re-patch after 800ms in case script.js defines them late */
+    setTimeout(function() {
+      ['addData','deleteRecord','saveEdit','handleFileImport'].forEach(function(fn) { patchFn(fn); });
+    }, 800);
+  });
+
+  /* Save when user switches away from the tab */
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden' && window.__igLoggedIn && window.currentUser) {
+      if (typeof saveUserData === 'function') saveUserData();
+    }
+  });
+
+  /* Save on page close / navigation */
+  window.addEventListener('beforeunload', function() {
+    if (window.__igLoggedIn && window.currentUser) {
+      if (typeof saveUserData === 'function') saveUserData();
+    }
+  });
+
+})();
 </script>
 
 </body>
