@@ -61,7 +61,7 @@ const PLAN_CONFIG = {
     excelExport:   false,
     priorityAI:    false,
     multiProfile:  false,
-    dataDays:      180,
+    dataDays:      365,
     dataWarnDays:  0,
     trialDays:     30
   },
@@ -585,14 +585,28 @@ function applyPlanUI() {
 async function saveUserData() {
   if (!window.currentUser) { console.warn("saveUserData: no user"); return; }
   try {
-    /* Trim to plan's dataDays before saving — keep newest records only */
-    let dataToSave = window.businessData || [];
+    /* Stamp each record with savedAt (when entered) if not already set.
+       Retention is based on savedAt — NOT the reporting month date.
+       This means Dec 2025 data entered TODAY is kept for 7 days from today. */
+    const now_ts = new Date().toISOString();
+    let dataToSave = (window.businessData || []).map(function(d) {
+      return {
+        date:     d.date,
+        revenue:  d.revenue,
+        expenses: d.expenses,
+        profit:   d.profit,
+        savedAt:  d.savedAt || now_ts   /* stamp once, never overwrite */
+      };
+    });
+
+    /* Trim: keep only records whose savedAt is within plan's dataDays window */
     const savePlanCfg = PLAN_CONFIG[window.currentPlan] || PLAN_CONFIG.basic;
     const saveMaxDays = savePlanCfg.dataDays;
     if (saveMaxDays !== Infinity && dataToSave.length > 0) {
       const saveCutoff = new Date(Date.now() - saveMaxDays * 24 * 60 * 60 * 1000);
-      const trimmed    = dataToSave.filter(function(d) { return new Date(d.date) >= saveCutoff; });
-      /* Only trim if we have records within the window — don't wipe everything */
+      const trimmed    = dataToSave.filter(function(d) {
+        return new Date(d.savedAt || d.date) >= saveCutoff;
+      });
       if (trimmed.length > 0) dataToSave = trimmed;
     }
 
@@ -638,12 +652,17 @@ async function loadUserData() {
       const parsed = JSON.parse(data.data);
       if (parsed && parsed.length) {
         let loaded = parsed.map(function(d) {
-          return { date: new Date(d.date), revenue: Number(d.revenue), expenses: Number(d.expenses), profit: Number(d.profit) };
+          return {
+            date:     new Date(d.date),
+            revenue:  Number(d.revenue),
+            expenses: Number(d.expenses),
+            profit:   Number(d.profit),
+            savedAt:  d.savedAt || new Date().toISOString()  /* backfill if missing */
+          };
         });
 
-        /* No filtering here — retention is enforced at SAVE time only.
-           Users always see all their entered records within the session.
-           The save function trims to plan limit before writing to Supabase. */
+        /* Records in Supabase are already trimmed to plan window at save time.
+           Load everything stored — no further filtering needed. */
 
         window.businessData = loaded;
 
