@@ -1517,32 +1517,112 @@ function guestGateCheck(context) {
   showGuestGate(); return false;
 }
 
-/* Intercept addData — guest gate + session start */
+/* ================================================================
+   DATA INTERCEPTS — guest gate + session tracking + AUTO-SAVE
+   Single place that wraps all data-writing functions.
+   Save fires 1.2s after any mutation (debounced).
+   File imports use 2.5s delay (async parsing).
+================================================================ */
+var _igSaveTimer = null;
+function _igScheduleSave(label) {
+  if (!window.__igLoggedIn || !window.currentUser) return;
+  clearTimeout(_igSaveTimer);
+  _igSaveTimer = setTimeout(function() {
+    if (typeof saveUserData === 'function') {
+      saveUserData();
+      console.log('[ImpactGrid] Saved after:', label);
+    }
+  }, 1200);
+}
+
+/* addData — guest gate + session + save */
 function _wrapAddData(orig) {
   return async function() {
-    /* 1. Guest gate */
     if (!window.__igLoggedIn) {
       if (!guestGateCheck('addData')) return;
     } else {
-      /* 2. Logged-in: open a session slot (Basic plan only; others pass through) */
       if (typeof igSessionStart === 'function') {
         var ok = await igSessionStart();
-        if (!ok) return; /* session limit hit — modal shown inside igSessionStart */
+        if (!ok) return;
       }
     }
     orig.apply(this, arguments);
+    _igScheduleSave('addData');
   };
 }
 
-var _origAddData = window.addData;
-if (typeof _origAddData === 'function') {
-  window.addData = _wrapAddData(_origAddData);
-} else {
-  document.addEventListener('DOMContentLoaded', function() {
-    var orig = window.addData;
-    if (typeof orig === 'function') window.addData = _wrapAddData(orig);
-  });
+/* deleteRecord — save after deletion */
+function _wrapDelete(orig) {
+  return function() {
+    orig.apply(this, arguments);
+    _igScheduleSave('deleteRecord');
+  };
 }
+
+/* saveEdit — save after edit */
+function _wrapEdit(orig) {
+  return function() {
+    orig.apply(this, arguments);
+    _igScheduleSave('saveEdit');
+  };
+}
+
+/* handleFileImport — longer delay for async parsing */
+function _wrapImport(orig) {
+  return function() {
+    var r = orig.apply(this, arguments);
+    if (window.__igLoggedIn && window.currentUser) {
+      clearTimeout(_igSaveTimer);
+      _igSaveTimer = setTimeout(function() {
+        if (typeof saveUserData === 'function') saveUserData();
+        console.log('[ImpactGrid] Saved after: fileImport');
+      }, 2500);
+    }
+    return r;
+  };
+}
+
+/* Apply wraps — immediately if functions exist, or on DOMContentLoaded */
+(function applyWraps() {
+  if (typeof window.addData       === 'function') window.addData       = _wrapAddData(window.addData);
+  if (typeof window.deleteRecord  === 'function') window.deleteRecord  = _wrapDelete(window.deleteRecord);
+  if (typeof window.saveEdit      === 'function') window.saveEdit      = _wrapEdit(window.saveEdit);
+  if (typeof window.handleFileImport === 'function') window.handleFileImport = _wrapImport(window.handleFileImport);
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+  /* script.js likely defines these at DOMContentLoaded — re-apply wraps */
+  if (typeof window.addData       === 'function' && !window.addData.__igWrapped)       { window.addData       = _wrapAddData(window.addData);        window.addData.__igWrapped = true; }
+  if (typeof window.deleteRecord  === 'function' && !window.deleteRecord.__igWrapped)  { window.deleteRecord  = _wrapDelete(window.deleteRecord);     window.deleteRecord.__igWrapped = true; }
+  if (typeof window.saveEdit      === 'function' && !window.saveEdit.__igWrapped)      { window.saveEdit      = _wrapEdit(window.saveEdit);           window.saveEdit.__igWrapped = true; }
+  if (typeof window.handleFileImport === 'function' && !window.handleFileImport.__igWrapped) { window.handleFileImport = _wrapImport(window.handleFileImport); window.handleFileImport.__igWrapped = true; }
+
+  /* Safety net: poll businessData length every 10s and save if it changed */
+  var _lastLen = (window.businessData || []).length;
+  setInterval(function() {
+    if (!window.__igLoggedIn || !window.currentUser) return;
+    var curLen = (window.businessData || []).length;
+    if (curLen !== _lastLen) {
+      _lastLen = curLen;
+      if (typeof saveUserData === 'function') {
+        saveUserData();
+        console.log('[ImpactGrid] Saved via poll — data length changed');
+      }
+    }
+  }, 10000);
+});
+
+/* Save on tab hide and page close */
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden' && window.__igLoggedIn && window.currentUser) {
+    if (typeof saveUserData === 'function') saveUserData();
+  }
+});
+window.addEventListener('beforeunload', function() {
+  if (window.__igLoggedIn && window.currentUser) {
+    if (typeof saveUserData === 'function') saveUserData();
+  }
+});
 
 /* Intercept section nav — guest gate + session close when results viewed */
 var _origShowSection = window.showSection;
@@ -1587,74 +1667,7 @@ window.showGuestGate  = showGuestGate;
 window.closeGuestGate = closeGuestGate;
 window.guestGateCheck = guestGateCheck;
 
-/* ================================================================
-   AUTO-SAVE — fires after every businessData mutation
-   Wraps addData, deleteRecord, saveEdit, handleFileImport so every
-   change to the dataset is persisted to Supabase automatically.
-   Guests are skipped. 1.2s debounce prevents save spam on imports.
-================================================================ */
-(function() {
-  var _saveTimer = null;
 
-  function scheduleSave(label) {
-    if (!window.__igLoggedIn || !window.currentUser) return;
-    clearTimeout(_saveTimer);
-    _saveTimer = setTimeout(function() {
-      if (typeof saveUserData === 'function') {
-        saveUserData();
-        console.log('[ImpactGrid] Auto-saved after:', label);
-      }
-    }, 1200);
-  }
-
-  /* Wait for DOMContentLoaded so script.js functions are defined */
-  document.addEventListener('DOMContentLoaded', function() {
-
-    function patchFn(name, delay) {
-      var orig = window[name];
-      if (typeof orig !== 'function' || orig.__igSavePatched) return;
-      window[name] = function() {
-        var r = orig.apply(this, arguments);
-        if (name === 'handleFileImport') {
-          /* imports are async — use longer delay */
-          if (window.__igLoggedIn && window.currentUser) {
-            clearTimeout(_saveTimer);
-            _saveTimer = setTimeout(function() {
-              if (typeof saveUserData === 'function') saveUserData();
-            }, 2500);
-          }
-        } else {
-          scheduleSave(name);
-        }
-        return r;
-      };
-      window[name].__igSavePatched = true;
-    }
-
-    /* Patch immediately */
-    ['addData','deleteRecord','saveEdit','handleFileImport'].forEach(function(fn) { patchFn(fn); });
-
-    /* Re-patch after 800ms in case script.js defines them late */
-    setTimeout(function() {
-      ['addData','deleteRecord','saveEdit','handleFileImport'].forEach(function(fn) { patchFn(fn); });
-    }, 800);
-  });
-
-  /* Save when user switches away from the tab */
-  document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'hidden' && window.__igLoggedIn && window.currentUser) {
-      if (typeof saveUserData === 'function') saveUserData();
-    }
-  });
-
-  /* Save on page close / navigation */
-  window.addEventListener('beforeunload', function() {
-    if (window.__igLoggedIn && window.currentUser) {
-      if (typeof saveUserData === 'function') saveUserData();
-    }
-  });
-
-})();
 </script>
 
 </body>
