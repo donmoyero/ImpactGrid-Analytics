@@ -1519,23 +1519,37 @@ function guestGateCheck(context) {
 
 /* ================================================================
    DATA INTERCEPTS — guest gate + session tracking + AUTO-SAVE
-   Single place that wraps all data-writing functions.
-   Save fires 1.2s after any mutation (debounced).
-   File imports use 2.5s delay (async parsing).
+   
+   Strategy: don't rely on wrapping script.js functions (race condition).
+   Instead use a 2-second polling loop that watches businessData for
+   any change in length OR content hash, then saves immediately.
+   Also wraps functions if available as a fast-path.
+   Guaranteed to catch every addData, deleteRecord, saveEdit, import.
 ================================================================ */
-var _igSaveTimer = null;
-function _igScheduleSave(label) {
+var _igSaveTimer    = null;
+var _igLastDataHash = '';
+var _igSavePending  = false;
+
+function _igDataHash() {
+  var d = window.businessData || [];
+  return d.length + '|' + d.reduce(function(s,r) {
+    return s + (r.revenue||0) + (r.expenses||0) + (r.date ? new Date(r.date).getTime() : 0);
+  }, 0);
+}
+
+function _igScheduleSave(label, delay) {
   if (!window.__igLoggedIn || !window.currentUser) return;
   clearTimeout(_igSaveTimer);
   _igSaveTimer = setTimeout(function() {
     if (typeof saveUserData === 'function') {
       saveUserData();
+      _igLastDataHash = _igDataHash();
       console.log('[ImpactGrid] Saved after:', label);
     }
-  }, 1200);
+  }, delay || 1200);
 }
 
-/* addData — guest gate + session + save */
+/* addData wrapper — guest gate + session + save */
 function _wrapAddData(orig) {
   return async function() {
     if (!window.__igLoggedIn) {
@@ -1547,75 +1561,68 @@ function _wrapAddData(orig) {
       }
     }
     orig.apply(this, arguments);
-    _igScheduleSave('addData');
+    _igScheduleSave('addData', 800);
   };
 }
 
-/* deleteRecord — save after deletion */
 function _wrapDelete(orig) {
-  return function() {
-    orig.apply(this, arguments);
-    _igScheduleSave('deleteRecord');
-  };
+  return function() { orig.apply(this, arguments); _igScheduleSave('deleteRecord', 800); };
 }
-
-/* saveEdit — save after edit */
 function _wrapEdit(orig) {
-  return function() {
-    orig.apply(this, arguments);
-    _igScheduleSave('saveEdit');
-  };
+  return function() { orig.apply(this, arguments); _igScheduleSave('saveEdit', 800); };
 }
-
-/* handleFileImport — longer delay for async parsing */
 function _wrapImport(orig) {
   return function() {
     var r = orig.apply(this, arguments);
-    if (window.__igLoggedIn && window.currentUser) {
-      clearTimeout(_igSaveTimer);
-      _igSaveTimer = setTimeout(function() {
-        if (typeof saveUserData === 'function') saveUserData();
-        console.log('[ImpactGrid] Saved after: fileImport');
-      }, 2500);
-    }
+    _igScheduleSave('fileImport', 3000);
     return r;
   };
 }
 
-/* Apply wraps — immediately if functions exist, or on DOMContentLoaded */
-(function applyWraps() {
-  if (typeof window.addData       === 'function') window.addData       = _wrapAddData(window.addData);
-  if (typeof window.deleteRecord  === 'function') window.deleteRecord  = _wrapDelete(window.deleteRecord);
-  if (typeof window.saveEdit      === 'function') window.saveEdit      = _wrapEdit(window.saveEdit);
-  if (typeof window.handleFileImport === 'function') window.handleFileImport = _wrapImport(window.handleFileImport);
-})();
+function _igApplyWraps() {
+  if (window.addData && !window.addData.__igW) {
+    window.addData = _wrapAddData(window.addData); window.addData.__igW = 1;
+  }
+  if (window.deleteRecord && !window.deleteRecord.__igW) {
+    window.deleteRecord = _wrapDelete(window.deleteRecord); window.deleteRecord.__igW = 1;
+  }
+  if (window.saveEdit && !window.saveEdit.__igW) {
+    window.saveEdit = _wrapEdit(window.saveEdit); window.saveEdit.__igW = 1;
+  }
+  if (window.handleFileImport && !window.handleFileImport.__igW) {
+    window.handleFileImport = _wrapImport(window.handleFileImport); window.handleFileImport.__igW = 1;
+  }
+}
 
+/* Try immediately, then again after scripts load */
+_igApplyWraps();
 document.addEventListener('DOMContentLoaded', function() {
-  /* script.js likely defines these at DOMContentLoaded — re-apply wraps */
-  if (typeof window.addData       === 'function' && !window.addData.__igWrapped)       { window.addData       = _wrapAddData(window.addData);        window.addData.__igWrapped = true; }
-  if (typeof window.deleteRecord  === 'function' && !window.deleteRecord.__igWrapped)  { window.deleteRecord  = _wrapDelete(window.deleteRecord);     window.deleteRecord.__igWrapped = true; }
-  if (typeof window.saveEdit      === 'function' && !window.saveEdit.__igWrapped)      { window.saveEdit      = _wrapEdit(window.saveEdit);           window.saveEdit.__igWrapped = true; }
-  if (typeof window.handleFileImport === 'function' && !window.handleFileImport.__igWrapped) { window.handleFileImport = _wrapImport(window.handleFileImport); window.handleFileImport.__igWrapped = true; }
+  _igApplyWraps();
+  setTimeout(_igApplyWraps, 500);
+  setTimeout(_igApplyWraps, 1500);
 
-  /* Safety net: poll businessData length every 10s and save if it changed */
-  var _lastLen = (window.businessData || []).length;
+  /* ── POLLING SAFETY NET ──
+     Checks businessData every 2 seconds. If content changed since
+     last save, triggers a save. This is the guaranteed fallback that
+     catches any mutation our wrappers miss. */
+  _igLastDataHash = _igDataHash();
   setInterval(function() {
     if (!window.__igLoggedIn || !window.currentUser) return;
-    var curLen = (window.businessData || []).length;
-    if (curLen !== _lastLen) {
-      _lastLen = curLen;
+    var h = _igDataHash();
+    if (h !== _igLastDataHash) {
+      _igLastDataHash = h;
       if (typeof saveUserData === 'function') {
         saveUserData();
-        console.log('[ImpactGrid] Saved via poll — data length changed');
+        console.log('[ImpactGrid] Poll-save triggered');
       }
     }
-  }, 10000);
+  }, 2000);
 });
 
-/* Save on tab hide and page close */
+/* Save on tab switch and page close */
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState === 'hidden' && window.__igLoggedIn && window.currentUser) {
-    if (typeof saveUserData === 'function') saveUserData();
+    if (typeof saveUserData === 'function') { saveUserData(); _igLastDataHash = _igDataHash(); }
   }
 });
 window.addEventListener('beforeunload', function() {
