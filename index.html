@@ -1454,7 +1454,9 @@ async function ggOnAuthSuccess(user) {
   document.body.appendChild(toast);
 
   /* ── Init plan system (loads user plan, may call loadUserData) ── */
-  if (typeof initPlanSystem === 'function') {
+  /* Guard: only run initPlanSystem once per page load */
+  if (typeof initPlanSystem === 'function' && !window.__igPlanInitDone) {
+    window.__igPlanInitDone = true;
     await initPlanSystem();
   }
 
