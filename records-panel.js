@@ -10,13 +10,14 @@
    - On save, the payload sent to Supabase is trimmed to the plan limit
      so only the allowed months are stored server-side.
    - This means a Basic user can enter 3 months, run full analysis,
-     then only the most recent 1 month is persisted on save.
+     then only records within the plan's day window are persisted on save.
+   Basic: 7 days · Professional: 180 days · Enterprise: unlimited
 ================================================================ */
 
 /* ── Plan retention limits (for save trimming only) ── */
-const DATA_RETENTION_MONTHS = {
-  analyst:      1,
-  professional: 12,
+const DATA_RETENTION_DAYS = {
+  basic:         7,  /* days */
+  professional:  180,
   enterprise:   Infinity,
   admin:        Infinity
 };
@@ -28,8 +29,8 @@ function renderRecordsPanel() {
 
   /* Read full live data — never modify it */
   const allData  = (window.businessData || []).slice().sort((a,b) => new Date(b.date)-new Date(a.date));
-  const plan     = window.currentPlan || 'analyst';
-  const maxMo    = DATA_RETENTION_MONTHS[plan] ?? 1;
+  const plan     = window.currentPlan || 'basic';
+  const maxMo    = DATA_RETENTION_DAYS[plan] ?? 7;
   const currency = window.currentCurrency || 'GBP';
   const sym      = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'NGN' ? '₦' : '£';
 
@@ -43,10 +44,12 @@ function renderRecordsPanel() {
 
   const retLabel = maxMo === Infinity
     ? 'Unlimited storage'
-    : `${maxMo} month${maxMo>1?'s':''} storage`;
+    : maxMo >= 30
+      ? `${Math.round(maxMo/30)} month${Math.round(maxMo/30)>1?'s':''} storage`
+      : `${maxMo} day${maxMo!==1?'s':''} storage`;
 
   const planColor = {
-    analyst:      'var(--text-muted)',
+    basic:         'var(--text-muted)',
     professional: 'var(--gold)',
     enterprise:   'var(--blue)',
     admin:        'var(--success)'
@@ -80,7 +83,9 @@ function renderRecordsPanel() {
       }
 
       /* Dim records that are beyond the plan retention window */
-      const beyondRetention = maxMo !== Infinity && i >= maxMo;
+      const recDate = new Date(d.date);
+      const cutoff  = maxMo !== Infinity ? new Date(Date.now() - maxMo * 24*60*60*1000) : null;
+      const beyondRetention = cutoff && recDate < cutoff;
       const rowStyle = beyondRetention
         ? 'opacity:0.38;position:relative;'
         : '';
@@ -115,7 +120,9 @@ function renderRecordsPanel() {
 
   /* ── Retention banner ── */
   const isLimited = maxMo !== Infinity;
-  const overLimit = data.length > maxMo;
+  const cutoffDate = maxMo !== Infinity ? new Date(Date.now() - maxMo * 24*60*60*1000) : null;
+  const overLimit  = cutoffDate ? data.some(function(d){ return new Date(d.date) < cutoffDate; }) : false;
+  const overCount  = cutoffDate ? data.filter(function(d){ return new Date(d.date) < cutoffDate; }).length : 0;
 
   const retBanner = isLimited
     ? overLimit
@@ -123,7 +130,7 @@ function renderRecordsPanel() {
           <span class="rp-retention-icon">⏱</span>
           <span class="rp-retention-text">
             <strong>${retLabel}</strong> on ${plan.charAt(0).toUpperCase()+plan.slice(1)} plan.
-            ${data.length - maxMo} older month${data.length - maxMo > 1 ? 's' : ''} shown but won't be saved.
+            ${overCount} older record${overCount > 1 ? 's' : ''} shown but won't be saved (outside ${retLabel} window).
             <a href="#" onclick="showSection('upgrade');closeRecordsPanel();return false;" class="rp-upgrade-link">Upgrade to keep all →</a>
           </span>
         </div>`
@@ -242,18 +249,22 @@ window.saveUserData = async function() {
   }
   if (!window.currentUser) return;
 
-  const plan  = window.currentPlan || 'analyst';
-  const maxMo = DATA_RETENTION_MONTHS[plan] ?? 1;
+  const plan  = window.currentPlan || 'basic';
+  const maxMo = DATA_RETENTION_DAYS[plan] ?? 7;
   const full  = window.businessData || [];
 
-  if (maxMo !== Infinity && full.length > maxMo) {
-    const sorted  = full.slice().sort((a,b) => new Date(b.date)-new Date(a.date));
-    const trimmed = sorted.slice(0, maxMo);
-    const backup        = window.businessData;
-    window.businessData = trimmed;
-    await coreSave();
-    window.businessData = backup;
-  } else {
+  if (maxMo !== Infinity) {
+    const cutoff  = new Date(Date.now() - maxMo * 24*60*60*1000);
+    const trimmed = full.filter(function(d){ return new Date(d.date) >= cutoff; });
+    if (trimmed.length < full.length) {
+      const backup        = window.businessData;
+      window.businessData = trimmed;
+      await coreSave();
+      window.businessData = backup;
+      return;
+    }
+  }
+  {
     await coreSave();
   }
 };
