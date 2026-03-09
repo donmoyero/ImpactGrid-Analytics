@@ -1454,11 +1454,7 @@ async function ggOnAuthSuccess(user) {
   document.body.appendChild(toast);
 
   /* ── Init plan system (loads user plan, may call loadUserData) ── */
-  /* Guard: only run initPlanSystem once per page load */
-  if (typeof initPlanSystem === 'function' && !window.__igPlanInitDone) {
-    window.__igPlanInitDone = true;
-    await initPlanSystem();
-  }
+  if (typeof initPlanSystem === 'function') await initPlanSystem();
 
   /* ── Merge guest data back in if account had no existing data ── */
   var hasExistingData = window.businessData && window.businessData.length > 0;
