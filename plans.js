@@ -594,13 +594,21 @@ async function loadUserData() {
     if (data.business_type) { const bt = document.getElementById("businessType"); if (bt) bt.value = data.business_type; }
     if (data.start_date)    { const sd = document.getElementById("businessStartDate"); if (sd) sd.value = data.start_date; }
     if (data.reporting_date){ const rd = document.getElementById("reportingDate"); if (rd) rd.value = data.reporting_date; }
+    /* Sync local businessData reference used by script.js */
     if (typeof businessData !== "undefined") {
       businessData.length = 0;
       (window.businessData || []).forEach(function(d){ businessData.push(d); });
     }
-    if (typeof updateAll === "function") updateAll();
-    if (typeof renderRecordsPanel === "function") renderRecordsPanel();
-    showAIMemoryGreeting();
+
+    /* Re-run all UI — charts, matrix, risk, records, AI greeting */
+    function _igRefreshUI() {
+      if (typeof updateAll          === "function") updateAll();
+      if (typeof renderRecordsPanel === "function") renderRecordsPanel();
+      showAIMemoryGreeting();
+    }
+    _igRefreshUI();
+    /* Retry after 600ms in case script.js UI isn't ready yet */
+    setTimeout(_igRefreshUI, 600);
   } catch(e) { console.error("Load exception:", e); }
 }
 
