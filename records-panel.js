@@ -227,49 +227,7 @@ function closeRecordsPanel() {
   if (o) { o.style.display = 'none'; o.onclick = null; }
 }
 
-/*
-  saveUserData override — trim to plan retention ONLY in the payload
-  sent to Supabase. window.businessData itself is NEVER touched.
-  This means analysis always uses all entered months; only storage
-  on the server respects the plan limit.
-*/
-/* ================================================================
-   saveUserData override — trims payload to plan retention before
-   sending to Supabase. window.businessData is NEVER mutated.
-   Resolves _igCoreSave at call time (not load time) to avoid the
-   race condition where records-panel.js loads before plans.js.
-================================================================ */
-window.__igCoreSave = null; /* set by plans.js expose at bottom of that file */
-
-window.saveUserData = async function() {
-  /* Resolve the core save function at call time */
-  var coreSave = window.__igCoreSave;
-  if (!coreSave) {
-    console.warn('[ImpactGrid] saveUserData called before plans.js ready');
-    return;
-  }
-  if (!window.currentUser) return;
-
-  const plan  = window.currentPlan || 'basic';
-  const maxMo = DATA_RETENTION_DAYS[plan] ?? 7;
-  const full  = window.businessData || [];
-
-  if (maxMo !== Infinity) {
-    const cutoff  = new Date(Date.now() - maxMo * 24*60*60*1000);
-    /* Use savedAt (entry timestamp) not d.date (reporting month) */
-    const trimmed = full.filter(function(d){ return new Date(d.savedAt||Date.now()) >= cutoff; });
-    if (trimmed.length < full.length) {
-      const backup        = window.businessData;
-      window.businessData = trimmed;
-      await coreSave();
-      window.businessData = backup;
-      return;
-    }
-  }
-  {
-    await coreSave();
-  }
-};
+/* Retention trimming is handled inside plans.js saveUserData — no override needed here */
 
 /* Expose globals */
 window.renderRecordsPanel   = renderRecordsPanel;
