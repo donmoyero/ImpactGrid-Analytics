@@ -144,7 +144,7 @@ async function initPlanSystem() {
     }
 
     let { data: planRow, error: planErr } = await supabase
-      .from("user_plans").select("*").eq("user_id", session.user.id).single();
+      .from("user_plans").select("*").eq("user_id", session.user.id).maybeSingle();
 
     if (planErr && planErr.code !== "PGRST116") {
       console.error("[ImpactGrid] user_plans fetch error:", planErr.message);
@@ -282,7 +282,7 @@ async function igSessionStart() {
       .from("user_plans")
       .select("sessions_used, usage_period_start")
       .eq("user_id", window.currentUser.id)
-      .single();
+      .maybeSingle();   /* maybeSingle returns null (not 406) if no row exists */
 
     if (planRow) {
       const periodStart = new Date(planRow.usage_period_start || Date.now());
@@ -629,12 +629,8 @@ async function loadUserData() {
   if (!window.currentUser) return;
   try {
     const { data, error } = await window.supabaseClient.from("user_data")
-      .select("*").eq("user_id", window.currentUser.id).single();
-    if (error) {
-      if (error.code === "PGRST116") console.log("No saved data yet.");
-      else console.error("Load error:", error.message);
-      return;
-    }
+      .select("*").eq("user_id", window.currentUser.id).maybeSingle();
+    if (error) { console.error("Load error:", error.message); return; }
     if (!data) return;
 
     /* Restore profile fields regardless of whether there is financial data */
@@ -854,7 +850,7 @@ document.addEventListener("DOMContentLoaded", function() {
 ================================================================ */
 window.initPlanSystem       = initPlanSystem;
 window.saveUserData         = saveUserData;
-window.__igCoreSave         = saveUserData;
+
 window.loadUserData         = loadUserData;
 window.canUse               = canUse;
 window.incrementUsage       = incrementUsage;
