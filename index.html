@@ -1599,6 +1599,14 @@ function _igApplyWraps() {
 
 /* Try immediately, then again after scripts load */
 _igApplyWraps();
+/* Listen for data loaded from Supabase and force full UI refresh */
+document.addEventListener('igDataLoaded', function(e) {
+  console.log('[ImpactGrid] igDataLoaded event — re-rendering with', e.detail.records, 'records');
+  if (typeof updateAll          === 'function') updateAll();
+  if (typeof renderRecordsPanel === 'function') renderRecordsPanel();
+  if (typeof updateHealthScore  === 'function') updateHealthScore();
+});
+
 document.addEventListener('DOMContentLoaded', function() {
   _igApplyWraps();
   setTimeout(_igApplyWraps, 500);
