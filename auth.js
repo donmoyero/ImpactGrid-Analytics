@@ -69,7 +69,11 @@ async function checkAuth(supabase) {
     window.__igLoggedIn = true;
 
     /* Init plan system now we know user is real */
-    if (typeof initPlanSystem === 'function') initPlanSystem();
+    /* Guard: only call initPlanSystem once per page load */
+    if (typeof initPlanSystem === 'function' && !window.__igPlanInitDone) {
+      window.__igPlanInitDone = true;
+      initPlanSystem();
+    }
 
   } catch (err) {
     console.error('[ImpactGrid] Auth check failed:', err);
