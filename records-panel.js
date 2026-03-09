@@ -1,15 +1,19 @@
 /* ================================================================
-   IMPACTGRID — RECORDS PANEL v2.0
+   IMPACTGRID — RECORDS PANEL v2.1
    Spreadsheet-style sidebar panel.
    Data persists in Supabase per user.
-   Retention enforced by plan:
-     analyst      → 1 month  (most recent only)
-     professional → 12 months
-     enterprise   → forever
-     admin        → forever
+
+   RETENTION RULE:
+   - window.businessData is NEVER trimmed here — it is the live source
+     of truth for all analysis, charts, AI, and forecasts.
+   - The panel DISPLAYS all records the user has entered.
+   - On save, the payload sent to Supabase is trimmed to the plan limit
+     so only the allowed months are stored server-side.
+   - This means a Basic user can enter 3 months, run full analysis,
+     then only the most recent 1 month is persisted on save.
 ================================================================ */
 
-/* ── Plan retention limits ── */
+/* ── Plan retention limits (for save trimming only) ── */
 const DATA_RETENTION_MONTHS = {
   analyst:      1,
   professional: 12,
@@ -17,35 +21,22 @@ const DATA_RETENTION_MONTHS = {
   admin:        Infinity
 };
 
-/* ── Enforce retention on load ── */
-function enforceDataRetention() {
-  const plan    = window.currentPlan || 'analyst';
-  const maxMo   = DATA_RETENTION_MONTHS[plan] ?? 1;
-  const data    = window.businessData || [];
-  if (!data.length || maxMo === Infinity) return;
-
-  // Sort newest first, keep only allowed months
-  data.sort((a, b) => new Date(b.date) - new Date(a.date));
-  if (data.length > maxMo) {
-    data.splice(maxMo); // drop oldest beyond limit
-    window.businessData = data;
-  }
-}
-
-/* ── Main render ── */
+/* ── Main render — reads window.businessData without mutating it ── */
 function renderRecordsPanel() {
-  enforceDataRetention();
-
   const panel = document.getElementById('recordsPanel');
   if (!panel) return;
 
-  const data     = (window.businessData || []).slice().sort((a,b) => new Date(b.date)-new Date(a.date));
+  /* Read full live data — never modify it */
+  const allData  = (window.businessData || []).slice().sort((a,b) => new Date(b.date)-new Date(a.date));
   const plan     = window.currentPlan || 'analyst';
   const maxMo    = DATA_RETENTION_MONTHS[plan] ?? 1;
   const currency = window.currentCurrency || 'GBP';
-  const sym      = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '£';
+  const sym      = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'NGN' ? '₦' : '£';
 
-  /* totals */
+  /* Show all entered records in the panel regardless of plan */
+  const data = allData;
+
+  /* totals across all displayed records */
   const totRev  = data.reduce((s,d) => s + (d.revenue  ||0), 0);
   const totExp  = data.reduce((s,d) => s + (d.expenses ||0), 0);
   const totProf = data.reduce((s,d) => s + (d.profit   ||0), 0);
@@ -55,10 +46,10 @@ function renderRecordsPanel() {
     : `${maxMo} month${maxMo>1?'s':''} storage`;
 
   const planColor = {
-    analyst: 'var(--text-muted)',
+    analyst:      'var(--text-muted)',
     professional: 'var(--gold)',
-    enterprise: 'var(--blue)',
-    admin: 'var(--success)'
+    enterprise:   'var(--blue)',
+    admin:        'var(--success)'
   }[plan] || 'var(--text-muted)';
 
   /* ── Build spreadsheet rows ── */
@@ -88,9 +79,18 @@ function renderRecordsPanel() {
         else                trendHTML = `<span class="rp-trend-fl">–</span>`;
       }
 
+      /* Dim records that are beyond the plan retention window */
+      const beyondRetention = maxMo !== Infinity && i >= maxMo;
+      const rowStyle = beyondRetention
+        ? 'opacity:0.38;position:relative;'
+        : '';
+      const lockIcon = beyondRetention
+        ? `<span title="Beyond ${retLabel} — upgrade to retain" style="margin-left:4px;font-size:9px;color:var(--text-muted);">🔒</span>`
+        : '';
+
       rowsHTML += `
-        <tr class="rp-data-row" onclick="handleRPRowClick(${i})" title="Click to edit ${mo}">
-          <td class="rp-cell rp-cell-date">${mo} ${trendHTML}</td>
+        <tr class="rp-data-row" style="${rowStyle}" onclick="handleRPRowClick(${i})" title="${beyondRetention ? 'Beyond retention — upgrade to keep' : 'Click to edit ' + mo}">
+          <td class="rp-cell rp-cell-date">${mo} ${trendHTML}${lockIcon}</td>
           <td class="rp-cell rp-cell-num rp-cell-rev">${sym}${Number(d.revenue||0).toLocaleString()}</td>
           <td class="rp-cell rp-cell-num rp-cell-exp">${sym}${Number(d.expenses||0).toLocaleString()}</td>
           <td class="rp-cell rp-cell-num ${profCls}">${profPfx}${sym}${Math.abs(profit).toLocaleString()}</td>
@@ -113,24 +113,31 @@ function renderRecordsPanel() {
       <td class="rp-cell rp-cell-num rp-cell-mg">${totMargin}%</td>
     </tr>` : '';
 
-  /* ── Sync dot ── */
-  const dotCls  = 'synced';
-  const dotLabel = 'Saved to account';
-
   /* ── Retention banner ── */
   const isLimited = maxMo !== Infinity;
-  const retBanner = isLimited ? `
-    <div class="rp-retention-banner">
-      <span class="rp-retention-icon">⏱</span>
-      <span class="rp-retention-text">
-        <strong>${retLabel}</strong> on ${plan.charAt(0).toUpperCase()+plan.slice(1)} plan.
-        <a href="#" onclick="showSection('upgrade');closeRecordsPanel();return false;" class="rp-upgrade-link">Upgrade for more →</a>
-      </span>
-    </div>` : `
-    <div class="rp-retention-banner rp-retention-ok">
-      <span class="rp-retention-icon">✓</span>
-      <span class="rp-retention-text"><strong>${retLabel}</strong> — all your data is always here.</span>
-    </div>`;
+  const overLimit = data.length > maxMo;
+
+  const retBanner = isLimited
+    ? overLimit
+      ? `<div class="rp-retention-banner rp-retention-warn">
+          <span class="rp-retention-icon">⏱</span>
+          <span class="rp-retention-text">
+            <strong>${retLabel}</strong> on ${plan.charAt(0).toUpperCase()+plan.slice(1)} plan.
+            ${data.length - maxMo} older month${data.length - maxMo > 1 ? 's' : ''} shown but won't be saved.
+            <a href="#" onclick="showSection('upgrade');closeRecordsPanel();return false;" class="rp-upgrade-link">Upgrade to keep all →</a>
+          </span>
+        </div>`
+      : `<div class="rp-retention-banner">
+          <span class="rp-retention-icon">⏱</span>
+          <span class="rp-retention-text">
+            <strong>${retLabel}</strong> on ${plan.charAt(0).toUpperCase()+plan.slice(1)} plan.
+            <a href="#" onclick="showSection('upgrade');closeRecordsPanel();return false;" class="rp-upgrade-link">Upgrade for more →</a>
+          </span>
+        </div>`
+    : `<div class="rp-retention-banner rp-retention-ok">
+        <span class="rp-retention-icon">✓</span>
+        <span class="rp-retention-text"><strong>${retLabel}</strong> — all your data is always here.</span>
+      </div>`;
 
   panel.innerHTML = `
     <!-- Header -->
@@ -144,8 +151,8 @@ function renderRecordsPanel() {
 
     <!-- Sync status -->
     <div class="rp-status">
-      <span class="rp-dot ${dotCls}"></span>
-      <span id="rpSyncLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);">${dotLabel}</span>
+      <span class="rp-dot synced"></span>
+      <span id="rpSyncLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);">Saved to account</span>
       <span class="rp-plan-chip" style="margin-left:auto;color:${planColor};">${plan.toUpperCase()}</span>
     </div>
 
@@ -183,8 +190,6 @@ function handleRPRowClick(reversedIndex) {
   const data   = (window.businessData || []).slice().sort((a,b) => new Date(b.date)-new Date(a.date));
   const record = data[reversedIndex];
   if (!record) return;
-
-  // Try to use existing edit modal if available
   if (typeof openEditModal === 'function') {
     const originalIndex = window.businessData.indexOf(record);
     openEditModal(originalIndex);
@@ -214,21 +219,35 @@ function closeRecordsPanel() {
   if (o) { o.style.display = 'none'; o.onclick = null; }
 }
 
-/* ── Sign-out data cleanup ── */
-// When user signs out, window.businessData is cleared in memory automatically.
-// Supabase data persists server-side; on next login loadUserData() reloads it.
-// Analyst plan: server enforces 1-month cap via saveUserData trim below.
-
-/* Override saveUserData to trim before saving based on plan */
+/*
+  saveUserData override — trim to plan retention ONLY in the payload
+  sent to Supabase. window.businessData itself is NEVER touched.
+  This means analysis always uses all entered months; only storage
+  on the server respects the plan limit.
+*/
 const _origSaveUserData = window.saveUserData;
 window.saveUserData = async function() {
-  enforceDataRetention();
-  if (_origSaveUserData) return _origSaveUserData();
+  const plan   = window.currentPlan || 'analyst';
+  const maxMo  = DATA_RETENTION_MONTHS[plan] ?? 1;
+  const full   = window.businessData || [];
+
+  if (maxMo !== Infinity && full.length > maxMo) {
+    /* Build a trimmed copy — newest maxMo months only */
+    const sorted  = full.slice().sort((a,b) => new Date(b.date)-new Date(a.date));
+    const trimmed = sorted.slice(0, maxMo);
+    /* Temporarily swap so saveUserData sends trimmed payload */
+    const backup          = window.businessData;
+    window.businessData   = trimmed;
+    if (_origSaveUserData) await _origSaveUserData();
+    window.businessData   = backup; /* restore full array immediately */
+  } else {
+    if (_origSaveUserData) await _origSaveUserData();
+  }
 };
 
 /* Expose globals */
-window.renderRecordsPanel  = renderRecordsPanel;
-window.openRecordsPanel    = openRecordsPanel;
-window.closeRecordsPanel   = closeRecordsPanel;
-window.handleRPRowClick    = handleRPRowClick;
-window.enforceDataRetention = enforceDataRetention;
+window.renderRecordsPanel   = renderRecordsPanel;
+window.openRecordsPanel     = openRecordsPanel;
+window.closeRecordsPanel    = closeRecordsPanel;
+window.handleRPRowClick     = handleRPRowClick;
+window.enforceDataRetention = function() {}; /* no-op — retention is display-only now */
