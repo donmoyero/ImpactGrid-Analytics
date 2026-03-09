@@ -605,9 +605,10 @@ function applyPlanUI() {
 async function saveUserData() {
   if (!window.currentUser) { console.warn("saveUserData: no user"); return; }
   try {
-    /* Stamp each record with savedAt (when entered) if not already set.
-       Retention is based on savedAt — NOT the reporting month date.
-       This means Dec 2025 data entered TODAY is kept for 7 days from today. */
+    /* Stamp each record with savedAt = now if not already set.
+       savedAt tracks WHEN the record was entered (not the reporting month).
+       We NEVER trim on save — records-panel.js handles the UI warning.
+       Hard expiry only happens after dataDays + 7 grace days via checkDataExpiry(). */
     const now_ts = new Date().toISOString();
     let dataToSave = (window.businessData || []).map(function(d) {
       return {
@@ -615,20 +616,13 @@ async function saveUserData() {
         revenue:  d.revenue,
         expenses: d.expenses,
         profit:   d.profit,
-        savedAt:  d.savedAt || now_ts   /* stamp once, never overwrite */
+        savedAt:  d.savedAt || now_ts
       };
     });
-
-    /* Trim: keep only records whose savedAt is within plan's dataDays window */
-    const savePlanCfg = PLAN_CONFIG[window.currentPlan] || PLAN_CONFIG.basic;
-    const saveMaxDays = savePlanCfg.dataDays;
-    if (saveMaxDays !== Infinity && dataToSave.length > 0) {
-      const saveCutoff = new Date(Date.now() - saveMaxDays * 24 * 60 * 60 * 1000);
-      const trimmed    = dataToSave.filter(function(d) {
-        return new Date(d.savedAt || d.date) >= saveCutoff;
-      });
-      if (trimmed.length > 0) dataToSave = trimmed;
-    }
+    /* Backfill savedAt on window.businessData so it persists in memory too */
+    window.businessData = dataToSave.map(function(d) {
+      return { date: new Date(d.date), revenue: d.revenue, expenses: d.expenses, profit: d.profit, savedAt: d.savedAt };
+    });
 
     const payload = {
       user_id:        window.currentUser.id,
@@ -689,17 +683,33 @@ async function loadUserData() {
           businessData.length = 0;
           loaded.forEach(function(d) { businessData.push(d); });
         }
+
+        console.log("[ImpactGrid] loadUserData: loaded", loaded.length, "records into businessData");
       }
     }
 
-    /* Refresh all UI */
-    if (typeof updateAll          === "function") updateAll();
-    if (typeof renderRecordsPanel === "function") renderRecordsPanel();
-    /* Retry after 600ms in case script.js UI isn't ready yet */
-    setTimeout(function() {
+    /* Refresh UI — retry at 300ms, 800ms, 1500ms to handle script.js timing */
+    function _refreshUI() {
+      /* Always re-sync script.js local array from window.businessData */
+      if (window.businessData && window.businessData.length) {
+        if (typeof businessData !== "undefined") {
+          businessData.length = 0;
+          window.businessData.forEach(function(d) { businessData.push(d); });
+        }
+        /* Also try setting via window in case script.js uses window.businessData */
+        window.businessData = window.businessData.slice();
+      }
       if (typeof updateAll          === "function") updateAll();
       if (typeof renderRecordsPanel === "function") renderRecordsPanel();
-    }, 600);
+    }
+    _refreshUI();
+    setTimeout(_refreshUI, 300);
+    setTimeout(_refreshUI, 800);
+    setTimeout(_refreshUI, 1500);
+    /* Final safety net — fire a custom event so script.js can react if it listens */
+    setTimeout(function() {
+      document.dispatchEvent(new CustomEvent("igDataLoaded", { detail: { records: (window.businessData||[]).length } }));
+    }, 200);
 
     showAIMemoryGreeting();
   } catch(e) { console.error("Load exception:", e); }
