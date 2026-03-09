@@ -766,6 +766,7 @@ document.addEventListener("DOMContentLoaded", function() {
 ================================================================ */
 window.initPlanSystem       = initPlanSystem;
 window.saveUserData         = saveUserData;
+window.__igCoreSave          = saveUserData; /* used by records-panel.js override */
 window.loadUserData         = loadUserData;
 window.canUse               = canUse;
 window.incrementUsage       = incrementUsage;
