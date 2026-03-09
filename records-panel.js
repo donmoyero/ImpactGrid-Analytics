@@ -16,8 +16,8 @@
 
 /* ── Plan retention limits (for save trimming only) ── */
 const DATA_RETENTION_DAYS = {
-  basic:         7,  /* days */
-  professional:  180,
+  basic:         7,
+  professional:  365,
   enterprise:   Infinity,
   admin:        Infinity
 };
@@ -83,9 +83,10 @@ function renderRecordsPanel() {
       }
 
       /* Dim records that are beyond the plan retention window */
-      const recDate = new Date(d.date);
-      const cutoff  = maxMo !== Infinity ? new Date(Date.now() - maxMo * 24*60*60*1000) : null;
-      const beyondRetention = cutoff && recDate < cutoff;
+      /* Use savedAt (when entered) not d.date (reporting month) for retention */
+      const enteredAt = new Date(d.savedAt || Date.now());
+      const cutoff    = maxMo !== Infinity ? new Date(Date.now() - maxMo * 24*60*60*1000) : null;
+      const beyondRetention = cutoff && enteredAt < cutoff;
       const rowStyle = beyondRetention
         ? 'opacity:0.38;position:relative;'
         : '';
@@ -121,23 +122,23 @@ function renderRecordsPanel() {
   /* ── Retention banner ── */
   const isLimited = maxMo !== Infinity;
   const cutoffDate = maxMo !== Infinity ? new Date(Date.now() - maxMo * 24*60*60*1000) : null;
-  const overLimit  = cutoffDate ? data.some(function(d){ return new Date(d.date) < cutoffDate; }) : false;
-  const overCount  = cutoffDate ? data.filter(function(d){ return new Date(d.date) < cutoffDate; }).length : 0;
+  const overLimit  = cutoffDate ? data.some(function(d){ return new Date(d.savedAt||Date.now()) < cutoffDate; }) : false;
+  const overCount  = cutoffDate ? data.filter(function(d){ return new Date(d.savedAt||Date.now()) < cutoffDate; }).length : 0;
 
   const retBanner = isLimited
     ? overLimit
       ? `<div class="rp-retention-banner rp-retention-warn">
           <span class="rp-retention-icon">⏱</span>
           <span class="rp-retention-text">
-            <strong>${retLabel}</strong> on ${plan.charAt(0).toUpperCase()+plan.slice(1)} plan.
-            ${overCount} older record${overCount > 1 ? 's' : ''} shown but won't be saved (outside ${retLabel} window).
+            <strong>${retLabel} storage</strong> on ${plan.charAt(0).toUpperCase()+plan.slice(1)} plan — records saved for ${retLabel} from when you entered them.
+            ${overCount} record${overCount > 1 ? 's' : ''} older than ${retLabel} won't be kept after logout.
             <a href="#" onclick="showSection('upgrade');closeRecordsPanel();return false;" class="rp-upgrade-link">Upgrade to keep all →</a>
           </span>
         </div>`
       : `<div class="rp-retention-banner">
           <span class="rp-retention-icon">⏱</span>
           <span class="rp-retention-text">
-            <strong>${retLabel}</strong> on ${plan.charAt(0).toUpperCase()+plan.slice(1)} plan.
+            <strong>${retLabel} storage</strong> — records saved for ${retLabel} from entry date.
             <a href="#" onclick="showSection('upgrade');closeRecordsPanel();return false;" class="rp-upgrade-link">Upgrade for more →</a>
           </span>
         </div>`
@@ -255,7 +256,8 @@ window.saveUserData = async function() {
 
   if (maxMo !== Infinity) {
     const cutoff  = new Date(Date.now() - maxMo * 24*60*60*1000);
-    const trimmed = full.filter(function(d){ return new Date(d.date) >= cutoff; });
+    /* Use savedAt (entry timestamp) not d.date (reporting month) */
+    const trimmed = full.filter(function(d){ return new Date(d.savedAt||Date.now()) >= cutoff; });
     if (trimmed.length < full.length) {
       const backup        = window.businessData;
       window.businessData = trimmed;
