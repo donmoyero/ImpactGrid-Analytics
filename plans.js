@@ -1,12 +1,15 @@
 /* ================================================================
-   IMPACTGRID PLAN SYSTEM v5.0 — plans.js
+   IMPACTGRID PLAN SYSTEM v5.1 — plans.js
 
    Architecture:
-   - sessions    : one full analysis run (addData → view Charts/AI/Report)
+   - sessions    : one full analysis run per 30-day period
    - aiQuestions : total AI chat messages per month — soft stop after limit
    - forecasts   : forecast generations per month
    - pdfs        : PDF exports per month
-   - dataDays    : days of records retained; Basic=7d, Professional=180d, Enterprise=∞
+   - dataDays    : days of records retained (Basic=7, Pro=180, Enterprise=∞)
+   
+   Sessions reset every 30 days from first use. Logout/login NEVER
+   resets sessions — they are always read live from Supabase.
 ================================================================ */
 
 const IMPACTGRID_ADMIN_ID = "303580e9-38c8-450b-90e0-82045e0b5c27";
@@ -25,10 +28,10 @@ const PLAN_CONFIG = {
     label:         "Basic",
     price:         "Free",
     color:         "#a0b0cc",
-    sessions:      3,        /* 3 full analysis runs per 30 days            */
-    aiQuestions:   10,       /* 10 AI questions — soft stop (nudge not lock) */
-    forecasts:     3,        /* 3 forecast generations per 30 days          */
-    pdfs:          0,        /* no PDF export on free plan                  */
+    sessions:      3,
+    aiQuestions:   10,
+    forecasts:     3,
+    pdfs:          0,
     reportHistory: 3,
     forecastYears: 1,
     fileImport:    false,
@@ -37,9 +40,8 @@ const PLAN_CONFIG = {
     excelExport:   false,
     priorityAI:    false,
     multiProfile:  false,
-    dataMonths:    0,   /* unused — see dataDays */
     dataDays:      7,
-    dataWarnDays:  7,
+    dataWarnDays:  2,
     trialDays:     0
   },
 
@@ -59,7 +61,6 @@ const PLAN_CONFIG = {
     excelExport:   false,
     priorityAI:    false,
     multiProfile:  false,
-    dataMonths:    0,   /* unused — see dataDays */
     dataDays:      180,
     dataWarnDays:  0,
     trialDays:     30
@@ -81,7 +82,7 @@ const PLAN_CONFIG = {
     excelExport:   true,
     priorityAI:    true,
     multiProfile:  true,
-    dataMonths:    Infinity,
+    dataDays:      Infinity,
     dataWarnDays:  0,
     trialDays:     30
   },
@@ -102,7 +103,6 @@ const PLAN_CONFIG = {
     excelExport:   true,
     priorityAI:    true,
     multiProfile:  true,
-    dataMonths:    Infinity,
     dataDays:      Infinity,
     dataWarnDays:  0,
     trialDays:     0
@@ -118,7 +118,7 @@ window.aiMemoryContext  = "";
 window.usageThisMonth   = { sessions: 0, aiQuestions: 0, forecasts: 0, pdfs: 0 };
 window.usagePeriodStart = null;
 
-/* Session lifecycle flags */
+/* Session lifecycle flags — in-memory only, just for current page load */
 window.__igSessionOpen     = false;
 window.__igSessionConsumed = false;
 
@@ -148,7 +148,9 @@ async function initPlanSystem() {
 
     if (!planRow) planRow = await createUserPlanRow(session.user.id, supabase);
 
-    window.currentPlan      = planRow.plan || "basic";
+    /* Map "analyst" rows (old name) to "basic" */
+    window.currentPlan = (planRow.plan === "analyst" ? "basic" : planRow.plan) || "basic";
+
     window.usagePeriodStart = planRow.usage_period_start
       ? new Date(planRow.usage_period_start) : new Date();
 
@@ -157,6 +159,7 @@ async function initPlanSystem() {
     periodEnd.setDate(periodEnd.getDate() + 30);
 
     if (now > periodEnd) {
+      /* 30-day period expired — reset counters in DB and memory */
       window.usageThisMonth   = { sessions: 0, aiQuestions: 0, forecasts: 0, pdfs: 0 };
       window.usagePeriodStart = now;
       await supabase.from("user_plans").update({
@@ -165,6 +168,7 @@ async function initPlanSystem() {
         usage_period_start: now.toISOString()
       }).eq("user_id", session.user.id);
     } else {
+      /* Load real counts from DB — this is what shows on login */
       window.usageThisMonth = {
         sessions:    planRow.sessions_used     || 0,
         aiQuestions: planRow.ai_questions_used || 0,
@@ -173,13 +177,17 @@ async function initPlanSystem() {
       };
     }
 
+    /* Reset per-page-load session flags */
+    window.__igSessionOpen     = false;
+    window.__igSessionConsumed = false;
+
     applyPlanUI();
     showTrialBannerIfNeeded(planRow);
     await loadUserData();
     await buildAIMemoryContext();
     renderReportHistory();
     checkDataExpiry();
-    /* Re-render usage bar AFTER all data loaded to show accurate DB counts */
+    /* Final usage bar refresh after everything is loaded */
     updateUsageBar();
 
   } catch(e) { console.error("Plan init error:", e); }
@@ -243,31 +251,35 @@ async function incrementUsage(type) {
 
 /* ================================================================
    SESSION LIFECYCLE
-   Basic plan only. Professional/Enterprise: sessions = Infinity, no gating.
+   Basic plan only. Professional/Enterprise: sessions = Infinity.
 
-   igSessionStart() — call inside addData() hook in index.html
-     Returns false if all sessions used this month (shows modal).
-     Returns true and opens a session slot.
+   igSessionStart() — called when user clicks "+ Add Record"
+     Reads LIVE count from Supabase every time — logout/login safe.
+     Returns false + shows modal if all 3 sessions used this month.
 
-   igSessionClose() — call when Charts / AI / Report section opens.
-     Consumes the open session slot (increments sessions_used).
+   igSessionClose() — called when user opens Charts/AI/Report/Risk.
+     Increments sessions_used in DB. __igSessionConsumed prevents
+     double-counting within the same page load only.
 ================================================================ */
 async function igSessionStart() {
   if (window.isAdmin) return true;
   if (window.currentPlan !== "basic") return true;
 
-  /* Re-fetch live count from Supabase so logout/login never resets it */
+  /* Always read live from Supabase — never trust in-memory for gate checks */
   try {
     const { data: planRow } = await window.supabaseClient
-      .from("user_plans").select("sessions_used, usage_period_start")
-      .eq("user_id", window.currentUser.id).single();
+      .from("user_plans")
+      .select("sessions_used, usage_period_start")
+      .eq("user_id", window.currentUser.id)
+      .single();
+
     if (planRow) {
-      /* Respect 30-day reset window */
       const periodStart = new Date(planRow.usage_period_start || Date.now());
       const periodEnd   = new Date(periodStart);
       periodEnd.setDate(periodEnd.getDate() + 30);
+
       if (new Date() > periodEnd) {
-        /* Period expired — reset in Supabase and in memory */
+        /* Period expired — reset */
         window.usageThisMonth.sessions = 0;
         window.usagePeriodStart = new Date();
         await window.supabaseClient.from("user_plans").update({
@@ -275,8 +287,9 @@ async function igSessionStart() {
           usage_period_start: new Date().toISOString()
         }).eq("user_id", window.currentUser.id);
       } else {
-        /* Always sync from DB — logout/login preserves real count */
+        /* Sync real count into memory */
         window.usageThisMonth.sessions = planRow.sessions_used || 0;
+        updateUsageBar();
       }
     }
   } catch(e) { /* non-fatal — fall through to in-memory value */ }
@@ -290,16 +303,16 @@ async function igSessionStart() {
   }
 
   window.__igSessionOpen     = true;
-  window.__igSessionConsumed = false; /* reset so igSessionClose can fire */
+  window.__igSessionConsumed = false;
   return true;
 }
 
 async function igSessionClose() {
   if (window.isAdmin) return;
   if (window.currentPlan !== "basic") return;
-  if (!window.__igSessionOpen) return;   /* no open session to close */
+  if (!window.__igSessionOpen || window.__igSessionConsumed) return;
   window.__igSessionOpen     = false;
-  window.__igSessionConsumed = true;     /* prevent double-fire within same page load */
+  window.__igSessionConsumed = true;
   await incrementUsage("sessions");
   updateUsageBar();
 }
@@ -324,14 +337,11 @@ function _showSessionLimitModal(used, limit) {
 
 /* ================================================================
    AI QUESTION GATING — soft stop at 10 (Basic plan)
-   Returns { allowed: true, softStop: bool }
-   softStop = true → append upgrade nudge banner under response.
 ================================================================ */
 async function checkAIQuestion() {
   if (window.isAdmin) return { allowed: true, softStop: false };
   const limit = getLimit("aiQuestions");
   if (limit === Infinity) return { allowed: true, softStop: false };
-
   await incrementUsage("aiQuestions");
   const nowUsed = getUsed("aiQuestions");
   const softStop = nowUsed > limit;
@@ -342,10 +352,9 @@ function aiUpgradeNudge() {
   const days = getDaysUntilReset();
   return '<div style="margin-top:14px;padding:12px 16px;background:linear-gradient(135deg,rgba(176,125,46,0.08),rgba(212,160,67,0.04));border:1px solid rgba(176,125,46,0.22);border-radius:10px;font-size:12px;font-family:\'DM Sans\',sans-serif;color:var(--text-secondary);">' +
     '<strong style="color:var(--gold);display:block;margin-bottom:5px;">⚡ You\'ve reached your 10 free AI questions this month</strong>' +
-    'You can keep asking — your data is still here and responses continue. Upgrade to ' +
-    '<a href="' + STRIPE_LINKS.professional + '" target="_blank" style="color:var(--gold);text-decoration:underline;">Professional</a> ' +
+    'Upgrade to <a href="' + STRIPE_LINKS.professional + '" target="_blank" style="color:var(--gold);text-decoration:underline;">Professional</a> ' +
     'for unlimited AI questions plus 10 sessions, forecasts, and PDF exports per month.' +
-    '<span style="display:block;margin-top:6px;font-size:11px;color:var(--text-muted);">⟳ Free questions reset in ' +
+    '<span style="display:block;margin-top:6px;font-size:11px;color:var(--text-muted);">⟳ Resets in ' +
     days + ' day' + (days !== 1 ? 's' : '') + '</span></div>';
 }
 
@@ -361,23 +370,23 @@ async function checkForecast() {
 }
 
 /* ================================================================
-   DATA EXPIRY — Basic plan (1-month retention)
-   Day 23: yellow warning banner (7 days before expiry)
-   Day 30: red expiry notice, data hidden
-   Day 37: hard delete from Supabase (7-day grace period)
+   DATA EXPIRY — Basic plan (7-day retention)
+   Day 5: yellow warning (2 days before expiry)
+   Day 7: red expiry notice, data hidden
+   Day 14: hard delete from Supabase (7-day grace period)
 ================================================================ */
 async function checkDataExpiry() {
   if (window.isAdmin) return;
-  if (window.currentPlan !== "basic") return;  /* only Basic has expiry */
+  if (window.currentPlan !== "basic") return;
   if (!window.businessData || !window.businessData.length) return;
 
   const retainDays = PLAN_CONFIG.basic.dataDays || 7;
   const warnDays   = PLAN_CONFIG.basic.dataWarnDays || 2;
   const graceDays  = 7;
 
-  const dates    = window.businessData.map(function(d) { return new Date(d.date); });
-  const oldest   = new Date(Math.min.apply(null, dates));
-  const ageDays  = Math.floor((Date.now() - oldest.getTime()) / 86400000);
+  const dates   = window.businessData.map(function(d) { return new Date(d.date); });
+  const oldest  = new Date(Math.min.apply(null, dates));
+  const ageDays = Math.floor((Date.now() - oldest.getTime()) / 86400000);
   const daysLeft = retainDays - ageDays;
 
   if (daysLeft <= 0) {
@@ -398,15 +407,13 @@ function _showDataExpiryNotice(expired, daysLeft) {
     banner.style.cssText = "display:flex;align-items:flex-start;gap:12px;margin-top:14px;padding:14px 18px;background:linear-gradient(135deg,rgba(255,77,109,0.08),rgba(255,77,109,0.04));border:1px solid rgba(255,77,109,0.28);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-secondary);";
     banner.innerHTML = "<span style='font-size:20px;flex-shrink:0;'>🗑️</span><div>" +
       "<strong style='color:#ff4d6d;display:block;margin-bottom:4px;'>Your data has expired</strong>" +
-      "Your free plan stores data for 30 days. Your records are hidden and will be permanently deleted in 7 days unless you upgrade." +
-      "<div style='margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;'>" +
-      "<a href='" + STRIPE_LINKS.professional + "' target='_blank' style='padding:7px 16px;background:linear-gradient(135deg,#8a6020,#d4a043);color:#fff;border-radius:8px;text-decoration:none;font-size:12px;font-weight:700;'>Upgrade to recover data</a>" +
-      "</div></div>";
+      "Your free plan stores data for 7 days. Your records are hidden and will be permanently deleted in 7 days unless you upgrade." +
+      "<div style='margin-top:10px;'><a href='" + STRIPE_LINKS.professional + "' target='_blank' style='padding:7px 16px;background:linear-gradient(135deg,#8a6020,#d4a043);color:#fff;border-radius:8px;text-decoration:none;font-size:12px;font-weight:700;'>Upgrade to recover data</a></div></div>";
   } else {
     banner.style.cssText = "display:flex;align-items:flex-start;gap:12px;margin-top:14px;padding:14px 18px;background:linear-gradient(135deg,rgba(200,169,110,0.08),rgba(200,169,110,0.03));border:1px solid rgba(200,169,110,0.25);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-secondary);";
     banner.innerHTML = "<span style='font-size:20px;flex-shrink:0;'>⚠️</span><div>" +
       "<strong style='color:var(--gold);display:block;margin-bottom:4px;'>Your data expires in " + daysLeft + " day" + (daysLeft !== 1 ? "s" : "") + "</strong>" +
-      "The free Basic plan stores data for 30 days. Upgrade before expiry to keep all records and analysis history." +
+      "The free Basic plan stores data for 7 days. Upgrade before expiry to keep all records and history." +
       "<div style='margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;'>" +
       "<a href='" + STRIPE_LINKS.professional + "' target='_blank' style='padding:7px 16px;background:linear-gradient(135deg,#8a6020,#d4a043);color:#fff;border-radius:8px;text-decoration:none;font-size:12px;font-weight:700;'>Upgrade — £8.99/mo</a>" +
       "<button onclick=\"document.getElementById('dataExpiryBanner').style.display='none'\" style='padding:7px 14px;background:transparent;border:1px solid rgba(200,169,110,0.25);color:var(--text-muted);border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;'>Dismiss</button>" +
@@ -438,14 +445,12 @@ function showLimitModal(type) {
   const labels = { sessions:"analysis sessions", aiQuestions:"AI questions", forecasts:"forecasts", pdfs:"PDF exports" };
   const modal = document.getElementById("limitModal");
   if (!modal) return;
-
   const isNoPDF = (type === "pdfs" && limit === 0);
   document.getElementById("limitModalTitle").textContent = isNoPDF ? "PDF Export Unavailable" : "Monthly Limit Reached";
   document.getElementById("limitModalBody").innerHTML = isNoPDF
     ? "PDF report export is not available on the <strong>" + plan.label + "</strong> plan.<br><br>Upgrade to <strong>Professional</strong> for 10 PDF exports per month."
-    : "You've used <strong style='color:var(--gold)'>" + used + " of " + limit + " " + (labels[type]||type) + "</strong> on your <strong>" + plan.label + "</strong> plan this month.<br><br>" +
+    : "You've used <strong style='color:var(--gold)'>" + used + " of " + limit + " " + (labels[type]||type) + "</strong> this month.<br><br>" +
       "<span style='color:var(--success);font-size:13px;'>⟳ Resets in <strong>" + days + " day" + (days !== 1 ? "s" : "") + "</strong></span>";
-
   document.getElementById("limitUpgradeBtn").style.display = (window.currentPlan === "enterprise") ? "none" : "block";
   document.getElementById("limitUpgradeBtn").href = (window.currentPlan === "basic") ? STRIPE_LINKS.professional : STRIPE_LINKS.enterprise;
   document.getElementById("limitUpgradeBtn").textContent = (window.currentPlan === "basic") ? "Upgrade to Professional — £8.99/mo" : "Upgrade to Enterprise — £13.99/mo";
@@ -464,6 +469,7 @@ function updateUsageBar() {
   const bar = document.getElementById("usageBar");
   if (!bar || window.isAdmin) return;
   const plan   = PLAN_CONFIG[window.currentPlan];
+  if (!plan) return;
   const types  = ["sessions","aiQuestions","forecasts","pdfs"];
   const labels = ["Sessions","AI Qs","Forecasts","PDFs"];
   bar.innerHTML = types.map(function(t, i) {
@@ -488,29 +494,22 @@ function updateUsageBar() {
 function showTrialBannerIfNeeded(planRow) {
   const banner = document.getElementById("trialBanner");
   if (!banner || window.isAdmin) return;
-
   const createdAt = new Date(planRow.created_at || Date.now());
   const trialEnd  = new Date(createdAt);
   trialEnd.setDate(trialEnd.getDate() + 30);
   const daysLeft  = Math.ceil((trialEnd - new Date()) / 86400000);
-
   if (daysLeft <= 0 || daysLeft > 30) return;
-
   const daysEl = document.getElementById("trialDaysLeft");
   if (daysEl) daysEl.textContent = daysLeft;
-
   const pct = Math.round((daysLeft / 30) * 100);
   const bar = document.getElementById("trialProgressBar");
   if (bar) bar.style.width = pct + "%";
-
   if (daysLeft <= 7) {
     banner.classList.add("tb-urgent");
     const titleEl = banner.querySelector(".tb-title");
-    if (titleEl) titleEl.innerHTML =
-      '<span class="tb-pulse"></span>Trial Ends in ' + daysLeft + ' Day' + (daysLeft !== 1 ? 's' : '') + ' — Upgrade to Keep Access';
+    if (titleEl) titleEl.innerHTML = '<span class="tb-pulse"></span>Trial Ends in ' + daysLeft + ' Day' + (daysLeft !== 1 ? 's' : '') + ' — Upgrade to Keep Access';
     const subEl = banner.querySelector(".tb-sub");
-    if (subEl) subEl.innerHTML =
-      'Your trial expires soon. Upgrade now to <strong>keep all your data and analysis history</strong> without interruption.';
+    if (subEl) subEl.innerHTML = 'Your trial expires soon. Upgrade now to <strong>keep all your data and analysis history</strong> without interruption.';
     if (!document.getElementById("trialUpgradeBtn")) {
       const cta = document.createElement("a");
       cta.id = "trialUpgradeBtn";
@@ -521,7 +520,6 @@ function showTrialBannerIfNeeded(planRow) {
       banner.querySelector(".tb-inner").appendChild(cta);
     }
   }
-
   banner.style.display = "block";
 }
 
@@ -563,10 +561,7 @@ function applyPlanUI() {
       btn.disabled    = true;
       btn.style.opacity = "0.6";
       btn.style.cursor  = "not-allowed";
-      if (btn.tagName === "A") {
-        btn.removeAttribute("href");
-        btn.onclick = function(e) { e.preventDefault(); };
-      }
+      if (btn.tagName === "A") { btn.removeAttribute("href"); btn.onclick = function(e) { e.preventDefault(); }; }
     }
   });
 
@@ -583,9 +578,9 @@ async function saveUserData() {
       user_id:        window.currentUser.id,
       data:           JSON.stringify(window.businessData || []),
       currency:       window.currentCurrency || "GBP",
-      business_type:  (document.getElementById("businessType")     || {}).value || "other",
-      start_date:     (document.getElementById("businessStartDate")|| {}).value || "",
-      reporting_date: (document.getElementById("reportingDate")    || {}).value || "",
+      business_type:  (document.getElementById("businessType")      || {}).value || "other",
+      start_date:     (document.getElementById("businessStartDate") || {}).value || "",
+      reporting_date: (document.getElementById("reportingDate")     || {}).value || "",
       updated_at:     new Date().toISOString()
     };
     const { error } = await window.supabaseClient.from("user_data").upsert(payload, { onConflict: "user_id" });
@@ -599,25 +594,14 @@ async function loadUserData() {
   try {
     const { data, error } = await window.supabaseClient.from("user_data")
       .select("*").eq("user_id", window.currentUser.id).single();
-    if (error) { if (error.code === "PGRST116") console.log("No saved data yet."); else console.error("Load error:", error.message); return; }
-    if (!data || !data.data) return;
-    const parsed = JSON.parse(data.data);
-    if (!parsed || !parsed.length) return;
-
-    /* Map all records from Supabase */
-    let loaded = parsed.map(function(d) {
-      return { date: new Date(d.date), revenue: Number(d.revenue), expenses: Number(d.expenses), profit: Number(d.profit) };
-    });
-
-    /* Apply plan retention window on load — filter records older than dataDays */
-    const planCfg = PLAN_CONFIG[window.currentPlan] || PLAN_CONFIG.basic;
-    const maxDays  = planCfg.dataDays != null ? planCfg.dataDays : 7;
-    if (maxDays !== Infinity) {
-      const cutoff = new Date(Date.now() - maxDays * 24 * 60 * 60 * 1000);
-      loaded = loaded.filter(function(d) { return new Date(d.date) >= cutoff; });
+    if (error) {
+      if (error.code === "PGRST116") console.log("No saved data yet.");
+      else console.error("Load error:", error.message);
+      return;
     }
+    if (!data) return;
 
-    window.businessData = loaded;
+    /* Restore profile fields regardless of whether there is financial data */
     if (data.currency) {
       window.currentCurrency = data.currency;
       const sel = document.getElementById("currencySelector");
@@ -626,21 +610,43 @@ async function loadUserData() {
     if (data.business_type) { const bt = document.getElementById("businessType"); if (bt) bt.value = data.business_type; }
     if (data.start_date)    { const sd = document.getElementById("businessStartDate"); if (sd) sd.value = data.start_date; }
     if (data.reporting_date){ const rd = document.getElementById("reportingDate"); if (rd) rd.value = data.reporting_date; }
-    /* Sync local businessData reference used by script.js */
-    if (typeof businessData !== "undefined") {
-      businessData.length = 0;
-      (window.businessData || []).forEach(function(d){ businessData.push(d); });
+
+    /* Restore financial records */
+    if (data.data) {
+      const parsed = JSON.parse(data.data);
+      if (parsed && parsed.length) {
+        let loaded = parsed.map(function(d) {
+          return { date: new Date(d.date), revenue: Number(d.revenue), expenses: Number(d.expenses), profit: Number(d.profit) };
+        });
+
+        /* Filter by plan's day retention window */
+        const planCfg = PLAN_CONFIG[window.currentPlan] || PLAN_CONFIG.basic;
+        const maxDays = planCfg.dataDays != null ? planCfg.dataDays : 7;
+        if (maxDays !== Infinity) {
+          const cutoff = new Date(Date.now() - maxDays * 24 * 60 * 60 * 1000);
+          loaded = loaded.filter(function(d) { return new Date(d.date) >= cutoff; });
+        }
+
+        window.businessData = loaded;
+
+        /* Sync into script.js local businessData array if it exists */
+        if (typeof businessData !== "undefined") {
+          businessData.length = 0;
+          loaded.forEach(function(d) { businessData.push(d); });
+        }
+      }
     }
 
-    /* Re-run all UI — charts, matrix, risk, records, AI greeting */
-    function _igRefreshUI() {
+    /* Refresh all UI */
+    if (typeof updateAll          === "function") updateAll();
+    if (typeof renderRecordsPanel === "function") renderRecordsPanel();
+    /* Retry after 600ms in case script.js UI isn't ready yet */
+    setTimeout(function() {
       if (typeof updateAll          === "function") updateAll();
       if (typeof renderRecordsPanel === "function") renderRecordsPanel();
-      showAIMemoryGreeting();
-    }
-    _igRefreshUI();
-    /* Retry after 600ms in case script.js UI isn't ready yet */
-    setTimeout(_igRefreshUI, 600);
+    }, 600);
+
+    showAIMemoryGreeting();
   } catch(e) { console.error("Load exception:", e); }
 }
 
@@ -787,6 +793,8 @@ async function handlePDFClick() {
 
 /* ================================================================
    PROFILE FIELD AUTO-SAVE
+   Saves businessStartDate, reportingDate, businessType, currency
+   whenever they change — debounced 800ms.
 ================================================================ */
 document.addEventListener("DOMContentLoaded", function() {
   var saveTimer = null;
@@ -797,7 +805,10 @@ document.addEventListener("DOMContentLoaded", function() {
   }
   ["businessStartDate","reportingDate","businessType","currencySelector"].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) { el.addEventListener("change", debouncedSave); el.addEventListener("input", debouncedSave); }
+    if (el) {
+      el.addEventListener("change", debouncedSave);
+      el.addEventListener("input",  debouncedSave);
+    }
   });
 });
 
@@ -806,7 +817,7 @@ document.addEventListener("DOMContentLoaded", function() {
 ================================================================ */
 window.initPlanSystem       = initPlanSystem;
 window.saveUserData         = saveUserData;
-window.__igCoreSave          = saveUserData; /* used by records-panel.js override */
+window.__igCoreSave         = saveUserData;
 window.loadUserData         = loadUserData;
 window.canUse               = canUse;
 window.incrementUsage       = incrementUsage;
