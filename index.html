@@ -606,63 +606,345 @@
          SECTION: UPGRADE / PRICING
     ============================================ -->
     <section id="upgrade" class="page-section">
-      <section class="card">
-        <h2>Choose Your Plan</h2>
-        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:32px;line-height:1.7;max-width:560px;">
-          Unlock the full power of ImpactGrid IFSRM. All plans include access to the AI Financial Intelligence engine.
-        </p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;">
-          <div class="pricing-card" id="pricingAnalyst">
-            <div class="pricing-tier">Basic</div>
-            <div class="pricing-price">Free</div>
-            <div class="pricing-desc">Perfect for getting started</div>
-            <ul class="pricing-features">
-              <li>✓ 1 month data storage</li>
-              <li>✓ Manual data entry</li>
-              <li>✓ Basic charts</li>
-              <li>✓ 5 AI questions/day</li>
-              <li>✓ 1-year forecasting</li>
-              <li style="color:var(--text-muted);">✗ File import</li>
-              <li style="color:var(--text-muted);">✗ PDF export</li>
-              <li style="color:var(--text-muted);">✗ Risk assessment</li>
+
+      <style>
+        /* ── Pricing page styles ── */
+        .pricing-page-wrap { max-width: 1060px; margin: 0 auto; padding: 8px 0 40px; }
+
+        .pricing-eyebrow {
+          display: flex; align-items: center; gap: 10px;
+          margin-bottom: 18px;
+        }
+        .pricing-eyebrow-dot {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: var(--gold, #b07d2e);
+          box-shadow: 0 0 10px rgba(176,125,46,0.7);
+          animation: pulse-dot 2s ease-in-out infinite;
+        }
+        .pricing-eyebrow-label {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10px; letter-spacing: 0.18em;
+          text-transform: uppercase; color: var(--gold, #b07d2e);
+        }
+        .pricing-headline {
+          font-family: 'Fraunces', serif;
+          font-size: clamp(28px, 4vw, 42px);
+          font-weight: 700; line-height: 1.12;
+          letter-spacing: -0.8px;
+          color: var(--text-primary, #0f1629);
+          margin-bottom: 14px;
+        }
+        .pricing-headline em { font-style: italic; font-weight: 300; color: var(--gold, #b07d2e); }
+        .pricing-subhead {
+          font-size: 14px; color: var(--text-secondary, #4a5578);
+          line-height: 1.7; max-width: 520px; margin-bottom: 48px;
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        /* ── Card grid ── */
+        .plans-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 20px;
+          align-items: start;
+        }
+        @media (max-width: 860px) { .plans-grid { grid-template-columns: 1fr; max-width: 440px; } }
+
+        .plan-card {
+          border-radius: 20px;
+          padding: 32px 28px 28px;
+          position: relative;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          display: flex; flex-direction: column;
+          background: var(--bg-surface, #fff);
+          border: 1px solid var(--border, #e2e6f0);
+          box-shadow: 0 4px 24px rgba(15,22,41,0.06);
+        }
+        .plan-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 16px 48px rgba(15,22,41,0.10);
+        }
+
+        /* Featured card */
+        .plan-card.featured {
+          background: #0f1629;
+          border-color: rgba(200,169,110,0.35);
+          box-shadow: 0 20px 60px rgba(15,22,41,0.25), 0 0 0 1px rgba(200,169,110,0.15);
+          transform: translateY(-8px) scale(1.02);
+          z-index: 2;
+        }
+        .plan-card.featured:hover {
+          transform: translateY(-12px) scale(1.02);
+          box-shadow: 0 28px 72px rgba(15,22,41,0.3);
+        }
+        .plan-card.featured::before {
+          content: '';
+          position: absolute; top: 0; left: 10%; right: 10%; height: 2px;
+          background: linear-gradient(to right, transparent, #d4a043, transparent);
+          border-radius: 2px;
+        }
+
+        /* Popular badge */
+        .plan-badge-popular {
+          position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+          background: linear-gradient(135deg, #8a6020, #d4a043);
+          color: #fff; font-family: 'JetBrains Mono', monospace;
+          font-size: 9px; font-weight: 600;
+          letter-spacing: 0.14em; text-transform: uppercase;
+          padding: 5px 16px; border-radius: 20px;
+          box-shadow: 0 4px 14px rgba(176,125,46,0.4);
+          white-space: nowrap;
+        }
+
+        /* Plan name */
+        .plan-name {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10px; letter-spacing: 0.14em;
+          text-transform: uppercase; margin-bottom: 12px;
+          color: var(--text-muted, #8b94b5);
+        }
+        .plan-card.featured .plan-name { color: rgba(200,169,110,0.7); }
+
+        /* Price */
+        .plan-price {
+          font-family: 'Fraunces', serif;
+          font-size: 46px; font-weight: 700;
+          line-height: 1; letter-spacing: -2px;
+          color: var(--text-primary, #0f1629);
+          margin-bottom: 4px;
+        }
+        .plan-card.featured .plan-price { color: #fff; }
+        .plan-price-period {
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px; font-weight: 400;
+          letter-spacing: 0; color: var(--text-muted, #8b94b5);
+        }
+        .plan-card.featured .plan-price-period { color: rgba(255,255,255,0.4); }
+
+        .plan-tagline {
+          font-size: 12.5px; color: var(--text-muted, #8b94b5);
+          margin: 10px 0 24px; font-family: 'DM Sans', sans-serif;
+          line-height: 1.5;
+        }
+        .plan-card.featured .plan-tagline { color: rgba(255,255,255,0.45); }
+
+        /* Divider */
+        .plan-divider {
+          height: 1px; background: var(--border, #e2e6f0);
+          margin: 0 0 22px;
+        }
+        .plan-card.featured .plan-divider { background: rgba(255,255,255,0.08); }
+
+        /* Features list */
+        .plan-features {
+          list-style: none; padding: 0; margin: 0 0 28px; flex: 1;
+          display: flex; flex-direction: column; gap: 11px;
+        }
+        .plan-features li {
+          display: flex; align-items: flex-start; gap: 10px;
+          font-size: 13px; font-family: 'DM Sans', sans-serif;
+          color: var(--text-secondary, #4a5578); line-height: 1.4;
+        }
+        .plan-card.featured .plan-features li { color: rgba(255,255,255,0.7); }
+        .plan-feat-icon {
+          flex-shrink: 0; width: 18px; height: 18px;
+          border-radius: 50%; display: flex; align-items: center; justify-content: center;
+          font-size: 10px; margin-top: 1px;
+        }
+        .feat-yes { background: rgba(5,150,105,0.12); color: #059669; }
+        .feat-no  { background: rgba(139,148,181,0.1); color: var(--text-muted, #8b94b5); }
+        .plan-card.featured .feat-yes { background: rgba(45,212,160,0.15); color: #2dd4a0; }
+        .plan-card.featured .feat-no  { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.25); }
+        .plan-features li.feat-no-item { opacity: 0.55; }
+
+        /* Limit badge */
+        .plan-limit-badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 5px 11px;
+          background: rgba(176,125,46,0.08);
+          border: 1px solid rgba(176,125,46,0.2);
+          border-radius: 20px; margin-bottom: 20px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10px; color: var(--gold, #b07d2e);
+          letter-spacing: 0.06em;
+        }
+        .plan-card.featured .plan-limit-badge {
+          background: rgba(200,169,110,0.1);
+          border-color: rgba(200,169,110,0.25);
+          color: #d4a043;
+        }
+
+        /* CTA buttons */
+        .plan-cta {
+          display: block; width: 100%; padding: 13px;
+          border-radius: 11px; text-align: center;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px; font-weight: 700;
+          text-decoration: none; cursor: pointer;
+          border: none; transition: all 0.18s ease;
+          letter-spacing: 0.01em;
+        }
+        .plan-cta-free {
+          background: transparent;
+          border: 1.5px solid var(--border, #e2e6f0);
+          color: var(--text-secondary, #4a5578);
+        }
+        .plan-cta-free:hover { border-color: var(--gold, #b07d2e); color: var(--gold, #b07d2e); }
+        .plan-cta-free:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .plan-cta-upgrade {
+          background: linear-gradient(135deg, #f0f2f8, #e6e9f2);
+          color: #0f1629;
+          border: 1px solid rgba(15,22,41,0.08);
+          box-shadow: 0 2px 8px rgba(15,22,41,0.06);
+        }
+        .plan-cta-upgrade:hover {
+          background: linear-gradient(135deg, #e6e9f2, #dce0ef);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 16px rgba(15,22,41,0.10);
+        }
+
+        .plan-cta-featured {
+          background: linear-gradient(135deg, #8a6020, #d4a043, #b07d2e);
+          color: #fff;
+          box-shadow: 0 6px 24px rgba(176,125,46,0.35);
+        }
+        .plan-cta-featured:hover {
+          filter: brightness(1.08);
+          transform: translateY(-1px);
+          box-shadow: 0 10px 32px rgba(176,125,46,0.45);
+        }
+
+        /* Guarantee strip */
+        .pricing-guarantee {
+          margin-top: 44px; padding: 20px 28px;
+          background: var(--bg-surface, #fff);
+          border: 1px solid var(--border, #e2e6f0);
+          border-radius: 16px;
+          display: flex; align-items: center; gap: 20px;
+          flex-wrap: wrap;
+        }
+        .pricing-guarantee-icon {
+          font-size: 28px; flex-shrink: 0;
+        }
+        .pricing-guarantee-text {
+          flex: 1; min-width: 200px;
+        }
+        .pricing-guarantee-text strong {
+          display: block;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px; font-weight: 700;
+          color: var(--text-primary, #0f1629);
+          margin-bottom: 4px;
+        }
+        .pricing-guarantee-text span {
+          font-size: 12.5px; color: var(--text-muted, #8b94b5);
+          font-family: 'DM Sans', sans-serif; line-height: 1.6;
+        }
+        .pricing-trust-items {
+          display: flex; gap: 20px; flex-wrap: wrap;
+        }
+        .pricing-trust-item {
+          display: flex; align-items: center; gap: 7px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10.5px; color: var(--text-muted, #8b94b5);
+          letter-spacing: 0.04em;
+        }
+        .pricing-trust-item::before {
+          content: '✓'; color: #059669; font-weight: 700;
+        }
+      </style>
+
+      <div class="pricing-page-wrap">
+        <!-- Header -->
+        <div class="pricing-eyebrow">
+          <div class="pricing-eyebrow-dot"></div>
+          <span class="pricing-eyebrow-label">Pricing Plans</span>
+        </div>
+        <h1 class="pricing-headline">Simple pricing.<br><em>Serious</em> analytics.</h1>
+        <p class="pricing-subhead">Start free, scale when you're ready. Every plan includes the full ImpactGrid AI Financial Intelligence engine — no hidden fees, no lock-in.</p>
+
+        <!-- Plans grid -->
+        <div class="plans-grid">
+
+          <!-- ── BASIC ── -->
+          <div class="plan-card" id="pricingAnalyst">
+            <div class="plan-name">Basic</div>
+            <div class="plan-price">Free<span class="plan-price-period"></span></div>
+            <div class="plan-tagline">Try ImpactGrid with no commitment</div>
+            <div class="plan-limit-badge">⊘ 3 sessions/month</div>
+            <div class="plan-divider"></div>
+            <ul class="plan-features">
+              <li><span class="plan-feat-icon feat-yes">✓</span>1 month data storage</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Manual data entry</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Basic revenue charts</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>3 AI questions / session</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>1-year forecasting</li>
+              <li class="feat-no-item"><span class="plan-feat-icon feat-no">✗</span>File import</li>
+              <li class="feat-no-item"><span class="plan-feat-icon feat-no">✗</span>PDF report export</li>
+              <li class="feat-no-item"><span class="plan-feat-icon feat-no">✗</span>Risk assessment</li>
             </ul>
-            <button class="pricing-btn pricing-current" disabled>Current Plan</button>
+            <button class="plan-cta plan-cta-free" id="basicPlanBtn" disabled>Current Plan</button>
           </div>
-          <div class="pricing-card pricing-featured" id="pricingProfessional">
-            <div class="pricing-popular">MOST POPULAR</div>
-            <div class="pricing-tier">Professional</div>
-            <div class="pricing-price">£8.99<span style="font-size:14px;font-weight:400;">/mo</span></div>
-            <div class="pricing-desc">For growing businesses</div>
-            <ul class="pricing-features">
-              <li>✓ 12 months data storage</li>
-              <li>✓ File import (Excel, CSV)</li>
-              <li>✓ All charts + matrix</li>
-              <li>✓ Unlimited AI questions</li>
-              <li>✓ 3-year forecasting</li>
-              <li>✓ Risk assessment</li>
-              <li>✓ PDF report export</li>
-              <li style="color:var(--text-muted);">✗ Multi-business profiles</li>
+
+          <!-- ── PROFESSIONAL (featured) ── -->
+          <div class="plan-card featured" id="pricingProfessional">
+            <div class="plan-badge-popular">Most Popular</div>
+            <div class="plan-name" style="color:rgba(200,169,110,0.7);">Professional</div>
+            <div class="plan-price" style="color:#fff;">£8.99<span class="plan-price-period" style="color:rgba(255,255,255,0.4);">/mo</span></div>
+            <div class="plan-tagline">Everything you need to grow with confidence</div>
+            <div class="plan-limit-badge">∞ Unlimited sessions</div>
+            <div class="plan-divider"></div>
+            <ul class="plan-features">
+              <li><span class="plan-feat-icon feat-yes">✓</span>12 months data storage</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>File import (Excel, CSV, PDF)</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>All charts + performance matrix</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Unlimited AI questions</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>3-year forecasting</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Full risk assessment</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>PDF report export</li>
+              <li class="feat-no-item"><span class="plan-feat-icon feat-no">✗</span>Multi-business profiles</li>
             </ul>
-            <a href="https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201" target="_blank" class="pricing-btn pricing-upgrade">Upgrade to Professional</a>
+            <a href="https://buy.stripe.com/aFa5kwaAg6Pedn64zC8N201" target="_blank" class="plan-cta plan-cta-featured">Upgrade to Professional</a>
           </div>
-          <div class="pricing-card" id="pricingEnterprise">
-            <div class="pricing-tier">Enterprise Intelligence</div>
-            <div class="pricing-price">£13.99<span style="font-size:14px;font-weight:400;">/mo</span></div>
-            <div class="pricing-desc">For serious SME analytics</div>
-            <ul class="pricing-features">
-              <li>✓ Unlimited data storage</li>
-              <li>✓ Everything in Professional</li>
-              <li>✓ 10-year forecasting</li>
-              <li>✓ Multi-business profiles</li>
-              <li>✓ Industry benchmarking</li>
-              <li>✓ Priority AI responses</li>
-              <li>✓ Excel export</li>
-              <li>✓ Advanced risk modelling</li>
+
+          <!-- ── ENTERPRISE ── -->
+          <div class="plan-card" id="pricingEnterprise">
+            <div class="plan-name">Enterprise</div>
+            <div class="plan-price">£13.99<span class="plan-price-period">/mo</span></div>
+            <div class="plan-tagline">Full-power analytics for serious SMEs</div>
+            <div class="plan-limit-badge">∞ Everything unlimited</div>
+            <div class="plan-divider"></div>
+            <ul class="plan-features">
+              <li><span class="plan-feat-icon feat-yes">✓</span>Unlimited data storage</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Everything in Professional</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>10-year forecasting</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Multi-business profiles</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Industry benchmarking</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Priority AI responses</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Excel export</li>
+              <li><span class="plan-feat-icon feat-yes">✓</span>Advanced risk modelling</li>
             </ul>
-            <a href="https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200" target="_blank" class="pricing-btn pricing-upgrade">Upgrade to Enterprise</a>
+            <a href="https://buy.stripe.com/8x29AM23Ka1qbeY5DG8N200" target="_blank" class="plan-cta plan-cta-upgrade">Upgrade to Enterprise</a>
+          </div>
+
+        </div>
+
+        <!-- Guarantee strip -->
+        <div class="pricing-guarantee">
+          <div class="pricing-guarantee-icon">🔒</div>
+          <div class="pricing-guarantee-text">
+            <strong>No risk. Cancel anytime.</strong>
+            <span>All paid plans are billed monthly with no long-term contract. Downgrade or cancel with one click — your data is always yours.</span>
+          </div>
+          <div class="pricing-trust-items">
+            <div class="pricing-trust-item">No credit card to start</div>
+            <div class="pricing-trust-item">Cancel anytime</div>
+            <div class="pricing-trust-item">Secure payments via Stripe</div>
           </div>
         </div>
-      </section>
+
+      </div>
     </section>
 
     <footer class="dashboard-footer">
