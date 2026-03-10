@@ -1599,17 +1599,6 @@ function _igApplyWraps() {
 
 /* Try immediately, then again after scripts load */
 _igApplyWraps();
-/* Override logout — save data BEFORE signing out so nothing is lost */
-window.logout = async function() {
-  try {
-    if (window.currentUser && (window.businessData||[]).length > 0) {
-      if (typeof saveUserData === 'function') await saveUserData();
-    }
-  } catch(e) { /* non-fatal */ }
-  if (window.supabaseClient) await window.supabaseClient.auth.signOut();
-  window.location.href = 'login.html';
-};
-
 /* Listen for data loaded from Supabase and force full UI refresh */
 document.addEventListener('igDataLoaded', function(e) {
   console.log('[ImpactGrid] igDataLoaded event — re-rendering with', e.detail.records, 'records');
@@ -1647,12 +1636,8 @@ document.addEventListener('visibilitychange', function() {
     if (typeof saveUserData === 'function') { saveUserData(); _igLastDataHash = _igDataHash(); }
   }
 });
-window.addEventListener('beforeunload', function() {
-  /* Only save if BOTH logged in AND currentUser exists — never save after signOut clears user */
-  if (window.__igLoggedIn && window.currentUser && (window.businessData||[]).length > 0) {
-    if (typeof saveUserData === 'function') saveUserData();
-  }
-});
+/* beforeunload save REMOVED — it fires after signOut clears businessData,
+   causing [] to be written to DB. Logout in auth.js saves explicitly before signOut. */
 
 /* Intercept section nav — guest gate + session close when results viewed */
 var _origShowSection = window.showSection;
