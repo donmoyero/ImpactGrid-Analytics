@@ -1599,6 +1599,17 @@ function _igApplyWraps() {
 
 /* Try immediately, then again after scripts load */
 _igApplyWraps();
+/* Override logout — save data BEFORE signing out so nothing is lost */
+window.logout = async function() {
+  try {
+    if (window.currentUser && (window.businessData||[]).length > 0) {
+      if (typeof saveUserData === 'function') await saveUserData();
+    }
+  } catch(e) { /* non-fatal */ }
+  if (window.supabaseClient) await window.supabaseClient.auth.signOut();
+  window.location.href = 'login.html';
+};
+
 /* Listen for data loaded from Supabase and force full UI refresh */
 document.addEventListener('igDataLoaded', function(e) {
   console.log('[ImpactGrid] igDataLoaded event — re-rendering with', e.detail.records, 'records');
@@ -1637,7 +1648,8 @@ document.addEventListener('visibilitychange', function() {
   }
 });
 window.addEventListener('beforeunload', function() {
-  if (window.__igLoggedIn && window.currentUser) {
+  /* Only save if BOTH logged in AND currentUser exists — never save after signOut clears user */
+  if (window.__igLoggedIn && window.currentUser && (window.businessData||[]).length > 0) {
     if (typeof saveUserData === 'function') saveUserData();
   }
 });
