@@ -456,7 +456,7 @@ function _showDataExpiryNotice(expired, daysLeft) {
 async function _hardDeleteExpiredData() {
   if (!window.currentUser) return;
   try {
-    window.businessData = [];
+    window.businessData.length = 0; /* mutate, never replace */
     await window.supabaseClient.from("user_data").upsert({
       user_id: window.currentUser.id, data: "[]", updated_at: new Date().toISOString()
     }, { onConflict: "user_id" });
@@ -619,9 +619,9 @@ async function saveUserData() {
         savedAt:  d.savedAt || now_ts
       };
     });
-    /* Backfill savedAt on window.businessData so it persists in memory too */
-    window.businessData = dataToSave.map(function(d) {
-      return { date: new Date(d.date), revenue: d.revenue, expenses: d.expenses, profit: d.profit, savedAt: d.savedAt };
+    /* Backfill savedAt on existing records in-place — never replace the array */
+    window.businessData.forEach(function(d, i) {
+      if (!d.savedAt && dataToSave[i]) d.savedAt = dataToSave[i].savedAt;
     });
 
     const payload = {
@@ -673,16 +673,13 @@ async function loadUserData() {
           };
         });
 
-        /* Records in Supabase are already trimmed to plan window at save time.
-           Load everything stored — no further filtering needed. */
-
-        window.businessData = loaded;
-
-        /* Sync into script.js local businessData array if it exists */
-        if (typeof businessData !== "undefined") {
-          businessData.length = 0;
-          loaded.forEach(function(d) { businessData.push(d); });
-        }
+        /* CRITICAL: mutate the existing array — NEVER replace it with assignment.
+           script.js does: var businessData = window.businessData
+           That's a reference to the original array object.
+           If we do window.businessData = loaded, script.js still holds the OLD empty array.
+           We must clear and repopulate the same array object in memory. */
+        window.businessData.length = 0;
+        loaded.forEach(function(d) { window.businessData.push(d); });
 
         console.log("[ImpactGrid] loadUserData: loaded", loaded.length, "records into businessData");
       }
@@ -690,15 +687,6 @@ async function loadUserData() {
 
     /* Refresh UI — retry at 300ms, 800ms, 1500ms to handle script.js timing */
     function _refreshUI() {
-      /* Always re-sync script.js local array from window.businessData */
-      if (window.businessData && window.businessData.length) {
-        if (typeof businessData !== "undefined") {
-          businessData.length = 0;
-          window.businessData.forEach(function(d) { businessData.push(d); });
-        }
-        /* Also try setting via window in case script.js uses window.businessData */
-        window.businessData = window.businessData.slice();
-      }
       if (typeof updateAll          === "function") updateAll();
       if (typeof renderRecordsPanel === "function") renderRecordsPanel();
     }
