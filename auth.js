@@ -24,11 +24,14 @@ window.supabaseReady.then(function (supabase) {
       if (isProtected) {
         window.location.href = 'login.html';
       } else {
-        /* On index — revert to guest mode, don't redirect */
+        /* On index — revert to guest mode, don't redirect.
+           IMPORTANT: clear businessData by mutating — never replace the array.
+           script.js holds a reference to the original array object. */
         window.__igLoggedIn = false;
         window.__igGuestUsed = false;
         window.currentUser = null;
-        window.businessData = [];
+        window.__igPlanInitDone = false;  /* allow re-init on next login */
+        if (window.businessData) window.businessData.length = 0;
         if (typeof renderRecordsPanel === 'function') renderRecordsPanel();
         if (typeof updateAll === 'function') updateAll();
       }
