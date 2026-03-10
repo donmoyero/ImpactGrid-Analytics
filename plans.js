@@ -415,8 +415,12 @@ async function checkDataExpiry() {
   const warnDays   = PLAN_CONFIG.basic.dataWarnDays || 2;
   const graceDays  = 7;
 
-  const dates   = window.businessData.map(function(d) { return new Date(d.date); });
-  const oldest  = new Date(Math.min.apply(null, dates));
+  /* Use savedAt (when record was entered) NOT d.date (reporting month).
+     Dec 2025 data entered today has savedAt=today — not 90 days old. */
+  const savedAts = window.businessData.map(function(d) {
+    return d.savedAt ? new Date(d.savedAt) : new Date();  /* default now = never expires */
+  });
+  const oldest  = new Date(Math.min.apply(null, savedAts));
   const ageDays = Math.floor((Date.now() - oldest.getTime()) / 86400000);
   const daysLeft = retainDays - ageDays;
 
