@@ -4,8 +4,14 @@
    settings.html → still redirects to login if no session
 ================================================================ */
 
-/* Logout always available */
+/* Logout — save data first, THEN sign out */
 window.logout = async function () {
+  try {
+    /* Save before anything is cleared */
+    if (window.currentUser && typeof saveUserData === 'function' && (window.businessData||[]).length > 0) {
+      await saveUserData();
+    }
+  } catch(e) {}
   try {
     if (window.supabaseClient) await window.supabaseClient.auth.signOut();
   } catch (e) {}
@@ -24,16 +30,14 @@ window.supabaseReady.then(function (supabase) {
       if (isProtected) {
         window.location.href = 'login.html';
       } else {
-        /* On index — revert to guest mode, don't redirect.
-           IMPORTANT: clear businessData by mutating — never replace the array.
-           script.js holds a reference to the original array object. */
+        /* On index — revert to guest mode.
+           We do NOT clear businessData or trigger any saves here.
+           logout() already saved before signOut was called.
+           The page will reload via location.href so data clears naturally. */
         window.__igLoggedIn = false;
         window.__igGuestUsed = false;
+        window.__igPlanInitDone = false;
         window.currentUser = null;
-        window.__igPlanInitDone = false;  /* allow re-init on next login */
-        if (window.businessData) window.businessData.length = 0;
-        if (typeof renderRecordsPanel === 'function') renderRecordsPanel();
-        if (typeof updateAll === 'function') updateAll();
       }
     }
     if (event === 'TOKEN_REFRESHED') {
