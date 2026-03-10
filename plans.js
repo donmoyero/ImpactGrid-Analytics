@@ -682,22 +682,21 @@ async function loadUserData() {
         loaded.forEach(function(d) { window.businessData.push(d); });
 
         console.log("[ImpactGrid] loadUserData: loaded", loaded.length, "records into businessData");
+        console.log("[ImpactGrid] businessData array id check:", window.businessData === (typeof businessData !== 'undefined' ? businessData : window.businessData));
       }
     }
 
-    /* Refresh UI — retry at 300ms, 800ms, 1500ms to handle script.js timing */
+    /* All data is now in window.businessData — refresh UI now and retry */
     function _refreshUI() {
+      var n = (window.businessData || []).length;
+      console.log("[ImpactGrid] _refreshUI: businessData has", n, "records");
       if (typeof updateAll          === "function") updateAll();
       if (typeof renderRecordsPanel === "function") renderRecordsPanel();
+      document.dispatchEvent(new CustomEvent("igDataLoaded", { detail: { records: n } }));
     }
     _refreshUI();
-    setTimeout(_refreshUI, 300);
-    setTimeout(_refreshUI, 800);
-    setTimeout(_refreshUI, 1500);
-    /* Final safety net — fire a custom event so script.js can react if it listens */
-    setTimeout(function() {
-      document.dispatchEvent(new CustomEvent("igDataLoaded", { detail: { records: (window.businessData||[]).length } }));
-    }, 200);
+    setTimeout(_refreshUI, 400);
+    setTimeout(_refreshUI, 1000);
 
     showAIMemoryGreeting();
   } catch(e) { console.error("Load exception:", e); }
