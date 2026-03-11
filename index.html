@@ -2157,7 +2157,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* ================================================================
    IMPACTGRID AI BUDDY — Core JS
-   Calls your Express /chat server (running on port 3000 via ngrok).
+   Calls your Express /chat server (running on port 3000 via Cloudflare tunnel).
    Injects full user financial context into every prompt.
 ================================================================ */
 
@@ -2167,7 +2167,7 @@ var _buddyTyping    = false;
 var _buddyConnected = false;
 
 /* ── Auto-connect silently on load ── */
-var _BUDDY_URL = 'https://ambient-salem-pine-talented.trycloudflare.com';
+var _BUDDY_URL = 'https://differently-trust-november-debug.trycloudflare.com';
 
 function _buddyAutoConnect() {
   /* Read URL at call-time so page variable has loaded */
@@ -2245,7 +2245,7 @@ function _buddyUserName() {
 /* ── Test connection to Express server ── */
 async function buddyConnect() {
   var ep = ((document.getElementById('buddyEndpoint') || {}).value || _buddyEndpoint || '').replace(/\/+$/, '');
-  if (!ep) { _buddySetStatus('Enter your ngrok URL first', 'err'); return; }
+  if (!ep) { _buddySetStatus('No server URL configured', 'err'); return; }
 
   _buddySetStatus('Connecting to Dijo…', '');
 
@@ -2268,7 +2268,7 @@ async function buddyConnect() {
 
   } catch(e) {
     _buddyConnected = false;
-    _buddySetStatus('&#10007; Could not connect — is ngrok running? (' + e.message + ')', 'err');
+    _buddySetStatus('&#10007; Could not connect — is your tunnel running? (' + e.message + ')', 'err');
     var badge = document.getElementById('buddyModelBadge');
     var bname = document.getElementById('buddyModelName');
     if (badge) badge.className = 'buddy-model-badge offline';
@@ -2358,7 +2358,7 @@ async function buddyAsk(message) {
 
   if (!_buddyConnected || !_buddyEndpoint) {
     _buddyAppendMsg('ai',
-      '&#9888; <strong>Not connected.</strong> Paste your ngrok URL above and click <strong>Connect</strong> to start.'
+      '&#9888; <strong>Dijo is offline.</strong> Make sure your server and Cloudflare tunnel are running, then refresh the page.'
     );
     return;
   }
@@ -2396,7 +2396,7 @@ async function buddyAsk(message) {
     if (bname) bname.textContent = 'Offline';
     _buddyAppendMsg('ai',
       '&#9888; <strong>Connection lost.</strong> ' + e.message + '<br><br>' +
-      'Check that your ngrok tunnel and Express server are still running.'
+      'Check that your Cloudflare tunnel and Express server are still running.'
     );
   } finally {
     _buddyTyping = false;
@@ -2526,7 +2526,7 @@ window.guestGateCheck = guestGateCheck;
 <!-- ── ImpactGrid AI Floating Bubble ── -->
 <!-- Floating bubble uses "dashboard" mode (platform helper)  -->
 <!-- AI Buddy section uses "adviser" mode (financial adviser) -->
-<!-- Replace URL below with your ngrok URL each session       -->
+<!-- Replace IMPACTGRID_AI_URL below with your tunnel URL each session -->
 <script src="impactgrid-chat-bubble.js"></script>
 
 </body>
