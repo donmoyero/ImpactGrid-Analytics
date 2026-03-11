@@ -2116,7 +2116,10 @@ var _BUDDY_URL = 'https://workless-nelly-mirella.ngrok-free.dev';
 
 function _buddyAutoConnect() {
   _buddyEndpoint = _BUDDY_URL;
-  fetch(_buddyEndpoint + '/health')
+  fetch(_buddyEndpoint + '/health', {
+    method: 'GET',
+    headers: { 'ngrok-skip-browser-warning': '1', 'User-Agent': 'ImpactGridAI' }
+  })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       _buddyConnected = true;
@@ -2313,7 +2316,7 @@ async function buddyAsk(message) {
 
     var res = await fetch(_buddyEndpoint + '/chat', {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1', 'User-Agent': 'ImpactGridAI' },
       body:    JSON.stringify({ message: fullPrompt, mode: 'adviser' })
     });
 
