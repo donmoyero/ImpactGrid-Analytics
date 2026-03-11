@@ -4,12 +4,12 @@
    Set IMPACTGRID_AI_URL to your ngrok URL before deploying.
 
    Usage: <script src="impactgrid-chat-bubble.js"></script>
-          <script>IMPACTGRID_AI_URL = "https://ambient-salem-pine-talented.trycloudflare.com";</script>
+          <script>IMPACTGRID_AI_URL = "https://genes-inputs-alternatively-pichunter.trycloudflare.com";</script>
 ================================================================ */
 
 (function() {
   /* ── Config — hardcoded, never exposed to users ── */
-  var AI_URL  = 'https://ambient-salem-pine-talented.trycloudflare.com';
+  var AI_URL  = 'https://genes-inputs-alternatively-pichunter.trycloudflare.com';
   var MODE    = (typeof IMPACTGRID_AI_MODE !== 'undefined' ? IMPACTGRID_AI_MODE : 'group');
   var HISTORY = [];
   var TYPING  = false;
