@@ -2111,41 +2111,46 @@ var _buddyHistory   = [];
 var _buddyTyping    = false;
 var _buddyConnected = false;
 
-/* ── Auto-connect silently on page load ── */
+/* ── Auto-connect silently — runs immediately and retries ── */
+var _BUDDY_URL = 'https://workless-nelly-mirella.ngrok-free.dev';
+
+function _buddyAutoConnect() {
+  _buddyEndpoint = _BUDDY_URL;
+  fetch(_buddyEndpoint + '/health', {
+    headers: { 'ngrok-skip-browser-warning': 'true' }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.status === 'ok') {
+      _buddyConnected = true;
+      var badge = document.getElementById('buddyModelBadge');
+      var bname = document.getElementById('buddyModelName');
+      if (badge) badge.className = 'buddy-model-badge';
+      if (bname) bname.textContent = 'AI · online';
+      _buddySetStatus('✓ ImpactGrid AI is ready', 'ok');
+      setTimeout(function(){
+        var bar = document.getElementById('buddyConfigBar');
+        if (bar) bar.style.display = 'none';
+      }, 3000);
+    }
+  })
+  .catch(function(e){
+    console.warn('[Buddy] Connect failed, retrying in 5s...', e.message);
+    _buddyConnected = false;
+    var badge = document.getElementById('buddyModelBadge');
+    var bname = document.getElementById('buddyModelName');
+    if (badge) badge.className = 'buddy-model-badge offline';
+    if (bname) bname.textContent = 'AI · offline';
+    _buddySetStatus('AI is currently offline', 'err');
+    /* Retry after 5 seconds */
+    setTimeout(_buddyAutoConnect, 5000);
+  });
+}
+
+/* Run immediately + after DOM ready */
+_buddyAutoConnect();
 document.addEventListener('DOMContentLoaded', function() {
-  /* Endpoint is hardcoded in the hidden input — users never see it */
-  _buddyEndpoint = (document.getElementById('buddyEndpoint') || {}).value || '';
   _buddyRenderWelcome();
-  /* Connect silently in background */
-  if (_buddyEndpoint) {
-    fetch(_buddyEndpoint + '/health', {
-        headers: { 'ngrok-skip-browser-warning': 'true' }
-      })
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if (d.status === 'ok') {
-          _buddyConnected = true;
-          var badge = document.getElementById('buddyModelBadge');
-          var bname = document.getElementById('buddyModelName');
-          if (badge) badge.className = 'buddy-model-badge';
-          if (bname) bname.textContent = 'AI · online';
-          _buddySetStatus('✓ ImpactGrid AI is ready', 'ok');
-          /* Hide status bar after 3s */
-          setTimeout(function(){
-            var bar = document.getElementById('buddyConfigBar');
-            if (bar) bar.style.display = 'none';
-          }, 3000);
-        }
-      })
-      .catch(function(){
-        _buddyConnected = false;
-        var badge = document.getElementById('buddyModelBadge');
-        var bname = document.getElementById('buddyModelName');
-        if (badge) badge.className = 'buddy-model-badge offline';
-        if (bname) bname.textContent = 'AI · offline';
-        _buddySetStatus('AI is currently offline', 'err');
-      });
-  }
 });
 
 /* ── Welcome message ── */
