@@ -117,7 +117,371 @@
       .main-content { margin-left: 0 !important; padding-bottom: 80px !important; }
       #sbOverlay.active { display: block !important; }
     }
-  </style>
+  
+
+/* ================================================================
+   IMPACTGRID AI BUDDY — Styles
+================================================================ */
+
+/* ── Header ── */
+.buddy-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 28px;
+  background: linear-gradient(135deg, rgba(14,18,32,0.95), rgba(10,13,24,0.98));
+  border: 1px solid rgba(200,169,110,0.2);
+  border-radius: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.buddy-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 80% 50%, rgba(200,169,110,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Avatar ── */
+.buddy-avatar-wrap { flex-shrink: 0; }
+.buddy-avatar {
+  width: 56px; height: 56px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.buddy-avatar-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(200,169,110,0.4);
+  animation: buddy-ring-spin 8s linear infinite;
+  background: conic-gradient(from 0deg, rgba(200,169,110,0.3), transparent 60%, rgba(200,169,110,0.1), transparent);
+}
+@keyframes buddy-ring-spin { to { transform: rotate(360deg); } }
+.buddy-avatar-inner {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(200,169,110,0.12), rgba(226,201,138,0.06));
+  border: 1px solid rgba(200,169,110,0.25);
+  display: flex; align-items: center; justify-content: center;
+}
+.buddy-status-dot {
+  position: absolute; bottom: 2px; right: 2px;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #2dd4a0;
+  border: 2px solid var(--bg-dark, #06080f);
+  box-shadow: 0 0 8px rgba(45,212,160,0.6);
+  animation: buddy-pulse 2.5s ease-in-out infinite;
+}
+@keyframes buddy-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(45,212,160,0.6); }
+  50% { box-shadow: 0 0 16px rgba(45,212,160,0.9), 0 0 4px rgba(45,212,160,0.4); }
+}
+
+/* ── Header text ── */
+.buddy-header-text { flex: 1; min-width: 0; }
+.buddy-name {
+  font-family: 'Syne', 'Fraunces', Georgia, serif;
+  font-size: 20px; font-weight: 800;
+  color: var(--text-primary, #edf0f7);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.buddy-tagline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted, #3d4e68);
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+
+/* ── Model badge ── */
+.buddy-model-badge {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 14px;
+  background: rgba(45,212,160,0.06);
+  border: 1px solid rgba(45,212,160,0.18);
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #2dd4a0;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.buddy-model-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #2dd4a0;
+  animation: buddy-pulse 2.5s ease-in-out infinite;
+}
+.buddy-model-badge.offline { color: #ff4d6d; border-color: rgba(255,77,109,0.2); background: rgba(255,77,109,0.06); }
+.buddy-model-badge.offline .buddy-model-dot { background: #ff4d6d; box-shadow: 0 0 8px rgba(255,77,109,0.5); }
+
+/* ── Config bar ── */
+.buddy-config-bar {
+  padding: 14px 20px;
+  background: rgba(10,13,24,0.8);
+  border: 1px solid rgba(200,169,110,0.12);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.buddy-config-inner {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted, #3d4e68);
+}
+.buddy-endpoint-input {
+  flex: 1; min-width: 200px;
+  padding: 7px 12px;
+  background: rgba(6,8,15,0.8);
+  border: 1px solid rgba(200,169,110,0.2);
+  border-radius: 7px;
+  color: var(--text-primary, #edf0f7);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.buddy-endpoint-input:focus { border-color: rgba(200,169,110,0.5); }
+.buddy-model-select {
+  padding: 7px 10px;
+  background: rgba(6,8,15,0.8);
+  border: 1px solid rgba(200,169,110,0.2);
+  border-radius: 7px;
+  color: var(--text-primary, #edf0f7);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+}
+.buddy-connect-btn {
+  padding: 7px 18px;
+  background: linear-gradient(135deg, #8a6020, #d4a043);
+  border: none; border-radius: 7px;
+  color: #fff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.buddy-connect-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.buddy-connect-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  margin-top: 6px;
+  letter-spacing: 0.05em;
+}
+.buddy-connect-status.ok  { color: #2dd4a0; }
+.buddy-connect-status.err { color: #ff4d6d; }
+
+/* ── Chat window ── */
+.buddy-chat-wrap {
+  background: linear-gradient(180deg, rgba(6,8,15,0.98) 0%, rgba(10,13,24,0.95) 100%);
+  border: 1px solid rgba(200,169,110,0.14);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.buddy-chat-output {
+  flex: 1;
+  min-height: 380px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding: 24px 24px 12px;
+  display: flex; flex-direction: column; gap: 16px;
+  scroll-behavior: smooth;
+}
+.buddy-chat-output::-webkit-scrollbar { width: 4px; }
+.buddy-chat-output::-webkit-scrollbar-track { background: transparent; }
+.buddy-chat-output::-webkit-scrollbar-thumb { background: rgba(200,169,110,0.2); border-radius: 2px; }
+
+/* ── Messages ── */
+.buddy-msg {
+  display: flex; gap: 12px; align-items: flex-start;
+  animation: buddy-msg-in 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes buddy-msg-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.buddy-msg.user { flex-direction: row-reverse; }
+
+.buddy-msg-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.buddy-msg.ai .buddy-msg-avatar {
+  background: linear-gradient(135deg, rgba(200,169,110,0.15), rgba(200,169,110,0.08));
+  border: 1px solid rgba(200,169,110,0.25);
+  color: #c8a96e;
+}
+.buddy-msg.user .buddy-msg-avatar {
+  background: linear-gradient(135deg, rgba(45,212,160,0.12), rgba(45,212,160,0.06));
+  border: 1px solid rgba(45,212,160,0.2);
+  color: #2dd4a0;
+}
+
+.buddy-msg-bubble {
+  max-width: 75%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+.buddy-msg.ai .buddy-msg-bubble {
+  background: rgba(200,169,110,0.05);
+  border: 1px solid rgba(200,169,110,0.12);
+  color: var(--text-secondary, #a0b0cc);
+  border-top-left-radius: 4px;
+}
+.buddy-msg.user .buddy-msg-bubble {
+  background: rgba(45,212,160,0.07);
+  border: 1px solid rgba(45,212,160,0.15);
+  color: var(--text-primary, #edf0f7);
+  border-top-right-radius: 4px;
+}
+.buddy-msg-bubble strong { color: var(--text-primary, #edf0f7); }
+.buddy-msg-bubble .buddy-msg-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.1em;
+  color: #c8a96e; font-weight: 700;
+  margin-bottom: 6px; display: block;
+  text-transform: uppercase;
+}
+
+/* ── Typing indicator ── */
+.buddy-typing {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 24px;
+}
+.buddy-typing-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(200,169,110,0.1);
+  border: 1px solid rgba(200,169,110,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: #c8a96e; font-weight: 700;
+}
+.buddy-typing-dots {
+  display: flex; gap: 5px; align-items: center;
+  padding: 10px 16px;
+  background: rgba(200,169,110,0.04);
+  border: 1px solid rgba(200,169,110,0.1);
+  border-radius: 12px;
+}
+.buddy-typing-dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(200,169,110,0.5);
+  animation: buddy-dot-bounce 1.4s ease-in-out infinite;
+}
+.buddy-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.buddy-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes buddy-dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ── Chips ── */
+.buddy-chips {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 12px 24px;
+  border-top: 1px solid rgba(200,169,110,0.07);
+}
+.buddy-chip {
+  padding: 6px 14px;
+  background: rgba(200,169,110,0.05);
+  border: 1px solid rgba(200,169,110,0.18);
+  border-radius: 20px;
+  color: var(--text-secondary, #a0b0cc);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.buddy-chip:hover {
+  background: rgba(200,169,110,0.12);
+  border-color: rgba(200,169,110,0.35);
+  color: #c8a96e;
+  transform: translateY(-1px);
+}
+
+/* ── Input row ── */
+.buddy-input-row {
+  display: flex; gap: 10px; align-items: center;
+  padding: 16px 24px 20px;
+  border-top: 1px solid rgba(200,169,110,0.08);
+}
+.buddy-input-wrap {
+  flex: 1;
+  display: flex; align-items: center;
+  background: rgba(6,8,15,0.9);
+  border: 1px solid rgba(200,169,110,0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.buddy-input-wrap:focus-within { border-color: rgba(200,169,110,0.45); }
+.buddy-input {
+  flex: 1;
+  padding: 13px 16px;
+  background: transparent;
+  border: none; outline: none;
+  color: var(--text-primary, #edf0f7);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+}
+.buddy-input::placeholder { color: var(--text-muted, #3d4e68); }
+.buddy-send-btn {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, #8a6020, #d4a043);
+  border: none; border-radius: 10px;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  margin: 4px;
+  flex-shrink: 0;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.buddy-send-btn:hover { opacity: 0.85; transform: scale(1.05); }
+.buddy-send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.buddy-clear-btn {
+  width: 36px; height: 36px;
+  background: rgba(255,77,109,0.06);
+  border: 1px solid rgba(255,77,109,0.15);
+  border-radius: 8px;
+  color: rgba(255,77,109,0.6);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.buddy-clear-btn:hover { background: rgba(255,77,109,0.12); color: #ff4d6d; }
+
+/* ── Markdown-ish formatting in AI messages ── */
+.buddy-msg-bubble ul { padding-left: 18px; margin: 8px 0; }
+.buddy-msg-bubble li { margin-bottom: 4px; }
+.buddy-msg-bubble p  { margin: 0 0 8px; }
+.buddy-msg-bubble p:last-child { margin-bottom: 0; }
+.buddy-msg-bubble code {
+  background: rgba(200,169,110,0.1);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #c8a96e;
+}
+
+</style>
 </head>
 <body>
 
@@ -688,38 +1052,92 @@
 
 
     <!-- ============================================
-         SECTION: AI INTELLIGENCE
+         SECTION: AI BUDDY
     ============================================ -->
 
     <section id="ai" class="page-section">
-      <section class="card">
-        <h2>ImpactGrid AI Intelligence</h2>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:10px 14px;background:var(--bg-mid);border:1px solid var(--border);border-radius:var(--r-sm);">
-          <div style="width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 8px rgba(45,212,160,0.6);flex-shrink:0;animation:pulse-dot 2s ease-in-out infinite;"></div>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:0.07em;">
-            IMPACTGRID AI · ACTIVE · IFSRM Intelligence Engine v3.0
-          </span>
-        </div>
-        <div id="aiChatOutput" class="ai-chat-output">
-          <div class="ai-response" style="animation:none;">
-            <strong>ImpactGrid AI</strong><br><br>
-            Welcome to ImpactGrid Financial Intelligence. I'm your IFSRM-powered adviser — built for serious SME analysis. Enter your business data and ask me anything: regime assessment, forecasts, risk profiling, break-even modelling, growth strategy, or benchmarks.<br><br>
-            <div class="ai-suggestions">
-              <button class="ai-suggestion-chip" onclick="fillAIChat('3 year projection')">3 year projection</button>
-              <button class="ai-suggestion-chip" onclick="fillAIChat('How risky is my business?')">How risky is my business?</button>
-              <button class="ai-suggestion-chip" onclick="fillAIChat('How can I improve profitability?')">Improve profitability</button>
-              <button class="ai-suggestion-chip" onclick="fillAIChat('What is my break-even point?')">Break-even analysis</button>
+
+      <!-- ── AI Buddy Header ── -->
+      <div class="buddy-header">
+        <div class="buddy-avatar-wrap">
+          <div class="buddy-avatar">
+            <div class="buddy-avatar-ring"></div>
+            <div class="buddy-avatar-inner">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="10" r="5" fill="#c8a96e" opacity="0.9"/>
+                <path d="M6 26c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="#c8a96e" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                <circle cx="16" cy="16" r="14" stroke="#c8a96e" stroke-width="0.5" opacity="0.2"/>
+              </svg>
             </div>
+            <div class="buddy-status-dot"></div>
           </div>
         </div>
-        <div class="ai-chat-input-row">
-          <input id="aiChatInput" placeholder="Ask ImpactGrid AI anything about your business..." onkeydown="if(event.key==='Enter') askImpactGridAI()">
-          <button class="btn-primary" onclick="askImpactGridAI()">Ask AI</button>
+        <div class="buddy-header-text">
+          <div class="buddy-name">ImpactGrid AI Buddy</div>
+          <div class="buddy-tagline">Your personal financial intelligence adviser · Powered by your local AI</div>
         </div>
-      </section>
+        <div class="buddy-model-badge" id="buddyModelBadge">
+          <span class="buddy-model-dot"></span>
+          <span id="buddyModelName">Connecting…</span>
+        </div>
+      </div>
 
-      <section class="card">
-        <h2>AI Revenue Forecast Visualisation</h2>
+      <!-- ── Connection Config ── -->
+      <div class="buddy-config-bar" id="buddyConfigBar">
+        <div class="buddy-config-inner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+          <span>AI server URL:</span>
+          <input id="buddyEndpoint" class="buddy-endpoint-input" 
+            placeholder="https://xxxx.ngrok.io" 
+            value="">
+          <button class="buddy-connect-btn" onclick="buddyConnect()">Connect</button>
+        </div>
+        <div id="buddyConnectStatus" class="buddy-connect-status"></div>
+      </div>
+
+      <!-- ── Chat Window ── -->
+      <div class="buddy-chat-wrap">
+        <div class="buddy-chat-output" id="buddyChatOutput">
+          <!-- Welcome message injected by JS -->
+        </div>
+
+        <!-- Typing indicator -->
+        <div class="buddy-typing" id="buddyTyping" style="display:none;">
+          <div class="buddy-typing-avatar">AI</div>
+          <div class="buddy-typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="buddy-chips" id="buddyChips">
+          <button class="buddy-chip" onclick="buddyAsk('Give me a full financial health assessment')">📊 Health check</button>
+          <button class="buddy-chip" onclick="buddyAsk('What are my top 3 risks right now?')">⚠️ Risk analysis</button>
+          <button class="buddy-chip" onclick="buddyAsk('Project my revenue for the next 3 years')">📈 3yr forecast</button>
+          <button class="buddy-chip" onclick="buddyAsk('How can I reduce expenses and improve margin?')">💰 Cut costs</button>
+          <button class="buddy-chip" onclick="buddyAsk('What is my break-even point?')">⚖️ Break-even</button>
+          <button class="buddy-chip" onclick="buddyAsk('Am I ready to scale or hire?')">🚀 Scale check</button>
+        </div>
+
+        <!-- Input -->
+        <div class="buddy-input-row">
+          <div class="buddy-input-wrap">
+            <input id="buddyChatInput" class="buddy-input" 
+              placeholder="Ask your AI Buddy anything about your business…"
+              onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); buddySend(); }">
+            <button class="buddy-send-btn" onclick="buddySend()" title="Send">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+          <button class="buddy-clear-btn" onclick="buddyClear()" title="Clear chat">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Forecast section preserved ── -->
+      <section class="card" style="margin-top:24px;">
+        <h2>AI Revenue Forecast</h2>
         <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
           <button class="ai-suggestion-chip" onclick="generateAIProjection(3)">3 Years</button>
           <button class="ai-suggestion-chip" onclick="generateAIProjection(5)">5 Years</button>
@@ -728,6 +1146,11 @@
         <div class="chart-card" style="height:360px;"><canvas id="aiForecastChart"></canvas></div>
         <div id="aiForecastExplanation"></div>
       </section>
+
+      <!-- Keep legacy IDs so script.js doesn't break -->
+      <div id="aiChatOutput" style="display:none;"></div>
+      <input id="aiChatInput" style="display:none;">
+
     </section>
 
 
@@ -1677,6 +2100,306 @@ document.addEventListener('DOMContentLoaded', function() {
     + '<button onclick="showGuestGate()" style="flex-shrink:0;padding:6px 14px;background:linear-gradient(135deg,#8a6020,#d4a043);border:none;border-radius:7px;color:#fff;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:\'DM Sans\',sans-serif;">Sign up free →</button>';
   header.appendChild(banner);
 });
+
+
+/* ================================================================
+   IMPACTGRID AI BUDDY — Core JS
+   Calls your Express /chat server (running on port 3000 via ngrok).
+   Injects full user financial context into every prompt.
+================================================================ */
+
+var _buddyEndpoint  = '';
+var _buddyHistory   = [];
+var _buddyTyping    = false;
+var _buddyConnected = false;
+
+/* ── Restore saved endpoint on page load ── */
+document.addEventListener('DOMContentLoaded', function() {
+  try { _buddyEndpoint = localStorage.getItem('ig_buddy_endpoint') || ''; } catch(e){}
+  var epInput = document.getElementById('buddyEndpoint');
+  if (epInput && _buddyEndpoint) epInput.value = _buddyEndpoint;
+  _buddyRenderWelcome();
+  if (_buddyEndpoint) buddyConnect();
+});
+
+/* ── Welcome message ── */
+function _buddyRenderWelcome() {
+  var name = _buddyUserName();
+  var greeting = name
+    ? 'Hello <strong style="color:#c8a96e;">' + name + '</strong> &#128075;'
+    : 'Hello, welcome to ImpactGrid &#128075;';
+
+  var dataCount = (window.businessData || []).length;
+  var dataLine  = dataCount >= 3
+    ? 'I can see <strong style="color:#c8a96e;">' + dataCount + ' months</strong> of your financial data — I'm ready to advise you.'
+    : dataCount > 0
+    ? 'I can see <strong style="color:#c8a96e;">' + dataCount + ' month' + (dataCount>1?'s':'') + '</strong> so far. Add at least 3 months to unlock full analysis.'
+    : 'No financial data yet. Add your monthly records on the dashboard and I'll give you deep insights.';
+
+  _buddyAppendMsg('ai',
+    greeting + '<br><br>' +
+    'I'm <strong>ImpactGrid AI Buddy</strong> — your personal financial adviser, powered by Mistral running on a private local AI. ' +
+    'Everything you share stays completely private.<br><br>' +
+    dataLine + '<br><br>' +
+    'Ask me anything: financial health, risk analysis, forecasts, cost cutting, break-even, or growth strategy.'
+  );
+}
+
+function _buddyUserName() {
+  var user = window.currentUser;
+  if (!user) return '';
+  if (user.user_metadata && user.user_metadata.full_name)
+    return user.user_metadata.full_name.split(' ')[0];
+  if (user.email) return user.email.split('@')[0];
+  return '';
+}
+
+/* ── Test connection to Express server ── */
+async function buddyConnect() {
+  var ep = ((document.getElementById('buddyEndpoint') || {}).value || _buddyEndpoint || '').replace(/\/+$/, '');
+  if (!ep) { _buddySetStatus('Enter your ngrok URL first', 'err'); return; }
+
+  _buddySetStatus('Connecting…', '');
+
+  try {
+    /* Ping the health endpoint */
+    var res = await fetch(ep + '/health');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    if (data.status !== 'ok') throw new Error('Server not ready');
+
+    _buddyConnected = true;
+    _buddyEndpoint  = ep;
+    try { localStorage.setItem('ig_buddy_endpoint', ep); } catch(e){}
+
+    _buddySetStatus('&#10003; Connected to ImpactGrid AI — Mistral is ready', 'ok');
+    var badge = document.getElementById('buddyModelBadge');
+    var bname = document.getElementById('buddyModelName');
+    if (badge) badge.className = 'buddy-model-badge';
+    if (bname) bname.textContent = 'mistral · online';
+
+  } catch(e) {
+    _buddyConnected = false;
+    _buddySetStatus('&#10007; Could not connect — is ngrok running? (' + e.message + ')', 'err');
+    var badge = document.getElementById('buddyModelBadge');
+    var bname = document.getElementById('buddyModelName');
+    if (badge) badge.className = 'buddy-model-badge offline';
+    if (bname) bname.textContent = 'Offline';
+  }
+}
+
+/* ── Build the full prompt with user context ── */
+function _buddyBuildPrompt(userMessage) {
+  var data     = window.businessData || [];
+  var currency = window.currentCurrency || 'GBP';
+  var sym      = {GBP:'£',USD:'$',EUR:'€',NGN:'₦'}[currency] || currency+' ';
+  var bizType  = (document.getElementById('businessType')      || {}).value || 'business';
+  var startDate= (document.getElementById('businessStartDate') || {}).value || '';
+  var name     = _buddyUserName();
+
+  /* System context */
+  var ctx = 'You are ImpactGrid AI Buddy — a highly skilled, direct, and warm financial adviser. ';
+  ctx += 'You give specific, actionable advice based on real numbers. Never be vague or generic. ';
+  ctx += 'Format your answers clearly. Use bullet points when listing items. ';
+  if (name) ctx += 'The user's name is ' + name + '. Address them by name. ';
+  ctx += '\n\n';
+
+  ctx += 'USER PROFILE:\n';
+  if (bizType)   ctx += 'Business type: ' + bizType + '\n';
+  if (startDate) ctx += 'Trading since: ' + startDate + '\n';
+  ctx += 'Currency: ' + currency + '\n\n';
+
+  if (data.length === 0) {
+    ctx += 'FINANCIAL DATA: No data entered yet.\n\n';
+  } else {
+    ctx += 'MONTHLY FINANCIAL DATA (' + data.length + ' months):\n';
+    var totalRev = 0, totalExp = 0, totalPro = 0;
+    data.forEach(function(d) {
+      var mo  = new Date(d.date).toISOString().slice(0,7);
+      var rev = Number(d.revenue)  || 0;
+      var exp = Number(d.expenses) || 0;
+      var pro = rev - exp;
+      var mar = rev > 0 ? ((pro/rev)*100).toFixed(1) : '0.0';
+      ctx += mo + ': Revenue=' + sym + rev.toLocaleString() + ', Expenses=' + sym + exp.toLocaleString() + ', Profit=' + sym + pro.toLocaleString() + ', Margin=' + mar + '%\n';
+      totalRev += rev; totalExp += exp; totalPro += pro;
+    });
+    var avgMargin = totalRev > 0 ? ((totalPro/totalRev)*100).toFixed(1) : '0.0';
+    ctx += '\nSUMMARY: Total Revenue=' + sym + totalRev.toLocaleString();
+    ctx += ', Total Profit=' + sym + totalPro.toLocaleString();
+    ctx += ', Avg Margin=' + avgMargin + '%\n';
+
+    /* Growth */
+    if (data.length >= 2) {
+      var first = Number(data[0].revenue), last = Number(data[data.length-1].revenue);
+      var growth = first > 0 ? (((last-first)/first)*100).toFixed(1) : '0';
+      ctx += 'Revenue trend: ' + (growth >= 0 ? '+' : '') + growth + '% over the period\n';
+    }
+  }
+
+  /* Conversation history (last 6 turns) */
+  if (_buddyHistory.length > 0) {
+    ctx += '\nCONVERSATION HISTORY:\n';
+    _buddyHistory.slice(-6).forEach(function(m) {
+      ctx += (m.role === 'user' ? 'User: ' : 'You: ') + m.content + '\n';
+    });
+  }
+
+  ctx += '\nNow answer this question: ' + userMessage;
+  return ctx;
+}
+
+/* ── Send message ── */
+async function buddySend() {
+  var input   = document.getElementById('buddyChatInput');
+  var message = (input ? input.value : '').trim();
+  if (!message || _buddyTyping) return;
+  if (input) input.value = '';
+  await buddyAsk(message);
+}
+
+async function buddyAsk(message) {
+  if (!message || _buddyTyping) return;
+
+  /* Hide suggestion chips */
+  var chips = document.getElementById('buddyChips');
+  if (chips) chips.style.display = 'none';
+
+  /* Show user message */
+  _buddyAppendMsg('user', _escHtml(message));
+  _buddyHistory.push({ role: 'user', content: message });
+
+  if (!_buddyConnected || !_buddyEndpoint) {
+    _buddyAppendMsg('ai',
+      '&#9888; <strong>Not connected.</strong> Paste your ngrok URL above and click <strong>Connect</strong> to start.'
+    );
+    return;
+  }
+
+  /* Show typing */
+  _buddyTyping = true;
+  var typingEl = document.getElementById('buddyTyping');
+  if (typingEl) typingEl.style.display = 'flex';
+  var sendBtn = document.querySelector('.buddy-send-btn');
+  if (sendBtn) sendBtn.disabled = true;
+  _buddyScrollBottom();
+
+  try {
+    var fullPrompt = _buddyBuildPrompt(message);
+
+    var res = await fetch(_buddyEndpoint + '/chat', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ message: fullPrompt, mode: 'adviser' })
+    });
+
+    if (!res.ok) throw new Error('Server returned HTTP ' + res.status);
+    var data  = await res.json();
+    var reply = data.reply || 'No response received.';
+
+    _buddyHistory.push({ role: 'assistant', content: reply });
+    _buddyAppendMsg('ai', _buddyFormat(reply));
+
+  } catch(e) {
+    console.error('[Buddy]', e);
+    _buddyConnected = false;
+    var badge = document.getElementById('buddyModelBadge');
+    var bname = document.getElementById('buddyModelName');
+    if (badge) badge.className = 'buddy-model-badge offline';
+    if (bname) bname.textContent = 'Offline';
+    _buddyAppendMsg('ai',
+      '&#9888; <strong>Connection lost.</strong> ' + e.message + '<br><br>' +
+      'Check that your ngrok tunnel and Express server are still running.'
+    );
+  } finally {
+    _buddyTyping = false;
+    var typingEl = document.getElementById('buddyTyping');
+    if (typingEl) typingEl.style.display = 'none';
+    var sendBtn = document.querySelector('.buddy-send-btn');
+    if (sendBtn) sendBtn.disabled = false;
+    _buddyScrollBottom();
+  }
+}
+
+/* ── UI helpers ── */
+function _buddyAppendMsg(role, html) {
+  var output = document.getElementById('buddyChatOutput');
+  if (!output) return;
+  var isAI   = role === 'ai';
+  var label  = isAI ? 'ImpactGrid AI Buddy' : 'You';
+  var init   = isAI ? 'AI' : (_buddyUserName()[0] || 'U').toUpperCase();
+  var div    = document.createElement('div');
+  div.className = 'buddy-msg ' + role;
+  div.innerHTML =
+    '<div class="buddy-msg-avatar">' + init + '</div>' +
+    '<div class="buddy-msg-bubble">' +
+      '<span class="buddy-msg-name">' + label + '</span>' +
+      html +
+    '</div>';
+  output.appendChild(div);
+  _buddyScrollBottom();
+}
+
+function _buddyScrollBottom() {
+  var o = document.getElementById('buddyChatOutput');
+  if (o) setTimeout(function(){ o.scrollTop = o.scrollHeight; }, 50);
+}
+
+function _buddySetStatus(msg, type) {
+  var el = document.getElementById('buddyConnectStatus');
+  if (!el) return;
+  el.innerHTML  = msg;
+  el.className  = 'buddy-connect-status ' + (type||'');
+}
+
+function _escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function _buddyFormat(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/^### (.+)$/gm, '<strong style="color:#c8a96e;display:block;margin:10px 0 4px;">$1</strong>')
+    .replace(/^## (.+)$/gm,  '<strong style="color:#c8a96e;display:block;margin:10px 0 6px;">$1</strong>')
+    .replace(/^# (.+)$/gm,   '<strong style="color:#c8a96e;display:block;margin:12px 0 6px;">$1</strong>')
+    .replace(/^[-*] (.+)$/gm,'<li style="margin-bottom:4px;">$1</li>')
+    .replace(/^\d+\. (.+)$/gm,'<li style="margin-bottom:4px;">$1</li>')
+    .replace(/(<li[^>]*>.*?<\/li>\n?)+/gs, '<ul style="padding-left:18px;margin:8px 0;">$&</ul>')
+    .replace(/\n{2,}/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+function buddyClear() {
+  _buddyHistory = [];
+  var output = document.getElementById('buddyChatOutput');
+  if (output) output.innerHTML = '';
+  var chips  = document.getElementById('buddyChips');
+  if (chips)  chips.style.display = 'flex';
+  _buddyRenderWelcome();
+}
+
+/* Re-render welcome when data loads */
+document.addEventListener('igDataLoaded', function() {
+  var output = document.getElementById('buddyChatOutput');
+  if (output && output.children.length <= 1) {
+    output.innerHTML = '';
+    _buddyHistory = [];
+    _buddyRenderWelcome();
+  }
+});
+
+window.buddyConnect = buddyConnect;
+window.buddySend    = buddySend;
+window.buddyAsk     = buddyAsk;
+window.buddyClear   = buddyClear;
+
+window.fillAIChat = function(text) {
+  var inp = document.getElementById('buddyChatInput');
+  if (inp) { inp.value = text; buddySend(); }
+};
 
 window.showGuestGate  = showGuestGate;
 window.closeGuestGate = closeGuestGate;
