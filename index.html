@@ -27,7 +27,7 @@
           }
         }
       } catch(e) { hasSession = true; }
-      // Mark guest or logged-in state — don't redirect, just track
+      // Mark guest or logged-in state — do not redirect, just track
       window.__igLoggedIn = hasSession;
       window.__igGuestUsed = false; // flips to true after first free try
     })();
@@ -1436,7 +1436,7 @@
           <span class="pricing-eyebrow-label">Pricing Plans</span>
         </div>
         <h1 class="pricing-headline">Simple pricing.<br><em>Serious</em> analytics.</h1>
-        <p class="pricing-subhead">Start free, scale when you're ready. Every plan includes the full ImpactGrid AI Financial Intelligence engine — no hidden fees, no lock-in.</p>
+        <p class="pricing-subhead">Start free, scale when you are ready. Every plan includes the full ImpactGrid AI Financial Intelligence engine — no hidden fees, no lock-in.</p>
 
         <!-- Plans grid -->
         <div class="plans-grid">
@@ -1939,7 +1939,7 @@ function guestGateCheck(context) {
 /* ================================================================
    DATA INTERCEPTS — guest gate + session tracking + AUTO-SAVE
    
-   Strategy: don't rely on wrapping script.js functions (race condition).
+   Strategy: do not rely on wrapping script.js functions (race condition).
    Instead use a 2-second polling loop that watches businessData for
    any change in length OR content hash, then saves immediately.
    Also wraps functions if available as a fast-path.
@@ -2126,8 +2126,8 @@ function _buddyAutoConnect() {
       var badge = document.getElementById('buddyModelBadge');
       var bname = document.getElementById('buddyModelName');
       if (badge) badge.className = 'buddy-model-badge';
-      if (bname) bname.textContent = 'AI · online';
-      _buddySetStatus('✓ ImpactGrid AI is ready', 'ok');
+      if (bname) bname.textContent = 'AI - online';
+      _buddySetStatus('ImpactGrid AI is ready', 'ok');
       setTimeout(function(){
         var bar = document.getElementById('buddyConfigBar');
         if (bar) bar.style.display = 'none';
@@ -2140,7 +2140,7 @@ function _buddyAutoConnect() {
     var badge = document.getElementById('buddyModelBadge');
     var bname = document.getElementById('buddyModelName');
     if (badge) badge.className = 'buddy-model-badge offline';
-    if (bname) bname.textContent = 'AI · offline';
+    if (bname) bname.textContent = 'AI - offline';
     _buddySetStatus('AI is currently offline', 'err');
     /* Retry after 5 seconds */
     setTimeout(_buddyAutoConnect, 5000);
@@ -2162,14 +2162,14 @@ function _buddyRenderWelcome() {
 
   var dataCount = (window.businessData || []).length;
   var dataLine  = dataCount >= 3
-    ? 'I can see <strong style="color:#c8a96e;">' + dataCount + ' months</strong> of your financial data — I'm ready to advise you.'
+    ? 'I can see <strong style="color:#c8a96e;">' + dataCount + ' months</strong> of your financial data — I am ready to advise you.'
     : dataCount > 0
     ? 'I can see <strong style="color:#c8a96e;">' + dataCount + ' month' + (dataCount>1?'s':'') + '</strong> so far. Add at least 3 months to unlock full analysis.'
-    : 'No financial data yet. Add your monthly records on the dashboard and I'll give you deep insights.';
+    : 'No financial data yet. Add your monthly records on the dashboard and I will give you deep insights.';
 
   _buddyAppendMsg('ai',
     greeting + '<br><br>' +
-    'I'm <strong>ImpactGrid AI Buddy</strong> — your personal financial adviser, powered by Mistral running on a private local AI. ' +
+    'I am <strong>ImpactGrid AI Buddy</strong> — your personal financial adviser, powered by Mistral running on a private local AI. ' +
     'Everything you share stays completely private.<br><br>' +
     dataLine + '<br><br>' +
     'Ask me anything: financial health, risk analysis, forecasts, cost cutting, break-even, or growth strategy.'
@@ -2207,7 +2207,7 @@ async function buddyConnect() {
     var badge = document.getElementById('buddyModelBadge');
     var bname = document.getElementById('buddyModelName');
     if (badge) badge.className = 'buddy-model-badge';
-    if (bname) bname.textContent = 'mistral · online';
+    if (bname) bname.textContent = 'mistral - online';
 
   } catch(e) {
     _buddyConnected = false;
@@ -2232,7 +2232,7 @@ function _buddyBuildPrompt(userMessage) {
   var ctx = 'You are ImpactGrid AI Buddy — a highly skilled, direct, and warm financial adviser. ';
   ctx += 'You give specific, actionable advice based on real numbers. Never be vague or generic. ';
   ctx += 'Format your answers clearly. Use bullet points when listing items. ';
-  if (name) ctx += 'The user's name is ' + name + '. Address them by name. ';
+  if (name) ctx += 'The user name is ' + name + '. Address them by name. ';
   ctx += '\n\n';
 
   ctx += 'USER PROFILE:\n';
