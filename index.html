@@ -1140,7 +1140,7 @@ body.dark .buddy-input,
         </div>
       </div>
       <!-- Hidden inputs — never shown to users -->
-      <input id="buddyEndpoint" style="display:none;" value="https://ambient-salem-pine-talented.trycloudflare.com">
+      <input id="buddyEndpoint" style="display:none;" value="">
       <select id="buddyModel" style="display:none;"><option value="dijo">dijo</option></select>
 
       <!-- ── Chat Window ── -->
@@ -1753,6 +1753,11 @@ body.dark .buddy-input,
 </div>
 
 <script>
+  var IMPACTGRID_AI_URL  = "https://differently-trust-november-debug.trycloudflare.com";
+  var IMPACTGRID_AI_MODE = "dashboard";
+</script>
+
+<script>
 /* ================================================================
    GUEST GATE SYSTEM — inline auth, zero page navigation
 ================================================================ */
@@ -2162,10 +2167,15 @@ var _buddyTyping    = false;
 var _buddyConnected = false;
 
 /* ── Auto-connect silently on load ── */
-var _BUDDY_URL = (typeof IMPACTGRID_AI_URL !== 'undefined' ? IMPACTGRID_AI_URL : 'https://ambient-salem-pine-talented.trycloudflare.com');
+var _BUDDY_URL = 'https://ambient-salem-pine-talented.trycloudflare.com';
 
 function _buddyAutoConnect() {
+  /* Read URL at call-time so page variable has loaded */
+  _BUDDY_URL = (typeof IMPACTGRID_AI_URL !== 'undefined' && IMPACTGRID_AI_URL ? IMPACTGRID_AI_URL : _BUDDY_URL);
   _buddyEndpoint = _BUDDY_URL;
+  /* Also sync the hidden input so buddyConnect() uses same URL */
+  var epInput = document.getElementById('buddyEndpoint');
+  if (epInput && !epInput.value) epInput.value = _BUDDY_URL;
   fetch(_buddyEndpoint + '/health', {
     method: 'GET',
     headers: { 'ngrok-skip-browser-warning': '1', 'User-Agent': 'ImpactGridAI' }
@@ -2517,10 +2527,6 @@ window.guestGateCheck = guestGateCheck;
 <!-- Floating bubble uses "dashboard" mode (platform helper)  -->
 <!-- AI Buddy section uses "adviser" mode (financial adviser) -->
 <!-- Replace URL below with your ngrok URL each session       -->
-<script>
-  var IMPACTGRID_AI_URL  = "https://ambient-salem-pine-talented.trycloudflare.com";
-  var IMPACTGRID_AI_MODE = "dashboard";
-</script>
 <script src="impactgrid-chat-bubble.js"></script>
 
 </body>
