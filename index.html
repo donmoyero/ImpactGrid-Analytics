@@ -1082,18 +1082,16 @@
         </div>
       </div>
 
-      <!-- ── Connection Config ── -->
-      <div class="buddy-config-bar" id="buddyConfigBar">
+      <!-- AI connection status — users never see the source URL -->
+      <div class="buddy-config-bar" id="buddyConfigBar" style="padding:10px 20px;">
         <div class="buddy-config-inner">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-          <span>AI server URL:</span>
-          <input id="buddyEndpoint" class="buddy-endpoint-input" 
-            placeholder="https://xxxx.ngrok.io" 
-            value="">
-          <button class="buddy-connect-btn" onclick="buddyConnect()">Connect</button>
+          <div class="buddy-model-dot"></div>
+          <span id="buddyConnectStatus" class="buddy-connect-status" style="margin:0;">Connecting to ImpactGrid AI…</span>
         </div>
-        <div id="buddyConnectStatus" class="buddy-connect-status"></div>
       </div>
+      <!-- Hidden inputs — never shown to users -->
+      <input id="buddyEndpoint" style="display:none;" value="https://workless-nelly-mirella.ngrok-free.dev">
+      <select id="buddyModel" style="display:none;"><option value="mistral">mistral</option></select>
 
       <!-- ── Chat Window ── -->
       <div class="buddy-chat-wrap">
@@ -2113,13 +2111,39 @@ var _buddyHistory   = [];
 var _buddyTyping    = false;
 var _buddyConnected = false;
 
-/* ── Restore saved endpoint on page load ── */
+/* ── Auto-connect silently on page load ── */
 document.addEventListener('DOMContentLoaded', function() {
-  try { _buddyEndpoint = localStorage.getItem('ig_buddy_endpoint') || ''; } catch(e){}
-  var epInput = document.getElementById('buddyEndpoint');
-  if (epInput && _buddyEndpoint) epInput.value = _buddyEndpoint;
+  /* Endpoint is hardcoded in the hidden input — users never see it */
+  _buddyEndpoint = (document.getElementById('buddyEndpoint') || {}).value || '';
   _buddyRenderWelcome();
-  if (_buddyEndpoint) buddyConnect();
+  /* Connect silently in background */
+  if (_buddyEndpoint) {
+    fetch(_buddyEndpoint + '/health')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.status === 'ok') {
+          _buddyConnected = true;
+          var badge = document.getElementById('buddyModelBadge');
+          var bname = document.getElementById('buddyModelName');
+          if (badge) badge.className = 'buddy-model-badge';
+          if (bname) bname.textContent = 'AI · online';
+          _buddySetStatus('✓ ImpactGrid AI is ready', 'ok');
+          /* Hide status bar after 3s */
+          setTimeout(function(){
+            var bar = document.getElementById('buddyConfigBar');
+            if (bar) bar.style.display = 'none';
+          }, 3000);
+        }
+      })
+      .catch(function(){
+        _buddyConnected = false;
+        var badge = document.getElementById('buddyModelBadge');
+        var bname = document.getElementById('buddyModelName');
+        if (badge) badge.className = 'buddy-model-badge offline';
+        if (bname) bname.textContent = 'AI · offline';
+        _buddySetStatus('AI is currently offline', 'err');
+      });
+  }
 });
 
 /* ── Welcome message ── */
@@ -2407,6 +2431,17 @@ window.guestGateCheck = guestGateCheck;
 
 
 </script>
+
+
+<!-- ── ImpactGrid AI Floating Bubble ── -->
+<!-- Floating bubble uses "dashboard" mode (platform helper)  -->
+<!-- AI Buddy section uses "adviser" mode (financial adviser) -->
+<!-- Replace URL below with your ngrok URL each session       -->
+<script>
+  var IMPACTGRID_AI_URL  = "https://YOUR-NGROK-URL.ngrok.io";
+  var IMPACTGRID_AI_MODE = "dashboard";
+</script>
+<script src="impactgrid-chat-bubble.js"></script>
 
 </body>
 </html>
