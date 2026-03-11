@@ -1,724 +1,513 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="light">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ImpactGrid Group — Intelligent Platforms for Creators &amp; Businesses</title>
-<link rel="icon" href="favicon.ico"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
-<style>
-/* ══ VARIABLES ════════════════════════════════════ */
-:root{
-  --bg:#faf8f4;
-  --surf:#f3f0ea;
-  --card:#ffffff;
-  --b:#e4dfd6;
-  --b2:#ccc9c0;
-  --tx:#1a1814;
-  --dim:#7a7060;
-  --dim2:#b0a898;
-  --bl:#2a6dd9;
-  --bl2:#1a52b0;
-  --gr:#1a9e5a;
-  --gold:#b8860b;
-  --gold2:#8a6208;
-  --gold-bg:rgba(184,134,11,.08);
-  --gold-bd:rgba(184,134,11,.26);
-  --sh:0 2px 18px rgba(0,0,0,.07);
-  --shl:0 16px 64px rgba(0,0,0,.11);
-  --r:14px;
-}
-[data-theme="dark"]{
-  --bg:#080808;
-  --surf:#101010;
-  --card:#161616;
-  --b:#222222;
-  --b2:#2e2e2e;
-  --tx:#f0ece6;
-  --dim:#888880;
-  --dim2:#444440;
-  --bl:#4a8ff5;
-  --bl2:#2460d9;
-  --gr:#1fd97a;
-  --gold:#d4a017;
-  --gold2:#b8860b;
-  --gold-bg:rgba(212,160,23,.09);
-  --gold-bd:rgba(212,160,23,.28);
-  --sh:0 2px 18px rgba(0,0,0,.45);
-  --shl:0 16px 64px rgba(0,0,0,.6);
-}
+/* ================================================================
+   ImpactGrid Group Chat Bubble
+   Works on both impactgridgroup.com AND impactgridanalytics.com.
+   Set IMPACTGRID_AI_URL and optionally IMPACTGRID_AI_MODE before the script tag.
 
-/* ══ RESET ════════════════════════════════════════ */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;line-height:1.65;overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
-a{color:inherit;text-decoration:none}
-img{display:block}
+   group.com:     <script>IMPACTGRID_AI_URL = "https://xxxx.trycloudflare.com";</script>
+   analytics.com: <script>IMPACTGRID_AI_URL = "https://xxxx.trycloudflare.com"; IMPACTGRID_AI_MODE = "dashboard";</script>
+================================================================ */
 
-/* ══ AMBIENT GLOWS ════════════════════════════════ */
-.amb{position:fixed;pointer-events:none;z-index:0;border-radius:50%}
-.amb-a{width:700px;height:700px;top:-260px;right:-200px;background:radial-gradient(circle,rgba(212,160,23,.1) 0%,transparent 60%);animation:f1 16s ease-in-out infinite alternate}
-.amb-b{width:560px;height:560px;bottom:-200px;left:-160px;background:radial-gradient(circle,rgba(184,134,11,.07) 0%,transparent 60%);animation:f2 20s ease-in-out infinite alternate}
-[data-theme="light"] .amb-a{background:radial-gradient(circle,rgba(184,134,11,.09) 0%,transparent 60%)}
-[data-theme="light"] .amb-b{background:radial-gradient(circle,rgba(138,98,8,.06) 0%,transparent 60%)}
-@keyframes f1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-50px,60px) scale(1.08)}}
-@keyframes f2{0%{transform:translate(0,0) scale(1)}100%{transform:translate(50px,-50px) scale(1.06)}}
+(function() {
+  /* ── Config — hardcoded, never exposed to users ── */
+  var AI_URL  = (typeof IMPACTGRID_AI_URL !== 'undefined' ? IMPACTGRID_AI_URL : 'https://differently-trust-november-debug.trycloudflare.com');
+  var MODE    = (typeof IMPACTGRID_AI_MODE !== 'undefined' ? IMPACTGRID_AI_MODE : 'group');
+  var HISTORY = [];
+  var TYPING  = false;
 
-/* ══ NAV ══════════════════════════════════════════ */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:300;
-  height:64px;padding:0 clamp(16px,5vw,64px);
-  display:flex;align-items:center;justify-content:space-between;
-  background:rgba(250,248,244,.9);
-  backdrop-filter:blur(24px) saturate(160%);
-  border-bottom:1px solid var(--b);
-  transition:background .3s,border-color .3s;
-}
-[data-theme="dark"] nav{background:rgba(8,8,8,.9)}
-.n-left{display:flex;align-items:center;gap:12px}
-.n-logo{height:36px;width:auto;transition:opacity .2s}
-.n-logo:hover{opacity:.8}
-.n-logo-fb{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:900;font-size:.76rem;color:#fff;display:none}
-.n-sep{width:1px;height:22px;background:var(--b2)}
-.n-name{
-  font-family:'Syne',sans-serif;font-weight:900;font-size:.95rem;letter-spacing:-.025em;
-  background:linear-gradient(135deg,var(--gold2),var(--gold));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.n-name span{
-  -webkit-text-fill-color:var(--dim);color:var(--dim);font-weight:500;
-  background:none;-webkit-background-clip:unset;background-clip:unset;
-}
-.n-right{display:flex;align-items:center;gap:18px}
-.n-links{display:flex;align-items:center;gap:22px}
-.n-links a{font-size:.79rem;color:var(--dim);transition:color .18s;font-weight:400}
-.n-links a:hover{color:var(--tx)}
-.n-cta{
-  font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;
-  padding:8px 20px;border-radius:40px;letter-spacing:.03em;text-transform:uppercase;
-  background:linear-gradient(135deg,var(--gold),var(--gold2));
-  color:#fff;transition:all .22s;white-space:nowrap;
-}
-.n-cta:hover{background:linear-gradient(135deg,var(--gold2),#5a3a04);transform:translateY(-1px);box-shadow:0 8px 28px rgba(184,134,11,.32)}
-.tbtn{
-  width:34px;height:34px;border-radius:50%;
-  background:var(--surf);border:1px solid var(--b2);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  font-size:.88rem;transition:all .2s;flex-shrink:0;
-}
-.tbtn:hover{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-bg)}
-/* Mobile hamburger */
-.nmob{
-  display:none;background:var(--surf);border:1px solid var(--b2);
-  color:var(--tx);width:34px;height:34px;border-radius:8px;
-  cursor:pointer;align-items:center;justify-content:center;font-size:1rem;
-}
+  /* ── Inject fonts ── */
+  var font = document.createElement('link');
+  font.rel  = 'stylesheet';
+  font.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@700&display=swap';
+  document.head.appendChild(font);
 
-/* Mobile drawer */
-#mDrawer{
-  position:fixed;top:64px;left:0;right:0;bottom:0;
-  background:var(--bg);z-index:299;
-  padding:24px clamp(16px,5vw,40px);
-  display:flex;flex-direction:column;gap:6px;
-  transform:translateX(-100%);
-  transition:transform .32s cubic-bezier(.77,0,.18,1);
-  border-top:1px solid var(--b);
-  overflow-y:auto;
-}
-#mDrawer.open{transform:translateX(0)}
-.md-link{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:13px 16px;border-radius:10px;
-  color:var(--tx);font-size:.9rem;font-weight:500;
-  border:1px solid transparent;transition:all .15s;
-}
-.md-link:hover{background:var(--gold-bg);border-color:var(--gold-bd);color:var(--gold)}
-.md-cta{
-  margin-top:10px;padding:14px 16px;border-radius:10px;
-  background:linear-gradient(135deg,var(--gold),var(--gold2));
-  color:#fff;font-family:'Syne',sans-serif;font-weight:800;
-  font-size:.84rem;letter-spacing:.03em;text-transform:uppercase;
-  text-align:center;transition:all .2s;
-}
-.md-cta:hover{background:linear-gradient(135deg,var(--gold2),#5a3a04)}
-.md-sep{height:1px;background:var(--b);margin:8px 0}
+  /* ── Inject CSS ── */
+  var style = document.createElement('style');
+  style.textContent = `
+    #ig-bubble-btn {
+      position: fixed; bottom: 28px; right: 28px; z-index: 99999;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: linear-gradient(135deg, #1a3a6a, #2563eb);
+      border: none; cursor: pointer;
+      box-shadow: 0 8px 32px rgba(37,99,235,0.4), 0 2px 8px rgba(0,0,0,0.15);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      animation: ig-bubble-in 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes ig-bubble-in {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    #ig-bubble-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 12px 40px rgba(37,99,235,0.5);
+    }
+    #ig-bubble-btn svg { transition: transform 0.3s; }
+    #ig-bubble-btn.open svg.chat-icon { display: none; }
+    #ig-bubble-btn.open svg.close-icon { display: block !important; }
 
-/* ══ HERO ═════════════════════════════════════════ */
-.hero{
-  position:relative;z-index:1;
-  min-height:100vh;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;
-  padding:100px clamp(16px,5vw,60px) 80px;
-}
-.hero::before{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(ellipse at 65% 25%,rgba(184,134,11,.12) 0%,transparent 50%),
-    radial-gradient(ellipse at 20% 75%,rgba(138,98,8,.07) 0%,transparent 45%),
-    repeating-linear-gradient(-45deg,transparent,transparent 38px,rgba(184,134,11,.018) 38px,rgba(184,134,11,.018) 39px);
-}
-[data-theme="dark"] .hero::before{
-  background:
-    radial-gradient(ellipse at 65% 25%,rgba(212,160,23,.1) 0%,transparent 50%),
-    radial-gradient(ellipse at 20% 75%,rgba(184,134,11,.06) 0%,transparent 45%),
-    repeating-linear-gradient(-45deg,transparent,transparent 38px,rgba(212,160,23,.012) 38px,rgba(212,160,23,.012) 39px);
-}
-.h-badge{
-  position:relative;z-index:1;
-  display:inline-flex;align-items:center;gap:8px;
-  background:var(--gold-bg);border:1px solid var(--gold-bd);color:var(--gold);
-  font-size:.59rem;text-transform:uppercase;letter-spacing:3px;
-  padding:5px 16px;border-radius:40px;margin-bottom:28px;font-weight:700;
-  opacity:0;animation:fup .8s .1s ease forwards;
-}
-.h-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pd 2.5s infinite}
-@keyframes pd{0%,100%{opacity:1}50%{opacity:.15}}
-.h-title{
-  position:relative;z-index:1;
-  font-family:'Syne',sans-serif;font-weight:900;
-  font-size:clamp(3.4rem,10vw,8.5rem);
-  line-height:.88;letter-spacing:-.05em;
-  opacity:0;animation:fup .9s .18s ease forwards;
-}
-.h-title .t1{
-  display:block;
-  background:linear-gradient(135deg,var(--gold) 0%,var(--gold2) 50%,var(--gold) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.h-title .t2{
-  display:block;
-  -webkit-text-stroke:1.5px var(--b2);
-  color:transparent;
-}
-[data-theme="dark"] .h-title .t2{-webkit-text-stroke:1.5px rgba(255,255,255,.15)}
-.h-title .t3{
-  display:block;
-  background:linear-gradient(135deg,var(--gold2) 0%,var(--gold-bd) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  opacity:.28;
-}
-.h-sub{
-  position:relative;z-index:1;
-  font-size:clamp(.88rem,1.6vw,1.08rem);
-  color:var(--dim);max-width:460px;line-height:1.82;
-  margin:26px auto 0;font-weight:300;
-  opacity:0;animation:fup .9s .3s ease forwards;
-}
-.h-sub strong{color:var(--tx);font-weight:600}
-.h-actions{
-  position:relative;z-index:1;
-  display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
-  margin-top:32px;
-  opacity:0;animation:fup .9s .42s ease forwards;
-}
-.h-btn-p{
-  display:inline-flex;align-items:center;gap:8px;
-  background:linear-gradient(135deg,var(--gold),var(--gold2));
-  color:#fff;font-family:'Syne',sans-serif;font-weight:800;
-  font-size:.77rem;letter-spacing:.04em;text-transform:uppercase;
-  padding:13px 28px;border-radius:40px;transition:all .22s;
-}
-.h-btn-p:hover{background:linear-gradient(135deg,var(--gold2),#5a3a04);transform:translateY(-2px);box-shadow:0 12px 36px rgba(184,134,11,.3)}
-.h-btn-s{
-  display:inline-flex;align-items:center;gap:8px;
-  background:var(--card);border:1px solid var(--b2);color:var(--tx);
-  font-size:.77rem;font-weight:500;
-  padding:13px 24px;border-radius:40px;transition:all .22s;
-}
-.h-btn-s:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-bg)}
-.h-scroll{
-  position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
-  display:flex;flex-direction:column;align-items:center;gap:7px;
-  color:var(--dim2);font-size:.54rem;letter-spacing:3px;text-transform:uppercase;
-  opacity:0;animation:fup .9s .7s ease forwards;cursor:pointer;z-index:1;
-}
-.h-scroll svg{width:16px;height:16px;animation:bob 2.4s ease-in-out infinite}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
-@keyframes fup{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    #ig-unread {
+      position: absolute; top: -2px; right: -2px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #ef4444;
+      border: 2px solid #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px; font-weight: 700; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      animation: ig-badge-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes ig-badge-pop {
+      from { transform: scale(0); }
+      to   { transform: scale(1); }
+    }
 
-/* ══ SECTIONS ═════════════════════════════════════ */
-.sec{position:relative;z-index:1;padding:90px clamp(16px,5vw,64px)}
-.s-lbl{text-align:center;font-size:.57rem;text-transform:uppercase;letter-spacing:4px;color:var(--gold);font-weight:700;margin-bottom:10px}
-.s-ttl{
-  text-align:center;font-family:'Syne',sans-serif;font-weight:900;
-  font-size:clamp(1.9rem,3.5vw,2.8rem);letter-spacing:-.04em;line-height:1;margin-bottom:10px;
-  background:linear-gradient(135deg,var(--gold2),var(--gold));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-[data-theme="dark"] .s-ttl{
-  background:linear-gradient(135deg,var(--gold),var(--gold2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.s-sub{text-align:center;font-size:.86rem;color:var(--dim);font-weight:300;margin-bottom:54px}
+    #ig-chat-panel {
+      position: fixed; bottom: 100px; right: 28px; z-index: 99998;
+      width: 360px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      transform-origin: bottom right;
+      animation: ig-panel-in 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      max-height: 560px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    @keyframes ig-panel-in {
+      from { transform: scale(0.7) translateY(20px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    #ig-chat-panel.closing {
+      animation: ig-panel-out 0.2s ease-in forwards;
+    }
+    @keyframes ig-panel-out {
+      to { transform: scale(0.7) translateY(20px); opacity: 0; }
+    }
 
-/* ══ PLATFORM CARDS ═══════════════════════════════ */
-.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1100px;margin:0 auto}
-.pc{
-  position:relative;overflow:hidden;
-  border-radius:22px;border:1px solid var(--b);
-  background:var(--card);padding:52px 48px 48px;
-  cursor:pointer;box-shadow:var(--sh);
-  transition:transform .45s cubic-bezier(.23,1,.32,1),border-color .3s,box-shadow .45s;
-}
-.pc::before{
-  content:'';position:absolute;inset:0;opacity:0;
-  transition:opacity .45s;pointer-events:none;border-radius:22px;
-}
-.pc:hover{transform:translateY(-8px);box-shadow:var(--shl)}
-.pc:hover::before{opacity:1}
-/* Gold card */
-.pc-ca::before{background:radial-gradient(ellipse at 100% 0%,rgba(184,134,11,.14),transparent 55%)}
-.pc-ca:hover{border-color:var(--gold-bd)}
-[data-theme="dark"] .pc-ca::before{background:radial-gradient(ellipse at 100% 0%,rgba(212,160,23,.16),transparent 55%)}
-/* Blue card */
-.pc-an::before{background:radial-gradient(ellipse at 100% 0%,rgba(42,109,217,.11),transparent 55%)}
-.pc-an:hover{border-color:rgba(42,109,217,.32)}
-.pc-num{
-  position:absolute;top:20px;right:28px;
-  font-family:'Syne',sans-serif;font-weight:900;font-size:5.5rem;
-  line-height:1;letter-spacing:-.06em;pointer-events:none;
-  color:rgba(0,0,0,.035);
-}
-[data-theme="dark"] .pc-num{color:rgba(255,255,255,.03)}
-.pc-chip{
-  display:inline-block;font-size:.56rem;font-weight:700;
-  text-transform:uppercase;letter-spacing:2px;
-  padding:4px 12px;border-radius:20px;margin-bottom:20px;
-}
-.pc-ca .pc-chip{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-bd)}
-.pc-an .pc-chip{background:rgba(42,109,217,.07);color:var(--bl);border:1px solid rgba(42,109,217,.18)}
-.pc-icon{font-size:3rem;margin-bottom:22px;display:block;line-height:1}
-.pc-name{
-  font-family:'Syne',sans-serif;font-weight:900;
-  font-size:clamp(1.55rem,2.8vw,2.1rem);letter-spacing:-.04em;
-  line-height:1.05;margin-bottom:14px;
-}
-.pc-ca .pc-name{
-  background:linear-gradient(135deg,var(--gold2),var(--gold));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-[data-theme="dark"] .pc-ca .pc-name{
-  background:linear-gradient(135deg,var(--gold),var(--gold2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.pc-desc{font-size:.86rem;color:var(--dim);line-height:1.82;margin-bottom:28px;font-weight:300;max-width:340px}
-.pc-feats{display:flex;flex-direction:column;gap:10px;margin-bottom:36px}
-.pc-feat{display:flex;align-items:center;gap:11px;font-size:.79rem;color:var(--dim)}
-.pc-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-.pc-ca .pc-dot{background:var(--gold)}
-.pc-an .pc-dot{background:var(--bl)}
-.pc-btn{
-  display:inline-flex;align-items:center;gap:10px;
-  color:#fff;font-family:'Syne',sans-serif;font-weight:800;
-  font-size:.76rem;letter-spacing:.04em;text-transform:uppercase;
-  padding:13px 26px;border-radius:40px;transition:all .22s;
-}
-.pc-ca .pc-btn{background:linear-gradient(135deg,var(--gold),var(--gold2))}
-.pc-ca .pc-btn:hover{background:linear-gradient(135deg,var(--gold2),#5a3a04);transform:translateX(4px);box-shadow:0 8px 28px rgba(184,134,11,.28)}
-.pc-an .pc-btn{background:var(--bl)}
-.pc-an .pc-btn:hover{background:var(--bl2);transform:translateX(4px);box-shadow:0 8px 24px rgba(42,109,217,.28)}
-.pc-btn svg{width:14px;height:14px;transition:transform .2s}
-.pc-btn:hover svg{transform:translateX(5px)}
+    /* Header */
+    .ig-panel-header {
+      background: linear-gradient(135deg, #1a3a6a 0%, #2563eb 100%);
+      padding: 18px 20px 16px;
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0;
+    }
+    .ig-header-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; position: relative;
+    }
+    .ig-header-avatar::after {
+      content: '';
+      position: absolute; bottom: 1px; right: 1px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #4ade80;
+      border: 2px solid #1a3a6a;
+    }
+    .ig-header-text { flex: 1; min-width: 0; }
+    .ig-header-name {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 15px; font-weight: 700; color: #fff;
+      line-height: 1.2;
+    }
+    .ig-header-sub {
+      font-size: 11px; color: rgba(255,255,255,0.65);
+      margin-top: 2px; font-weight: 400;
+    }
+    .ig-header-close {
+      background: rgba(255,255,255,0.12);
+      border: none; border-radius: 8px;
+      width: 30px; height: 30px;
+      color: rgba(255,255,255,0.8);
+      cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .ig-header-close:hover { background: rgba(255,255,255,0.22); }
 
-/* ══ BRIDGE ═══════════════════════════════════════ */
-.bridge{
-  position:relative;z-index:1;
-  max-width:1100px;margin:0 auto;
-  padding:0 clamp(16px,5vw,64px) 80px;
-}
-.br-rule{
-  height:1px;
-  background:linear-gradient(90deg,transparent,var(--b2) 25%,var(--b2) 75%,transparent);
-  margin-bottom:44px;
-}
-.br-cols{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px}
-.br-card{
-  background:var(--card);border:1px solid var(--b);border-radius:var(--r);
-  padding:22px 24px;box-shadow:var(--sh);transition:border-color .2s;
-}
-.br-card:hover{border-color:var(--gold-bd)}
-.br-lbl{font-size:.53rem;text-transform:uppercase;letter-spacing:3px;color:var(--dim2);font-weight:700;margin-bottom:4px}
-.br-name{font-family:'Syne',sans-serif;font-weight:800;font-size:.96rem;margin-bottom:3px}
-.br-ca{color:var(--gold)}
-.br-an{color:var(--bl)}
-.br-desc{font-size:.72rem;color:var(--dim);font-weight:300}
-.br-mid{text-align:center;padding:0 12px}
-.br-arr{font-size:1.8rem;color:var(--b2);display:block;line-height:1}
-.br-lbl2{font-size:.53rem;color:var(--dim2);text-transform:uppercase;letter-spacing:2px;margin-top:5px;display:block}
+    /* Messages */
+    .ig-messages {
+      flex: 1; overflow-y: auto;
+      padding: 20px 16px 12px;
+      display: flex; flex-direction: column; gap: 12px;
+      min-height: 260px; max-height: 340px;
+      scroll-behavior: smooth;
+      background: #f8faff;
+    }
+    .ig-messages::-webkit-scrollbar { width: 3px; }
+    .ig-messages::-webkit-scrollbar-track { background: transparent; }
+    .ig-messages::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
 
-/* ══ STATS ════════════════════════════════════════ */
-.stats{
-  position:relative;z-index:1;
-  max-width:1100px;margin:0 auto;
-  padding:0 clamp(16px,5vw,64px) 100px;
-}
-.stats-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  border:1px solid var(--b);border-radius:18px;
-  overflow:hidden;box-shadow:var(--sh);
-}
-.stat{
-  background:var(--card);padding:34px 26px;
-  border-right:1px solid var(--b);
-  transition:background .22s,transform .22s;
-  cursor:default;
-}
-.stat:last-child{border-right:none}
-.stat:hover{background:var(--gold-bg)}
-.stat-n{
-  font-family:'Syne',sans-serif;font-weight:900;
-  font-size:2.4rem;letter-spacing:-.05em;line-height:1;
-  margin-bottom:7px;color:var(--gold);
-}
-.stat-l{font-size:.62rem;color:var(--dim);text-transform:uppercase;letter-spacing:2px;font-weight:500}
+    .ig-msg {
+      display: flex; gap: 8px; align-items: flex-end;
+      animation: ig-msg-in 0.25s ease;
+      max-width: 100%;
+    }
+    @keyframes ig-msg-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .ig-msg.user { flex-direction: row-reverse; }
+    .ig-msg-av {
+      width: 28px; height: 28px; border-radius: 50%;
+      flex-shrink: 0; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+    }
+    .ig-msg.ai   .ig-msg-av { background: linear-gradient(135deg,#1a3a6a,#2563eb); color: #fff; }
+    .ig-msg.user .ig-msg-av { background: #e2e8f0; color: #64748b; }
+    .ig-msg-text {
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13.5px; line-height: 1.65;
+      max-width: 78%;
+      word-break: break-word;
+    }
+    .ig-msg.ai   .ig-msg-text {
+      background: #fff;
+      border: 1px solid #e8edf5;
+      color: #1e293b;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .ig-msg.user .ig-msg-text {
+      background: linear-gradient(135deg, #1a3a6a, #2563eb);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .ig-msg-text strong { font-weight: 600; }
+    .ig-msg-text a { color: #2563eb; text-decoration: underline; }
 
-/* ══ FEATURE STRIP ════════════════════════════════ */
-.features{
-  position:relative;z-index:1;
-  background:var(--surf);border-top:1px solid var(--b);border-bottom:1px solid var(--b);
-  padding:60px clamp(16px,5vw,64px);
-}
-.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1100px;margin:0 auto}
-.feat-item{display:flex;gap:16px;align-items:flex-start}
-.feat-ico{
-  width:42px;height:42px;border-radius:10px;flex-shrink:0;
-  background:var(--gold-bg);border:1px solid var(--gold-bd);
-  display:flex;align-items:center;justify-content:center;font-size:1.1rem;
-}
-.feat-ttl{font-family:'Syne',sans-serif;font-size:.84rem;font-weight:800;color:var(--tx);margin-bottom:4px}
-.feat-dc{font-size:.72rem;color:var(--dim);line-height:1.6;font-weight:300}
+    /* Typing */
+    .ig-typing {
+      display: flex; gap: 8px; align-items: flex-end;
+      padding: 0 16px 8px;
+    }
+    .ig-typing-av {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg,#1a3a6a,#2563eb);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .ig-typing-dots {
+      display: flex; gap: 4px; align-items: center;
+      padding: 10px 14px;
+      background: #fff;
+      border: 1px solid #e8edf5;
+      border-radius: 14px; border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .ig-typing-dots span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #94a3b8;
+      animation: ig-dot 1.4s ease-in-out infinite;
+    }
+    .ig-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .ig-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes ig-dot {
+      0%,80%,100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-5px); opacity: 1; }
+    }
 
-/* ══ FOOTER ═══════════════════════════════════════ */
-footer{
-  position:relative;z-index:1;
-  border-top:1px solid var(--b);
-  padding:56px clamp(16px,5vw,64px) 38px;
-  background:var(--surf);
-}
-.ft-inner{max-width:1100px;margin:0 auto}
-.ft-top{
-  display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;
-  gap:48px;margin-bottom:44px;align-items:start;
-}
-.ft-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.ft-logo-img{height:28px;width:auto}
-.ft-brand{
-  font-family:'Syne',sans-serif;font-weight:900;font-size:.94rem;letter-spacing:-.02em;
-  background:linear-gradient(135deg,var(--gold2),var(--gold));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.ft-tag{font-size:.73rem;color:var(--dim);line-height:1.7;max-width:220px;font-weight:300;margin-bottom:18px}
-.ft-col h4{font-size:.52rem;text-transform:uppercase;letter-spacing:3px;color:var(--dim2);font-weight:700;margin-bottom:14px}
-.ft-col a{display:block;font-size:.76rem;color:var(--dim);margin-bottom:9px;transition:color .15s}
-.ft-col a:hover{color:var(--gold)}
-.ft-ext{color:var(--bl)!important}
-.ft-bottom{
-  display:flex;align-items:center;justify-content:space-between;
-  border-top:1px solid var(--b);padding-top:24px;flex-wrap:wrap;gap:10px;
-}
-.ft-bottom p{font-size:.65rem;color:var(--dim2)}
-.ft-bottom a{color:var(--dim2);transition:color .15s}
-.ft-bottom a:hover{color:var(--gold)}
+    /* Suggestions */
+    .ig-suggestions {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      padding: 6px 16px 10px;
+      background: #f8faff;
+      border-top: 1px solid #f1f5f9;
+    }
+    .ig-chip {
+      padding: 5px 12px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11.5px; color: #475569;
+      cursor: pointer; transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .ig-chip:hover {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+    }
 
-/* ══ REVEAL ═══════════════════════════════════════ */
-.rv{opacity:0;transform:translateY(26px);transition:opacity .65s ease,transform .65s ease}
-.rv.in{opacity:1;transform:translateY(0)}
-.rv2{opacity:0;transform:translateY(26px);transition:opacity .65s .14s ease,transform .65s .14s ease}
-.rv2.in{opacity:1;transform:translateY(0)}
+    /* Input */
+    .ig-input-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px 16px;
+      background: #fff;
+      border-top: 1px solid #f1f5f9;
+      flex-shrink: 0;
+    }
+    .ig-input {
+      flex: 1;
+      padding: 10px 14px;
+      background: #f8faff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; color: #1e293b;
+      outline: none; transition: border-color 0.2s;
+    }
+    .ig-input:focus { border-color: #93c5fd; }
+    .ig-input::placeholder { color: #94a3b8; }
+    .ig-send {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: linear-gradient(135deg, #1a3a6a, #2563eb);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+    }
+    .ig-send:hover { opacity: 0.85; transform: scale(1.05); }
+    .ig-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-/* ══ RESPONSIVE ═══════════════════════════════════ */
-@media(max-width:960px){
-  .pgrid{grid-template-columns:1fr}
-  .pc{padding:36px 28px 40px}
-  .br-cols{grid-template-columns:1fr;text-align:center}
-  .br-arr{display:inline-block;transform:rotate(90deg)}
-  .stats-grid{grid-template-columns:1fr 1fr}
-  .stat{border-right:none;border-bottom:1px solid var(--b)}
-  .stat:nth-child(odd){border-right:1px solid var(--b)}
-  .stat:last-child{border-bottom:none}
-  .ft-top{grid-template-columns:1fr 1fr;gap:28px}
-  .n-links{display:none}.nmob{display:inline-flex}
-  .feat-grid{grid-template-columns:1fr 1fr}
-}
-@media(max-width:580px){
-  .h-title{font-size:clamp(2.8rem,14vw,4.5rem)}
-  .feat-grid{grid-template-columns:1fr}
-  .ft-top{grid-template-columns:1fr}
-  .stats-grid{grid-template-columns:1fr 1fr}
-  .h-actions{flex-direction:column;align-items:center}
-}
-</style>
-</head>
-<body>
+    /* Branding */
+    .ig-powered {
+      text-align: center;
+      font-size: 10px; color: #94a3b8;
+      padding: 6px 0 10px;
+      background: #fff;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .ig-powered a { color: #2563eb; text-decoration: none; font-weight: 600; }
 
-<div class="amb amb-a"></div>
-<div class="amb amb-b"></div>
+    @media (max-width: 420px) {
+      #ig-chat-panel { width: calc(100vw - 24px); right: 12px; bottom: 90px; }
+      #ig-bubble-btn { right: 16px; bottom: 20px; }
+    }
+  `;
+  document.head.appendChild(style);
 
-<!-- ══ NAV ══════════════════════════════════════════ -->
-<nav>
-  <div class="n-left">
-    <a href="index.html">
-      <img src="logo.png" alt="ImpactGrid" class="n-logo" id="navLogo"
-           onerror="this.style.display='none';document.getElementById('navLogoFb').style.display='flex'"/>
-      <div class="n-logo-fb" id="navLogoFb" style="display:none">IG</div>
-    </a>
-    <div class="n-sep"></div>
-    <div class="n-name">ImpactGrid <span>Group</span></div>
-  </div>
-  <div class="n-right">
-    <div class="n-links">
-      <a href="#platforms">Platforms</a>
-      <a href="#features">Features</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="dashboard.html" class="n-cta">Enter Platform →</a>
-    </div>
-    <button class="tbtn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
-    <button class="nmob" id="menuBtn" onclick="toggleDrawer()" aria-label="Menu">☰</button>
-  </div>
-</nav>
+  /* ── Build HTML ── */
+  var wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <!-- Bubble button -->
+    <button id="ig-bubble-btn" onclick="igToggleChat()" aria-label="Chat with ImpactGrid AI">
+      <svg class="chat-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <svg class="close-icon" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+      <div id="ig-unread">1</div>
+    </button>
 
-<!-- Mobile drawer -->
-<div id="mDrawer">
-  <a href="#platforms" class="md-link" onclick="closeDrawer()">Platforms</a>
-  <a href="#features" class="md-link" onclick="closeDrawer()">Features</a>
-  <a href="about.html" class="md-link">About</a>
-  <a href="contact.html" class="md-link">Contact</a>
-  <div class="md-sep"></div>
-  <a href="dashboard.html" class="md-cta">Enter Platform →</a>
-  <a href="https://impactgridanalytics.com/" target="_blank" rel="noopener" class="md-link">Analytics Platform ↗</a>
-</div>
-
-<!-- ══ HERO ══════════════════════════════════════════ -->
-<section class="hero">
-  <div class="h-badge"><div class="h-dot"></div>Intelligent Platforms for Creators &amp; Businesses</div>
-  <h1 class="h-title">
-    <span class="t1">Impact</span>
-    <span class="t2">Grid</span>
-    <span class="t3">Group</span>
-  </h1>
-  <p class="h-sub">Two powerful platforms. One ecosystem.<br><strong>Built to create, grow, and understand your business.</strong></p>
-  <div class="h-actions">
-    <a href="dashboard.html" class="h-btn-p">
-      Enter Content Platform
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </a>
-    <a href="#platforms" class="h-btn-s">See Platforms</a>
-  </div>
-  <div class="h-scroll" onclick="document.getElementById('platforms').scrollIntoView({behavior:'smooth'})">
-    Explore
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-  </div>
-</section>
-
-<!-- ══ PLATFORMS ════════════════════════════════════ -->
-<section class="sec" id="platforms">
-  <p class="s-lbl rv">Choose your platform</p>
-  <h2 class="s-ttl rv">Two platforms. One ecosystem.</h2>
-  <p class="s-sub rv">Everything you need — in one group.</p>
-
-  <div class="pgrid">
-    <!-- Content Agency -->
-    <div class="pc pc-ca rv" onclick="window.location='dashboard.html'">
-      <div class="pc-num">01</div>
-      <span class="pc-chip">Creator Platform</span>
-      <span class="pc-icon">🎬</span>
-      <h3 class="pc-name">ImpactGrid<br>Content Agency</h3>
-      <p class="pc-desc">Hire creators, produce content, and manage social media campaigns — with powerful AI browser tools that edit your videos instantly.</p>
-      <div class="pc-feats">
-        <div class="pc-feat"><div class="pc-dot"></div>Video Editor &amp; Creator Studio</div>
-        <div class="pc-feat"><div class="pc-dot"></div>Book Manchester Creators</div>
-        <div class="pc-feat"><div class="pc-dot"></div>AI Content Calendar &amp; Scheduling</div>
-        <div class="pc-feat"><div class="pc-dot"></div>Trending Topics &amp; Insights</div>
-        <div class="pc-feat"><div class="pc-dot"></div>Jobs Marketplace &amp; Creator Profiles</div>
-        <div class="pc-feat"><div class="pc-dot"></div>Live GPS Creator Tracking</div>
-      </div>
-      <span class="pc-btn">
-        Enter Content Platform
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </span>
-    </div>
-
-    <!-- Analytics -->
-    <div class="pc pc-an rv2" onclick="window.open('https://impactgridanalytics.com/','_blank')">
-      <div class="pc-num">02</div>
-      <span class="pc-chip">Analytics Platform</span>
-      <span class="pc-icon">📊</span>
-      <h3 class="pc-name">ImpactGrid<br>Analysis</h3>
-      <p class="pc-desc">Track revenue, expenses, and business performance with powerful visual analytics, financial insights, and AI-powered reporting with <strong>Dijo</strong>.</p>
-      <div class="pc-feats">
-        <div class="pc-feat"><div class="pc-dot"></div>Revenue &amp; Expense Tracking</div>
-        <div class="pc-feat"><div class="pc-dot"></div>Financial Visualisations</div>
-        <div class="pc-feat"><div class="pc-dot"></div>AI Business Insights</div>
-        <div class="pc-feat"><div class="pc-dot"></div>Performance Benchmarks</div>
-        <div class="pc-feat"><div class="pc-dot"></div>Custom Reports &amp; Exports</div>
-        <div class="pc-feat"><div class="pc-dot"></div>Real-time Data Dashboard</div>
-      </div>
-      <span class="pc-btn">
-        Open Analysis Platform
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </span>
-    </div>
-  </div>
-</section>
-
-<!-- ══ BRIDGE ═══════════════════════════════════════ -->
-<div class="bridge rv">
-  <div class="br-rule"></div>
-  <div class="br-cols">
-    <div class="br-card">
-      <div class="br-lbl">Platform 01</div>
-      <div class="br-name br-ca">Content Agency</div>
-      <div class="br-desc">Create &amp; distribute your content</div>
-    </div>
-    <div class="br-mid">
-      <span class="br-arr">⇌</span>
-      <span class="br-lbl2">One ecosystem</span>
-    </div>
-    <div class="br-card">
-      <div class="br-lbl">Platform 02</div>
-      <div class="br-name br-an">ImpactGrid Analysis</div>
-      <div class="br-desc">Understand your business numbers</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ STATS ════════════════════════════════════════ -->
-<div class="stats rv">
-  <div class="stats-grid">
-    <div class="stat"><div class="stat-n">7+</div><div class="stat-l">Platforms Supported</div></div>
-    <div class="stat"><div class="stat-n">100%</div><div class="stat-l">Browser-Based</div></div>
-    <div class="stat"><div class="stat-n">5</div><div class="stat-l">Core Modules</div></div>
-    <div class="stat"><div class="stat-n">MCR</div><div class="stat-l">Manchester Based</div></div>
-  </div>
-</div>
-
-<!-- ══ FEATURES ═════════════════════════════════════ -->
-<div class="features rv" id="features">
-  <p class="s-lbl" style="margin-bottom:8px">Built for creators</p>
-  <h2 class="s-ttl" style="margin-bottom:8px">Everything in one place</h2>
-  <p class="s-sub" style="margin-bottom:44px">No more switching between tools.</p>
-  <div class="feat-grid">
-    <div class="feat-item">
-      <div class="feat-ico">🎬</div>
-      <div><div class="feat-ttl">Browser Video Editor</div><div class="feat-dc">Edit, trim, caption and export videos without installing anything. Works on any device.</div></div>
-    </div>
-    <div class="feat-item">
-      <div class="feat-ico">🤖</div>
-      <div><div class="feat-ttl">AI Content Planner</div><div class="feat-dc">Upload a video and ImpactGrid automatically generates your posting schedule, captions, and hashtags.</div></div>
-    </div>
-    <div class="feat-item">
-      <div class="feat-ico">📅</div>
-      <div><div class="feat-ttl">Content Calendar</div><div class="feat-dc">Visual drag-and-drop calendar for all your scheduled posts across every platform.</div></div>
-    </div>
-    <div class="feat-item">
-      <div class="feat-ico">💼</div>
-      <div><div class="feat-ttl">Jobs Marketplace</div><div class="feat-dc">Companies post creator jobs. Creators apply. AI matches the best fit automatically.</div></div>
-    </div>
-    <div class="feat-item">
-      <div class="feat-ico">🏢</div>
-      <div><div class="feat-ttl">Workspace &amp; Collaboration</div><div class="feat-dc">Employers create projects, assign creators, and track deliverables in one shared workspace.</div></div>
-    </div>
-    <div class="feat-item">
-      <div class="feat-ico">📊</div>
-      <div><div class="feat-ttl">Analytics &amp; Insights</div><div class="feat-dc">Track performance, predict viral potential, and understand what content drives growth.</div></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ FOOTER ════════════════════════════════════════ -->
-<footer>
-  <div class="ft-inner">
-    <div class="ft-top">
-      <div>
-        <div class="ft-logo-row">
-          <img src="logo.png" alt="ImpactGrid" class="ft-logo-img" onerror="this.style.display='none'"/>
-          <div class="ft-brand">ImpactGrid Group</div>
+    <!-- Chat panel -->
+    <div id="ig-chat-panel" style="display:none;">
+      <!-- Header -->
+      <div class="ig-panel-header">
+        <div class="ig-header-avatar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
         </div>
-        <p class="ft-tag">Intelligent platforms for creators and businesses. Built in Manchester, UK.</p>
+        <div class="ig-header-text">
+          <div class="ig-header-name">Dijo by ImpactGrid</div>
+          <div class="ig-header-sub">Your AI adviser · Online now</div>
+        </div>
+        <button class="ig-header-close" onclick="igToggleChat()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
-      <div class="ft-col">
-        <h4>Platforms</h4>
-        <a href="dashboard.html">Content Agency</a>
-        <a href="upload.html">Creator Studio</a>
-        <a href="https://impactgridanalytics.com/" target="_blank" rel="noopener" class="ft-ext">Analysis ↗</a>
-      </div>
-      <div class="ft-col">
-        <h4>Creator Tools</h4>
-        <a href="upload.html">Editor</a>
-        <a href="calendar.html">Calendar</a>
-        <a href="trending.html">Trending</a>
-        <a href="creators.html">Creators</a>
-      </div>
-      <div class="ft-col">
-        <h4>Company</h4>
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="services.html">Services</a>
-        <a href="dashboard.html">Dashboard</a>
-      </div>
-    </div>
-    <div class="ft-bottom">
-      <p>© 2025 ImpactGrid Group. All rights reserved. · Manchester, UK</p>
-      <p><a href="https://impactgridanalytics.com/" target="_blank">impactgridanalytics.com</a></p>
-    </div>
-  </div>
-</footer>
 
-<script>
-/* ── Theme ─────────────────────────────────────── */
-function applyTheme(t){
-  document.documentElement.setAttribute('data-theme',t);
-  document.getElementById('themeBtn').textContent = t==='dark' ? '☀️' : '🌙';
-  try{localStorage.setItem('ig-theme',t);}catch(e){}
-}
-function toggleTheme(){
-  applyTheme(document.documentElement.getAttribute('data-theme')==='light' ? 'dark' : 'light');
-}
-(function(){
-  try{applyTheme(localStorage.getItem('ig-theme')||'light');}
-  catch(e){applyTheme('light');}
+      <!-- Messages -->
+      <div class="ig-messages" id="ig-messages"></div>
+
+      <!-- Typing indicator -->
+      <div class="ig-typing" id="ig-typing" style="display:none;">
+        <div class="ig-typing-av">AI</div>
+        <div class="ig-typing-dots"><span></span><span></span><span></span></div>
+      </div>
+
+      <!-- Suggestion chips -->
+      <div class="ig-suggestions" id="ig-suggestions"></div>
+
+      <!-- Input -->
+      <div class="ig-input-row">
+        <input id="ig-input" class="ig-input" placeholder="Ask me anything…"
+          onkeydown="if(event.key==='Enter'){ event.preventDefault(); igSend(); }">
+        <button class="ig-send" id="ig-send-btn" onclick="igSend()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="ig-powered">Powered by <a href="https://impactgridanalytics.com" target="_blank">ImpactGrid Analytics</a></div>
+    </div>
+  `;
+  document.body.appendChild(wrap);
+
+  /* ── Show welcome message — varies by mode ── */
+  setTimeout(function() {
+    var welcomes = {
+      group:     'Hi there! &#128075; I\'m <strong>Dijo</strong> from ImpactGrid — happy to answer any questions about what we do, our plans, or how to get started. What\'s on your mind?',
+      dashboard: 'Hi! &#128075; I\'m <strong>Dijo</strong>, your ImpactGrid assistant. I can help you navigate the platform, understand your dashboard, or answer questions about your account. What do you need?',
+      adviser:   'Hi! &#128075; I\'m <strong>Dijo</strong> — your personal financial adviser from ImpactGrid. Ask me anything about your business.'
+    };
+    igAppendMsg('ai', welcomes[MODE] || welcomes.group);
+  }, 600);
+
+  /* ── Populate suggestion chips by mode ── */
+  (function() {
+    var chipSets = {
+      group: [
+        ['What is ImpactGrid?',       "What does ImpactGrid do?"],
+        ['Pricing',                   "What are the pricing plans?"],
+        ['Get started',               "How do I get started?"],
+        ['Data privacy',              "Is my data private?"]
+      ],
+      dashboard: [
+        ['How do I add data?',        "How do I add my monthly financial data?"],
+        ['View my records',           "How do I view and edit my records?"],
+        ['Upgrade my plan',           "How do I upgrade my plan?"],
+        ['What does risk score mean?',"What does my risk score mean?"]
+      ],
+      adviser: [
+        ['Health check',              "Give me a full financial health assessment"],
+        ['Top risks',                 "What are my top 3 risks right now?"],
+        ['Improve margins',           "How can I improve my profit margins?"],
+        ['Break-even',                "What is my break-even point?"]
+      ]
+    };
+    var chips  = (chipSets[MODE] || chipSets.group);
+    var el     = document.getElementById('ig-suggestions');
+    if (!el) return;
+    el.innerHTML = chips.map(function(c) {
+      return '<button class="ig-chip" onclick="igAsk(' + JSON.stringify(c[1]) + ')">' + c[0] + '</button>';
+    }).join('');
+  })();
+
+  /* ── Toggle panel ── */
+  window.igToggleChat = function() {
+    var panel  = document.getElementById('ig-chat-panel');
+    var btn    = document.getElementById('ig-bubble-btn');
+    var unread = document.getElementById('ig-unread');
+    var isOpen = panel.style.display !== 'none';
+
+    if (isOpen) {
+      panel.classList.add('closing');
+      setTimeout(function() {
+        panel.style.display = 'none';
+        panel.classList.remove('closing');
+      }, 200);
+      btn.classList.remove('open');
+    } else {
+      panel.style.display = 'flex';
+      panel.style.flexDirection = 'column';
+      btn.classList.add('open');
+      if (unread) unread.remove();
+      document.getElementById('ig-input').focus();
+      igScrollBottom();
+    }
+  };
+
+  /* ── Send ── */
+  window.igSend = function() {
+    var input = document.getElementById('ig-input');
+    var msg   = (input ? input.value : '').trim();
+    if (!msg || TYPING) return;
+    input.value = '';
+    igAsk(msg);
+  };
+
+  window.igAsk = async function(message) {
+    if (!message || TYPING) return;
+
+    /* Hide chips after first message */
+    var chips = document.getElementById('ig-suggestions');
+    if (chips) chips.style.display = 'none';
+
+    igAppendMsg('user', igEsc(message));
+    HISTORY.push({ role: 'user', content: message });
+
+    /* Show typing */
+    TYPING = true;
+    var typingEl = document.getElementById('ig-typing');
+    var sendBtn  = document.getElementById('ig-send-btn');
+    if (typingEl) typingEl.style.display = 'flex';
+    if (sendBtn)  sendBtn.disabled = true;
+    igScrollBottom();
+
+    /* Build prompt with conversation history */
+    var prompt = '';
+    if (HISTORY.length > 1) {
+      prompt += 'Conversation so far:\n';
+      HISTORY.slice(-8, -1).forEach(function(m) {
+        prompt += (m.role === 'user' ? 'Visitor: ' : 'You: ') + m.content + '\n';
+      });
+      prompt += '\n';
+    }
+    prompt += 'Visitor: ' + message;
+
+    try {
+      if (!AI_URL) throw new Error('AI_URL not configured');
+
+      var res = await fetch(AI_URL + '/chat', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1', 'User-Agent': 'ImpactGridBubble' },
+        body:    JSON.stringify({ message: prompt, mode: MODE })
+      });
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var data  = await res.json();
+      var reply = data.reply || 'Sorry, I couldn\'t get a response. Try again in a moment!';
+
+      HISTORY.push({ role: 'assistant', content: reply });
+      igAppendMsg('ai', igFormat(reply));
+
+    } catch(e) {
+      console.error('[ImpactGrid Chat]', e);
+      igAppendMsg('ai',
+        'Hmm, I\'m having trouble connecting right now. In the meantime, feel free to explore <a href="https://impactgridanalytics.com" target="_blank">impactgridanalytics.com</a> or reach out to our team directly!'
+      );
+    } finally {
+      TYPING = false;
+      if (typingEl) typingEl.style.display = 'none';
+      if (sendBtn)  sendBtn.disabled = false;
+      igScrollBottom();
+    }
+  };
+
+  function igAppendMsg(role, html) {
+    var msgs = document.getElementById('ig-messages');
+    if (!msgs) return;
+    var isAI = role === 'ai';
+    var div  = document.createElement('div');
+    div.className = 'ig-msg ' + role;
+    div.innerHTML =
+      '<div class="ig-msg-av">' + (isAI ? 'AI' : 'You') + '</div>' +
+      '<div class="ig-msg-text">' + html + '</div>';
+    msgs.appendChild(div);
+    igScrollBottom();
+  }
+
+  function igScrollBottom() {
+    var msgs = document.getElementById('ig-messages');
+    if (msgs) setTimeout(function(){ msgs.scrollTop = msgs.scrollHeight; }, 50);
+  }
+
+  function igEsc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function igFormat(text) {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^[-*] (.+)$/gm, '<li style="margin-bottom:3px;">$1</li>')
+      .replace(/(<li[^>]*>[\s\S]*?<\/li>\n?)+/g, '<ul style="padding-left:16px;margin:6px 0;">$&</ul>')
+      .replace(/\n{2,}/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+  }
+
 })();
-
-/* ── Mobile drawer ─────────────────────────────── */
-var _drawerOpen = false;
-function toggleDrawer(){
-  _drawerOpen = !_drawerOpen;
-  document.getElementById('mDrawer').classList.toggle('open', _drawerOpen);
-  document.getElementById('menuBtn').textContent = _drawerOpen ? '✕' : '☰';
-  document.body.style.overflow = _drawerOpen ? 'hidden' : '';
-}
-function closeDrawer(){
-  _drawerOpen = false;
-  document.getElementById('mDrawer').classList.remove('open');
-  document.getElementById('menuBtn').textContent = '☰';
-  document.body.style.overflow = '';
-}
-// Close on resize to desktop
-window.addEventListener('resize', function(){
-  if(window.innerWidth > 960) closeDrawer();
-});
-
-/* ── Scroll reveal ─────────────────────────────── */
-var ro = new IntersectionObserver(function(es){
-  es.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('in'); });
-},{threshold:0.06});
-document.querySelectorAll('.rv,.rv2').forEach(function(el){ ro.observe(el); });
-
-/* ── Staggered platform cards ──────────────────── */
-document.querySelectorAll('.pc').forEach(function(c,i){
-  c.style.transitionDelay = (0.08 + i * 0.14) + 's';
-});
-</script>
-
-<!-- Dijo AI Chat Bubble — group mode -->
-<script>
-  var IMPACTGRID_AI_URL  = "https://differently-trust-november-debug.trycloudflare.com";
-  var IMPACTGRID_AI_MODE = "group";
-</script>
-<script src="impactgrid-chat-bubble.js"></script>
-
-</body>
-</html>
