@@ -1141,7 +1141,7 @@ body.dark .buddy-input,
       </div>
       <!-- Hidden inputs — never shown to users -->
       <input id="buddyEndpoint" style="display:none;" value="https://ambient-salem-pine-talented.trycloudflare.com">
-      <select id="buddyModel" style="display:none;"><option value="mistral">mistral</option></select>
+      <select id="buddyModel" style="display:none;"><option value="dijo">dijo</option></select>
 
       <!-- ── Chat Window ── -->
       <div class="buddy-chat-wrap">
@@ -2162,7 +2162,7 @@ var _buddyTyping    = false;
 var _buddyConnected = false;
 
 /* ── Auto-connect silently on load ── */
-var _BUDDY_URL = 'https://ambient-salem-pine-talented.trycloudflare.com';
+var _BUDDY_URL = (typeof IMPACTGRID_AI_URL !== 'undefined' ? IMPACTGRID_AI_URL : 'https://ambient-salem-pine-talented.trycloudflare.com');
 
 function _buddyAutoConnect() {
   _buddyEndpoint = _BUDDY_URL;
@@ -2237,7 +2237,7 @@ async function buddyConnect() {
   var ep = ((document.getElementById('buddyEndpoint') || {}).value || _buddyEndpoint || '').replace(/\/+$/, '');
   if (!ep) { _buddySetStatus('Enter your ngrok URL first', 'err'); return; }
 
-  _buddySetStatus('Connecting…', '');
+  _buddySetStatus('Connecting to Dijo…', '');
 
   try {
     /* Ping the health endpoint */
