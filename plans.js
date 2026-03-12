@@ -6,7 +6,7 @@
    - aiQuestions : total AI chat messages per month — soft stop after limit
    - forecasts   : forecast generations per month
    - pdfs        : PDF exports per month
-   - dataDays    : days of records retained (Basic=7, Pro=180, Enterprise=∞)
+   - dataDays    : days of records retained (Basic=30, Pro=365, Enterprise=∞)
    
    Sessions reset every 30 days from first use. Logout/login NEVER
    resets sessions — they are always read live from Supabase.
@@ -40,8 +40,8 @@ const PLAN_CONFIG = {
     excelExport:   false,
     priorityAI:    false,
     multiProfile:  false,
-    dataDays:      7,
-    dataWarnDays:  2,
+    dataDays:      30,
+    dataWarnDays:  5,
     trialDays:     0
   },
 
@@ -402,9 +402,9 @@ async function checkForecast() {
 
 /* ================================================================
    DATA EXPIRY — Basic plan (7-day retention)
-   Day 5: yellow warning (2 days before expiry)
-   Day 7: red expiry notice, data hidden
-   Day 14: hard delete from Supabase (7-day grace period)
+   Day 25: yellow warning (5 days before expiry)
+   Day 30: red expiry notice, data hidden
+   Day 37: hard delete from Supabase (7-day grace period)
 ================================================================ */
 async function checkDataExpiry() {
   if (window.isAdmin) return;
