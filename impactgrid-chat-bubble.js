@@ -372,35 +372,7 @@
     igAppendMsg('ai', welcomes[MODE] || welcomes.group);
   }, 600);
 
-  /* ── Populate suggestion chips by mode ── */
-  (function() {
-    var chipSets = {
-      group: [
-        ['What is ImpactGrid?',       "What does ImpactGrid do?"],
-        ['Pricing',                   "What are the pricing plans?"],
-        ['Get started',               "How do I get started?"],
-        ['Data privacy',              "Is my data private?"]
-      ],
-      dashboard: [
-        ['➕ Add my data',            "How do I add my monthly revenue and expenses?"],
-        ['📋 View my records',        "How do I view and edit my financial records?"],
-        ['⬆️ Upgrade plan',           "What do I get if I upgrade my plan?"],
-        ['🔴 Risk score explained',   "What does my risk score mean and how is it calculated?"]
-      ],
-      adviser: [
-        ['Health check',              "Give me a full financial health assessment"],
-        ['Top risks',                 "What are my top 3 risks right now?"],
-        ['Improve margins',           "How can I improve my profit margins?"],
-        ['Break-even',                "What is my break-even point?"]
-      ]
-    };
-    var chips  = (chipSets[MODE] || chipSets.group);
-    var el     = document.getElementById('ig-suggestions');
-    if (!el) return;
-    el.innerHTML = chips.map(function(c) {
-      return '<button class="ig-chip" onclick="igAsk(' + JSON.stringify(c[1]) + ')">' + c[0] + '</button>';
-    }).join('');
-  })();
+  /* Suggestion chips removed */
 
   /* ── Toggle panel ── */
   window.igToggleChat = function() {
