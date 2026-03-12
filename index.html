@@ -1506,7 +1506,7 @@ body.dark .buddy-input,
       </div>
       <!-- Hidden inputs — never shown to users -->
       <input id="buddyEndpoint" style="display:none;" value="https://impactgrid-dijo.onrender.com">
-      <select id="buddyModel" style="display:none;"><option value="mistral">mistral</option></select>
+      <select id="buddyModel" style="display:none;"><option value="llama">llama-3.3-70b</option></select>
 
       <!-- ── Chat Window ── -->
       <div class="buddy-chat-wrap">
@@ -2560,7 +2560,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* ================================================================
    IMPACTGRID AI BUDDY — Core JS
-   Calls your Express /chat server (running on port 3000 via ngrok).
+   Calls Dija server at https://impactgrid-dijo.onrender.com
    Injects full user financial context into every prompt.
 ================================================================ */
 
@@ -2585,11 +2585,9 @@ function _buddyAutoConnect() {
       var bname = document.getElementById('buddyModelName');
       if (badge) badge.className = 'buddy-model-badge';
       if (bname) bname.textContent = 'Dija · online';
-      _buddySetStatus('ImpactGrid AI is ready', 'ok');
-      setTimeout(function() {
-        var bar = document.getElementById('buddyConfigBar');
-        if (bar) bar.style.display = 'none';
-      }, 3000);
+      _buddySetStatus('Dija is ready', 'ok');
+      var bar = document.getElementById('buddyConfigBar');
+      if (bar) bar.style.display = 'none';
     })
     .catch(function(e) {
       console.warn('[Buddy] server not reachable — local mode active:', e.message);
@@ -2601,6 +2599,8 @@ function _buddyAutoConnect() {
       if (badge) badge.style.color = '#c8a96e';
       if (bname) bname.textContent = 'Dija · local';
       _buddySetStatus('Dija is ready', 'ok');
+      var bar = document.getElementById('buddyConfigBar');
+      if (bar) bar.style.display = 'none';
       /* Keep retrying server in background silently */
       setTimeout(_buddyAutoConnect, 15000);
     });
@@ -2608,7 +2608,18 @@ function _buddyAutoConnect() {
 
 document.addEventListener('DOMContentLoaded', function() {
   _buddyRenderWelcome();
-  setTimeout(_buddyAutoConnect, 1000);
+
+  /* Immediately show as ready — local AI works right away */
+  var badge = document.getElementById('buddyModelBadge');
+  var bname = document.getElementById('buddyModelName');
+  if (badge) badge.className = 'buddy-model-badge';
+  if (badge) badge.style.color = '#c8a96e';
+  if (bname) bname.textContent = 'Dija · ready';
+  var bar = document.getElementById('buddyConfigBar');
+  if (bar) bar.style.display = 'none';
+
+  /* Try Render in background — silently upgrade if it responds */
+  setTimeout(_buddyAutoConnect, 1500);
 });
 
 /* ── Welcome message ── */
@@ -2627,10 +2638,9 @@ function _buddyRenderWelcome() {
 
   _buddyAppendMsg('ai',
     greeting + '<br><br>' +
-    'I am <strong>Dija by ImpactGrid</strong> — your personal financial adviser, powered by Mistral running on a private local AI. ' +
-    'Everything you share stays completely private.<br><br>' +
+    'I'm <strong>Dija</strong> — your ImpactGrid financial adviser. I'll help you understand your numbers, spot risks, and figure out what to do next.<br><br>' +
     dataLine + '<br><br>' +
-    'Ask me anything: financial health, risk analysis, forecasts, cost cutting, break-even, or growth strategy.'
+    'What would you like to know?'
   );
 }
 
@@ -2661,19 +2671,20 @@ async function buddyConnect() {
     _buddyEndpoint  = ep;
     try { localStorage.setItem('ig_buddy_endpoint', ep); } catch(e){}
 
-    _buddySetStatus('&#10003; Connected to ImpactGrid AI — Mistral is ready', 'ok');
+    _buddySetStatus('&#10003; Dija is connected and ready', 'ok');
     var badge = document.getElementById('buddyModelBadge');
     var bname = document.getElementById('buddyModelName');
     if (badge) badge.className = 'buddy-model-badge';
-    if (bname) bname.textContent = 'mistral - online';
+    if (bname) bname.textContent = 'Dija · online';
 
   } catch(e) {
     _buddyConnected = false;
-    _buddySetStatus('&#10007; Could not connect — is ngrok running? (' + e.message + ')', 'err');
+    _buddySetStatus('Running in local mode — answers from built-in AI', 'ok');
     var badge = document.getElementById('buddyModelBadge');
     var bname = document.getElementById('buddyModelName');
-    if (badge) badge.className = 'buddy-model-badge offline';
-    if (bname) bname.textContent = 'Offline';
+    if (badge) badge.className = 'buddy-model-badge';
+    if (badge) badge.style.color = '#c8a96e';
+    if (bname) bname.textContent = 'Dija · local';
   }
 }
 
