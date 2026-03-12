@@ -13,6 +13,9 @@ let performanceBarChart   = null;
 let distributionPieChart  = null;
 let aiForecastChart       = null;
 
+/* ── New section chart refs ── */
+var _riskRadarChart = null;
+
 let aiChatHistory     = [];
 let lastAIInsightText = "";
 
@@ -26,29 +29,26 @@ document.addEventListener("DOMContentLoaded", function() {
   try {
     var savedTheme = localStorage.getItem("ig-theme");
     if (savedTheme === "dark") {
-      toggleTheme(false); // go dark
+      toggleTheme(false);
     } else {
-      toggleTheme(true);  // default: light mode
+      toggleTheme(true);
     }
   } catch(e) {
-    toggleTheme(true); // fallback to light
+    toggleTheme(true);
   }
 
   renderAIInsights();
 
-  /* Init plan system after DOM ready */
   if (typeof initPlanSystem === "function") {
     initPlanSystem().then(function() {
       if (typeof buildAIMemoryContext === 'function') buildAIMemoryContext();
     });
   }
 
-  // Close edit modal on Escape key
   document.addEventListener("keydown", function(e) {
     if (e.key === "Escape") closeEditModal();
   });
 
-  // Close modal on backdrop click
   var modal = document.getElementById("editModal");
   if (modal) {
     modal.addEventListener("click", function(e) {
@@ -263,7 +263,6 @@ function importWordMammoth(file, statusEl) {
   reader.readAsArrayBuffer(file);
 }
 
-/* ── PDF import — single unified function, no duplicate ── */
 function importPDF(file, statusEl) {
   if (statusEl) { statusEl.textContent = "Reading PDF..."; statusEl.style.color = "var(--text-secondary)"; }
 
@@ -436,6 +435,10 @@ function updateAll() {
     renderPerformanceMatrix();
     renderRiskAssessment();
   }
+
+  /* ── New sections: KPI cards, gauge, benchmark, risk radar, Dijo insight ── */
+  try { updateMatrixSection(); } catch(e){ console.warn('[updateAll] matrix:', e); }
+  try { updateRiskSection();   } catch(e){ console.warn('[updateAll] risk:', e);   }
 
   var panel = document.getElementById("recordsPanel");
   if (panel && panel.classList.contains("open")) {
@@ -696,7 +699,7 @@ function metricTile(label, value, color) {
 }
 
 
-/* ================= PERFORMANCE MATRIX ================= */
+/* ================= PERFORMANCE MATRIX (legacy — kept for compatibility) ================= */
 
 function renderPerformanceMatrix() {
   var volatility = calculateVolatility();
@@ -802,7 +805,7 @@ function drawGauge(canvasId, value, color) {
 }
 
 
-/* ================= RISK ASSESSMENT ================= */
+/* ================= RISK ASSESSMENT (legacy — kept for compatibility) ================= */
 
 function renderRiskAssessment() {
   var volatility = calculateVolatility();
@@ -952,7 +955,7 @@ function generatePDF() {
   doc.setFontSize(26); doc.setFont("helvetica","bold"); setT(C.textPri); doc.text("Financial",mg+6,54);
   doc.setFontSize(26); setT(C.gold); doc.text("Intelligence",mg+6,63);
   doc.setFontSize(26); setT(C.textPri); doc.text("Report",mg+6,72);
-  label("IFSRM v3.0  ·  Regime-Dependent Stability Modelling for SMEs",mg+6,80,7,C.textMut);
+  label("Know if your business is healthy. Know exactly what to do next.",mg+6,80,7,C.textMut);
 
   var cards = [
     {label:"HEALTH SCORE",val:_healthScore+"/100",col:_healthScore>=70?C.green:_healthScore>=40?C.gold:C.red},
@@ -994,14 +997,14 @@ function generatePDF() {
     tLines.slice(0,4).forEach(function(l,i){ doc.text(l,mg+8,insY+18+(i*5.5)); });
   }
   rect(0,H-12,W,12,C.bgCard); rule(H-12,C.border,0.15);
-  label("ImpactGrid Analytics  ·  IFSRM v3.0  ·  Confidential Financial Report",mg,H-5,7,C.textMut);
+  label("ImpactGrid Analytics  ·  Confidential Financial Report",mg,H-5,7,C.textMut);
   label("Page 1",W-mg-8,H-5,7,C.textMut);
 
   /* PAGE 2 */
   doc.addPage(); rect(0,0,W,H,C.bg); rect(0,0,W,1.5,C.gold); rect(0,0,4,H,C.bgCard);
   rrect(mg,8,W-mg*2,14,C.bgCard,2,C.border);
   label("IMPACTGRID",mg+5,17,8,C.gold,"bold");
-  label("  ·  FINANCIAL INTELLIGENCE REPORT  ·  IFSRM v3.0",mg+30,17,7,C.textMut);
+  label("  ·  FINANCIAL INTELLIGENCE REPORT",mg+30,17,7,C.textMut);
   label(new Date().toLocaleDateString("en-GB"),W-mg-28,17,7,C.textMut);
   var y2=30;
   label("01  EXECUTIVE SUMMARY",mg,y2,9,C.goldLt,"bold"); rule(y2+2,C.gold,0.3); y2+=8;
@@ -1053,7 +1056,7 @@ function generatePDF() {
   label(fmt(_totalRev),cols[1].x,y2+5.5,7,C.blue,"bold"); label(fmt(_totalExp),cols[2].x,y2+5.5,7,C.red,"bold");
   label(fmt(_totalPro),cols[3].x,y2+5.5,7,_totalPro>=0?C.green:C.red,"bold"); label(totMarg+"%",cols[4].x,y2+5.5,7,C.goldLt,"bold");
   rect(0,H-12,W,12,C.bgCard); rule(H-12,C.border,0.15);
-  label("ImpactGrid Analytics  ·  IFSRM v3.0  ·  Confidential Financial Report",mg,H-5,7,C.textMut);
+  label("ImpactGrid Analytics  ·  Confidential Financial Report",mg,H-5,7,C.textMut);
   label("Page 2",W-mg-8,H-5,7,C.textMut);
 
   /* PAGE 3 */
@@ -1066,7 +1069,7 @@ function generatePDF() {
     var insBoxH=Math.min(90,16+Math.ceil(_insightText.length/85)*5);
     rrect(mg,y3,W-mg*2,insBoxH,C.bgCard2,3,C.border);
     setF(C.gold); doc.roundedRect(mg,y3,3,insBoxH,1.5,1.5,"F");
-    label("ImpactGrid AI  ·  IFSRM Analysis",mg+7,y3+8,7.5,C.gold,"bold"); rule(y3+11,[26,32,53],0.15);
+    label("ImpactGrid AI  ·  Financial Analysis",mg+7,y3+8,7.5,C.gold,"bold"); rule(y3+11,[26,32,53],0.15);
     var insLines=wrap(_insightText,W-mg*2-14);
     doc.setFontSize(7.5); doc.setFont("helvetica","normal"); setT(C.textSec);
     var lineY=y3+17;
@@ -1097,14 +1100,14 @@ function generatePDF() {
     label(r.level,rx+5,y3+20.5,6,[255,255,255],"bold");
   });
   y3+=30;
-  label("05  STABILITY REGIME",mg,y3,9,C.goldLt,"bold"); rule(y3+2,C.gold,0.3); y3+=8;
-  var regime=_healthScore>=70?"STABLE":_healthScore>=40?"TRANSITIONAL":"DISTRESSED";
+  label("05  STABILITY ASSESSMENT",mg,y3,9,C.goldLt,"bold"); rule(y3+2,C.gold,0.3); y3+=8;
+  var regime=_healthScore>=70?"STABLE":_healthScore>=40?"MODERATE":"NEEDS ATTENTION";
   var regimeCol=_healthScore>=70?C.green:_healthScore>=40?C.gold:C.red;
-  var regimeDesc=_healthScore>=70?"Business demonstrates strong financial health. Revenue exceeds expenses with consistent profitability. Continue current strategy while exploring growth opportunities.":_healthScore>=40?"Business is in a transitional phase. Profitability is moderate with some volatility detected. Focus on expense optimisation and revenue diversification.":"Business shows signs of financial distress. Immediate action required to reduce expenses, improve cash flow, and strengthen revenue streams.";
+  var regimeDesc=_healthScore>=70?"Business demonstrates strong financial health. Revenue exceeds expenses with consistent profitability. Continue current strategy while exploring growth opportunities.":_healthScore>=40?"Business is performing moderately. There are specific areas to improve — review margins and growth trajectory.":"Business needs attention. Focus on reducing expenses, improving cash flow, and strengthening revenue streams.";
   rrect(mg,y3,W-mg*2,30,C.bgCard2,3,C.border);
   setF(regimeCol); doc.roundedRect(mg,y3,W-mg*2,1,1.5,1.5,"F");
-  doc.setFontSize(14); doc.setFont("helvetica","bold"); setT(regimeCol); doc.text(regime+" REGIME",mg+6,y3+11);
-  label("IFSRM Classification  ·  Health Score: "+_healthScore+"/100",mg+6,y3+17,7,C.textMut);
+  doc.setFontSize(14); doc.setFont("helvetica","bold"); setT(regimeCol); doc.text(regime,mg+6,y3+11);
+  label("Health Score: "+_healthScore+"/100",mg+6,y3+17,7,C.textMut);
   wrap(regimeDesc,W-mg*2-12).forEach(function(l,i){ doc.setFontSize(7.5); doc.setFont("helvetica","normal"); setT(C.textSec); doc.text(l,mg+6,y3+22+(i*5)); });
   y3+=36;
   label("06  STRATEGIC RECOMMENDATIONS",mg,y3,9,C.goldLt,"bold"); rule(y3+2,C.gold,0.3); y3+=8;
@@ -1116,27 +1119,27 @@ function generatePDF() {
     label(String(i+1),mg+4,y3+5.5,7,C.gold,"bold"); label(rec,mg+10,y3+5.5,7.5,C.textPri); y3+=10;
   });
   rect(0,H-12,W,12,C.bgCard); rule(H-12,C.border,0.15);
-  label("ImpactGrid Analytics  ·  IFSRM v3.0  ·  Confidential — For Authorised Use Only",mg,H-5,7,C.textMut);
+  label("ImpactGrid Analytics  ·  Confidential — For Authorised Use Only",mg,H-5,7,C.textMut);
   label("Page 3",W-mg-8,H-5,7,C.textMut);
 
   /* PAGE 4 */
   doc.addPage(); rect(0,0,W,H,C.bg); rect(0,W/2,W/2,H,C.bgCard); rect(0,0,W,1.5,C.gold); rect(W/2,0,0.5,H,C.gold);
   doc.setFontSize(32); doc.setFont("helvetica","bold"); setT(C.gold); doc.text("Impact",mg,60);
   setT(C.textPri); doc.text("Grid",mg,75);
-  label("Financial Intelligence · IFSRM v3.0",mg,85,8,C.textMut);
+  label("Financial Intelligence · impactgridanalytics.com",mg,85,8,C.textMut);
   setD(C.gold); doc.setLineWidth(0.4); doc.line(mg,92,80,92);
-  label("This report was generated by the ImpactGrid",mg,102,8,C.textSec);
-  label("Financial Stability Engine using regime-dependent",mg,109,8,C.textSec);
-  label("modelling for SME financial analysis.",mg,116,8,C.textSec);
+  label("This report was generated by ImpactGrid,",mg,102,8,C.textSec);
+  label("your AI-powered financial command centre",mg,109,8,C.textSec);
+  label("for SME owners.",mg,116,8,C.textSec);
   label("impactgridanalytics.com",mg,135,9,C.gold,"bold");
-  label("Powered by IFSRM v3.0 · Secured by Supabase",mg,143,7,C.textMut);
+  label("Powered by ImpactGrid AI · Secured by Supabase",mg,143,7,C.textMut);
   label("© 2026 ImpactGrid Analytics",mg,151,7,C.textMut);
   var rx2=W/2+mg;
   label("REPORT SUMMARY",rx2,40,8,C.gold,"bold"); setD(C.gold); doc.setLineWidth(0.3); doc.line(rx2,43,W-mg,43);
   var sumItems=[
     ["Health Score",_healthScore+"/100"],["Total Revenue",fmt(_totalRev)],["Total Expenses",fmt(_totalExp)],
     ["Net Profit",fmt(_totalPro)],["Months Analysed",String(businessData.length)],
-    ["Stability Regime",regime],["Generated",new Date().toLocaleDateString("en-GB")]
+    ["Status",regime],["Generated",new Date().toLocaleDateString("en-GB")]
   ];
   sumItems.forEach(function(s,i){ label(s[0],rx2,53+(i*10),7.5,C.textMut); label(s[1],rx2+40,53+(i*10),7.5,C.textPri,"bold"); });
   rrect(rx2,H-55,30,30,C.bgCard2,2,C.border);
@@ -1146,7 +1149,7 @@ function generatePDF() {
   label("AI insights, and report history",rx2+34,H-29,6.5,C.textMut);
   label("at any time online.",rx2+34,H-24,6.5,C.textMut);
   rect(0,H-8,W,8,C.bgCard); rule(H-8,C.border,0.15);
-  label("CONFIDENTIAL  ·  Generated by ImpactGrid IFSRM v3.0  ·  © 2026 ImpactGrid Analytics",mg,H-3,6.5,C.textMut);
+  label("CONFIDENTIAL  ·  Generated by ImpactGrid  ·  © 2026 ImpactGrid Analytics",mg,H-3,6.5,C.textMut);
 
   if (typeof savePDFToAccount === "function") {
     try { var b64=doc.output("datauristring").split(",")[1]; savePDFToAccount(b64, _pdfMeta); } catch(e) { console.error("PDF save error:", e); }
@@ -1219,7 +1222,8 @@ function showSection(section, event) {
     if (li) li.classList.add("active");
   }
 
-  var sectionIndex = {"dashboard":0,"charts":1,"matrix":2,"risk":3,"ai":4,"settings":5,"report":6};
+  /* Mobile nav highlight — maps to 5-button nav */
+  var sectionIndex = {"dashboard":0,"charts":1,"ai":2,"risk":3,"report":4};
   var idx = sectionIndex[section];
   if (idx !== undefined) {
     var btns = document.querySelectorAll(".mob-nav-btn");
@@ -1292,12 +1296,11 @@ function mobileNav(section, el) {
 /* ================= THEME ================= */
 
 function toggleTheme(isLight) {
-  /* CSS is light-first. .dark-mode class activates dark palette. */
   if (isLight === undefined) {
     isLight = document.body.classList.contains("dark-mode");
   }
   document.body.classList.toggle("dark-mode", !isLight);
-  document.body.classList.remove("light-mode"); // clear any legacy class
+  document.body.classList.remove("light-mode");
 
   var switches = document.querySelectorAll('.theme-switch input[type="checkbox"]');
   switches.forEach(function(sw) { sw.checked = isLight; });
@@ -1350,6 +1353,9 @@ function bindGlobalFunctions() {
   window.closeLimitModal      = closeLimitModal;
   window.handlePDFClick       = handlePDFClick;
   window.downloadSavedPDF     = downloadSavedPDF;
+  window.updateMatrixSection  = updateMatrixSection;
+  window.updateRiskSection    = updateRiskSection;
+  window.refreshDijoRiskInsight = refreshDijoRiskInsight;
 }
 
 function closeUpgradeModal() {
@@ -1410,7 +1416,6 @@ function renderRecordsPanel() {
     return;
   }
 
-  // Oldest → newest (natural spreadsheet order)
   var sorted = data.slice().sort(function(a,b){ return a.date - b.date; });
 
   var html = "";
@@ -1446,7 +1451,6 @@ function renderRecordsPanel() {
 
   tbody.innerHTML = html;
 
-  // Totals footer
   var totalRev = data.reduce(function(s,d){ return s + d.revenue; }, 0);
   var totalExp = data.reduce(function(s,d){ return s + d.expenses; }, 0);
   var totalPro = data.reduce(function(s,d){ return s + d.profit; }, 0);
@@ -1465,7 +1469,6 @@ function renderRecordsPanel() {
       '</tr>';
   }
 
-  // Inline edit handlers
   tbody.querySelectorAll(".rp-cell-edit").forEach(function(cell) {
     var disp  = cell.querySelector(".rp-disp");
     var inp   = cell.querySelector(".rp-inp");
@@ -1506,7 +1509,6 @@ function renderRecordsPanel() {
     });
   });
 
-  // Delete handlers
   tbody.querySelectorAll(".rp-del").forEach(function(btn) {
     btn.addEventListener("click", function(e) {
       e.stopPropagation();
@@ -1517,6 +1519,310 @@ function renderRecordsPanel() {
       if (typeof saveUserData === "function") saveUserData();
     });
   });
+}
+
+
+/* ================================================================
+   PERFORMANCE MATRIX ENGINE
+   Called directly from updateAll() — no wrapping needed
+================================================================ */
+
+function updateMatrixSection() {
+  var data     = window.businessData || [];
+  var currency = window.currentCurrency || 'GBP';
+  if (data.length < 1) return;
+
+  var sym = {GBP:'£',USD:'$',EUR:'€',NGN:'₦'}[currency] || currency+' ';
+  function fc(v) {
+    try { return new Intl.NumberFormat(undefined,{style:'currency',currency:currency,maximumFractionDigits:0}).format(v); }
+    catch(e){ return sym + Math.round(v).toLocaleString(); }
+  }
+
+  var totalRev  = data.reduce(function(s,d){return s+(d.revenue||0);},0);
+  var totalExp  = data.reduce(function(s,d){return s+(d.expenses||0);},0);
+  var totalProf = data.reduce(function(s,d){return s+(d.profit||0);},0);
+  var n         = data.length;
+  var avgRev    = totalRev / n;
+  var margin    = totalRev > 0 ? (totalProf/totalRev*100) : 0;
+  var expRatio  = totalRev > 0 ? (totalExp/totalRev*100) : 0;
+
+  var growthRates = [];
+  for (var i=1;i<n;i++) {
+    if (data[i-1].revenue>0) growthRates.push((data[i].revenue-data[i-1].revenue)/data[i-1].revenue*100);
+  }
+  var avgGrowth = growthRates.length>0 ? growthRates.reduce(function(a,b){return a+b;},0)/growthRates.length : 0;
+
+  var revs   = data.map(function(d){return d.revenue;});
+  var mean   = totalRev/n;
+  var stdDev = Math.sqrt(revs.reduce(function(a,b){return a+Math.pow(b-mean,2);},0)/n);
+  var volatility = mean>0 ? (stdDev/mean*100) : 0;
+
+  var overallGrowth = data[0].revenue>0 ? (data[n-1].revenue-data[0].revenue)/data[0].revenue*100 : 0;
+
+  function setKPI(id,val) { var el=document.getElementById(id); if(el) el.textContent=val; }
+  function setTrend(id,val,isReverse) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var good = isReverse ? val<0 : val>0;
+    var cls  = Math.abs(val)<0.5 ? 'flat' : good ? 'up' : 'down';
+    el.className = 'kpi-trend ' + cls;
+    el.textContent = (val>=0?'+':'')+val.toFixed(1)+'%';
+  }
+
+  setKPI('kpiRevenue', fc(totalRev));
+  setKPI('kpiProfit',  fc(totalProf));
+  setKPI('kpiMargin',  margin.toFixed(1)+'%');
+  setKPI('kpiAvgRev',  fc(avgRev));
+  setKPI('kpiExpRatio', expRatio.toFixed(1)+'%');
+  setKPI('kpiGrowth',  avgGrowth.toFixed(1)+'%');
+
+  setTrend('kpiRevTrend',    overallGrowth,  false);
+  setTrend('kpiProfTrend',   overallGrowth,  false);
+  setTrend('kpiMarginTrend', margin-15,       false);
+  setTrend('kpiExpTrend',    expRatio-80,     true);
+  setTrend('kpiGrowthTrend', avgGrowth,       false);
+
+  if (n >= 3) {
+    var score = 0;
+    score += Math.min(30, Math.max(0, margin * 1.2));
+    score += Math.min(25, Math.max(0, avgGrowth * 3));
+    score += Math.min(25, Math.max(0, 25 - volatility*0.5));
+    score += Math.min(20, Math.max(0, (100-expRatio)*0.5));
+    score = Math.min(100, Math.max(0, Math.round(score)));
+
+    var color = score>=70 ? '#2dd4a0' : score>=45 ? '#c8a96e' : '#ff4d6d';
+    var healthLabel = score>=70 ? 'Strong' : score>=45 ? 'Moderate' : 'Under Pressure';
+
+    var fill = document.getElementById('gaugeFill');
+    if (fill) {
+      var offset = 204 - (score/100 * 204);
+      setTimeout(function(){ fill.style.strokeDashoffset = offset; fill.style.stroke = color; }, 100);
+    }
+    var gNum = document.getElementById('gaugeNumber');
+    if (gNum) { gNum.textContent = score; gNum.style.color = color; }
+    var gTitle = document.getElementById('gaugeTitle');
+    if (gTitle) gTitle.textContent = 'Business Health: ' + healthLabel;
+    var gSub = document.getElementById('gaugeSub');
+    if (gSub) gSub.textContent = score>=70
+      ? 'Your business is financially healthy. Revenue is stable, margins are solid, and costs are well-controlled.'
+      : score>=45
+      ? 'Your business is performing moderately. There are specific areas to improve — see the breakdown below.'
+      : 'Your business is under financial pressure. Focus on the highest-priority items in the breakdown.';
+
+    var bars = document.getElementById('gaugeBars');
+    if (bars) {
+      var components = [
+        { label:'Margin',     score: Math.min(100,Math.max(0,margin*5)),         color:'#2dd4a0' },
+        { label:'Growth',     score: Math.min(100,Math.max(0,50+avgGrowth*5)),   color:'#7eb3ff' },
+        { label:'Stability',  score: Math.min(100,Math.max(0,100-volatility*1.5)),color:'#c8a96e' },
+        { label:'Cost Ctrl',  score: Math.min(100,Math.max(0,(100-expRatio)*1.5)),color:'#ff9f43' },
+      ];
+      bars.innerHTML = components.map(function(c){
+        return '<div class="gauge-bar-row">'
+          + '<span class="gauge-bar-label">' + c.label + '</span>'
+          + '<div class="gauge-bar-track"><div class="gauge-bar-fill" style="width:'+Math.round(c.score)+'%;background:'+c.color+';"></div></div>'
+          + '<span class="gauge-bar-val">' + Math.round(c.score) + '</span>'
+          + '</div>';
+      }).join('');
+    }
+  }
+
+  var tbody = document.getElementById('benchmarkTableBody');
+  if (tbody && n>=2) {
+    var rows = [
+      { metric:'Profit Margin',  yours:margin.toFixed(1)+'%',    bench:'10–15%', good: margin>=10,   warn: margin>=6 },
+      { metric:'Expense Ratio',  yours:expRatio.toFixed(1)+'%',  bench:'75–82%', good: expRatio<=82, warn: expRatio<=88 },
+      { metric:'Monthly Growth', yours:avgGrowth.toFixed(1)+'%', bench:'2–5%',   good: avgGrowth>=2, warn: avgGrowth>=0 },
+      { metric:'Revenue Vol.',   yours:volatility.toFixed(1)+'%',bench:'< 20%',  good: volatility<20,warn: volatility<35 },
+    ];
+    tbody.innerHTML = rows.map(function(r){
+      var cls  = r.good ? 'bm-good' : r.warn ? 'bm-warn' : 'bm-bad';
+      var stat = r.good ? '✓ On track' : r.warn ? '~ Improving' : '✗ Needs work';
+      return '<tr><td style="color:var(--text-primary,#0f1629);font-weight:600;">'+r.metric+'</td>'
+        + '<td style="color:var(--text-primary,#0f1629);">'+r.yours+'</td>'
+        + '<td>'+r.bench+'</td>'
+        + '<td><span class="bm-pill '+cls+'">'+stat+'</span></td></tr>';
+    }).join('');
+  }
+}
+
+
+/* ================================================================
+   RISK SECTION ENGINE
+   Called directly from updateAll() — no wrapping needed
+================================================================ */
+
+var _riskRadarChart = null;
+
+function updateRiskSection() {
+  var data     = window.businessData || [];
+  var currency = window.currentCurrency || 'GBP';
+  if (data.length < 2) return;
+
+  var n        = data.length;
+  var totalRev = data.reduce(function(s,d){return s+(d.revenue||0);},0);
+  var totalExp = data.reduce(function(s,d){return s+(d.expenses||0);},0);
+  var totalProf= data.reduce(function(s,d){return s+(d.profit||0);},0);
+  var avgRev   = totalRev/n;
+  var margin   = totalRev>0 ? totalProf/totalRev*100 : 0;
+  var expRatio = totalRev>0 ? totalExp/totalRev*100 : 0;
+
+  var revs   = data.map(function(d){return d.revenue;});
+  var mean   = totalRev/n;
+  var stdDev = Math.sqrt(revs.reduce(function(a,b){return a+Math.pow(b-mean,2);},0)/n);
+  var volatility = mean>0 ? stdDev/mean*100 : 0;
+
+  var growthRates = [];
+  for(var i=1;i<n;i++) {
+    if(data[i-1].revenue>0) growthRates.push((data[i].revenue-data[i-1].revenue)/data[i-1].revenue*100);
+  }
+  var avgGrowth = growthRates.length>0 ? growthRates.reduce(function(a,b){return a+b;},0)/growthRates.length : 0;
+
+  var stabLevel = volatility<15?'Low':volatility<30?'Moderate':volatility<50?'Elevated':'High';
+  var stabScore = Math.max(0,Math.min(100, 100-volatility*1.5));
+  _setRiskCard('stability', stabLevel, stabScore,
+    volatility<15 ? 'Revenue is highly consistent month to month'
+    : volatility<30 ? 'Some variation — consider recurring revenue streams'
+    : 'High revenue swings — focus on predictable income sources');
+
+  var margLevel = margin>20?'Low':margin>10?'Moderate':margin>5?'Elevated':'High';
+  var margScore = Math.max(0,Math.min(100, margin*4));
+  _setRiskCard('margin', margLevel, margScore,
+    margin>20 ? 'Strong margins — good buffer against shocks'
+    : margin>10 ? 'Acceptable — aim for 20%+ for resilience'
+    : margin>5 ? 'Thin margins — vulnerable to cost increases'
+    : 'Very low margins — urgent improvement needed');
+
+  var avgProf   = totalProf/n;
+  var liqLevel  = avgProf>avgRev*0.15?'Low':avgProf>0?'Moderate':avgProf>-avgRev*0.1?'Elevated':'High';
+  var liqScore  = Math.max(0,Math.min(100, 50 + (avgProf/avgRev)*200));
+  _setRiskCard('liquidity', liqLevel, liqScore,
+    avgProf>avgRev*0.15 ? 'Healthy cash generation — positive monthly flow'
+    : avgProf>0 ? 'Cash-flow positive but slim — build a reserve'
+    : 'Cash-flow negative — expenses exceeding revenue');
+
+  var growthLevel = avgGrowth>3?'Low':avgGrowth>0?'Moderate':avgGrowth>-3?'Elevated':'High';
+  var growthScore = Math.max(0,Math.min(100, 50+avgGrowth*8));
+  _setRiskCard('growthRisk', growthLevel, growthScore,
+    avgGrowth>3 ? 'Strong growth momentum — sustain it'
+    : avgGrowth>0 ? 'Slow but positive — accelerate acquisition'
+    : 'Declining revenue — diagnose the cause urgently');
+
+  _updateRiskRadar([stabScore, margScore, liqScore, growthScore, Math.max(0,100-expRatio*0.8)]);
+
+  if (n>=3) _generateDijoRiskInsight(data, margin, volatility, avgGrowth, expRatio, currency);
+}
+
+function _setRiskCard(prefix, level, score, desc) {
+  var color = level==='Low'?'#2dd4a0':level==='Moderate'?'#c8a96e':level==='Elevated'?'#ff9f43':'#ff4d6d';
+  var icon  = level==='Low'?'✅':level==='Moderate'?'⚠️':level==='Elevated'?'🔶':'🚨';
+
+  var valEl = document.getElementById(prefix+'Risk');
+  var descEl= document.getElementById(prefix+'Desc');
+  var accEl = document.getElementById(prefix+'Accent');
+  var iconEl= document.getElementById(prefix+'Icon');
+  var metEl = document.getElementById(prefix+'Meter');
+
+  if(valEl)  { valEl.textContent = level+' Risk'; valEl.style.color = color; }
+  if(descEl)  descEl.textContent = desc;
+  if(accEl)   accEl.style.background = color;
+  if(iconEl) { iconEl.textContent = icon; iconEl.style.background = 'rgba('+_hexToRgb(color)+',0.12)'; }
+  if(metEl)  { metEl.style.width = Math.round(score)+'%'; metEl.style.background = color; }
+}
+
+function _hexToRgb(hex) {
+  var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return r+','+g+','+b;
+}
+
+function _updateRiskRadar(scores) {
+  var canvas = document.getElementById('riskRadarChart');
+  if (!canvas) return;
+  if (_riskRadarChart) { _riskRadarChart.destroy(); _riskRadarChart = null; }
+  _riskRadarChart = new Chart(canvas.getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels: ['Stability','Margin','Cash Flow','Growth','Cost Control'],
+      datasets: [{
+        label: 'Your Business',
+        data: scores.map(function(s){ return Math.round(s); }),
+        backgroundColor: 'rgba(200,169,110,0.12)',
+        borderColor: 'rgba(200,169,110,0.6)',
+        borderWidth: 2,
+        pointBackgroundColor: '#c8a96e',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        r: {
+          min:0, max:100,
+          ticks: { display:false },
+          grid: { color:'rgba(255,255,255,0.06)' },
+          angleLines: { color:'rgba(255,255,255,0.06)' },
+          pointLabels: {
+            font: { family:"'JetBrains Mono',monospace", size:10 },
+            color: 'rgba(160,176,204,0.8)'
+          }
+        }
+      },
+      plugins: { legend: { display:false } }
+    }
+  });
+}
+
+function _generateDijoRiskInsight(data, margin, volatility, avgGrowth, expRatio, currency) {
+  var el     = document.getElementById('riskInsight');
+  var chips  = document.getElementById('riskInsightChips');
+  var status = document.getElementById('dijoRiskStatus');
+  if (!el) return;
+
+  el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;color:rgba(160,176,204,0.5);">'
+    + '<div style="display:flex;gap:4px;">'
+    + '<div style="width:6px;height:6px;border-radius:50%;background:#c8a96e;animation:dijoTyping 1.2s ease-in-out infinite;"></div>'
+    + '<div style="width:6px;height:6px;border-radius:50%;background:#c8a96e;animation:dijoTyping 1.2s ease-in-out 0.2s infinite;"></div>'
+    + '<div style="width:6px;height:6px;border-radius:50%;background:#c8a96e;animation:dijoTyping 1.2s ease-in-out 0.4s infinite;"></div>'
+    + '</div><span style="font-size:12px;">Analysing your risk profile…</span></div>';
+
+  setTimeout(function() {
+    try {
+      var fin     = ImpactGridAI.buildFinancials(data, currency);
+      var insight = ImpactGridAI.riskAnalysis(fin, currency);
+      insight = insight.replace(/<div class='ai-suggestions'>[\s\S]*?<\/div>/, '');
+      el.innerHTML = insight;
+    } catch(e) {
+      var lines = [];
+      if (volatility > 30) lines.push('<strong>⚠ High Volatility:</strong> Revenue swings by ' + volatility.toFixed(0) + '% — unpredictable cash flow makes planning difficult.');
+      if (margin < 10)     lines.push('<strong>⚠ Thin Margins:</strong> At ' + margin.toFixed(1) + '% profit margin, one bad month could push you into loss.');
+      if (expRatio > 85)   lines.push('<strong>⚠ High Costs:</strong> ' + expRatio.toFixed(0) + 'p of every £1 earned goes on expenses. The SME benchmark is 75–80%.');
+      if (avgGrowth < 0)   lines.push('<strong>⚠ Declining Revenue:</strong> Revenue has been trending downward — this needs diagnosis before it compounds.');
+      if (lines.length === 0) lines.push('<strong>✓ No Critical Risks:</strong> Your business shows no major red flags. Maintain financial discipline and build a 3-month expense reserve.');
+      el.innerHTML = '<p>' + lines.join('</p><p>') + '</p>';
+    }
+    if (chips)  chips.style.display = 'flex';
+    if (status) status.textContent  = 'Generated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  }, 900);
+}
+
+function refreshDijoRiskInsight() {
+  var data = window.businessData || [];
+  if (data.length < 3) return;
+  var currency  = window.currentCurrency || 'GBP';
+  var totalRev  = data.reduce(function(s,d){return s+(d.revenue||0);},0);
+  var totalProf = data.reduce(function(s,d){return s+(d.profit||0);},0);
+  var totalExp  = data.reduce(function(s,d){return s+(d.expenses||0);},0);
+  var n         = data.length;
+  var margin    = totalRev>0 ? totalProf/totalRev*100 : 0;
+  var expRatio  = totalRev>0 ? totalExp/totalRev*100 : 0;
+  var revs      = data.map(function(d){return d.revenue;});
+  var mean      = totalRev/n;
+  var stdDev    = Math.sqrt(revs.reduce(function(a,b){return a+Math.pow(b-mean,2);},0)/n);
+  var volatility= mean>0 ? stdDev/mean*100 : 0;
+  var growthRates=[];
+  for(var i=1;i<n;i++) if(data[i-1].revenue>0) growthRates.push((data[i].revenue-data[i-1].revenue)/data[i-1].revenue*100);
+  var avgGrowth = growthRates.length>0 ? growthRates.reduce(function(a,b){return a+b;},0)/growthRates.length : 0;
+  _generateDijoRiskInsight(data, margin, volatility, avgGrowth, expRatio, currency);
 }
 
 /* All functions defined — bind globals for inline onclick handlers */
