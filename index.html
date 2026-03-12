@@ -2973,9 +2973,9 @@ window.guestGateCheck = guestGateCheck;
 <!-- ── ImpactGrid AI Floating Bubble ── -->
 <!-- Floating bubble uses "dashboard" mode (platform helper)  -->
 <!-- AI Buddy section uses "adviser" mode (financial adviser) -->
-<!-- Replace IMPACTGRID_AI_URL below with your tunnel URL each session -->
+<!-- Dijo AI — permanent Render deployment, no tunnel needed -->
 <script>
-  var IMPACTGRID_AI_URL  = "https://YOUR-NGROK-URL.ngrok.io";
+  var IMPACTGRID_AI_URL  = "https://impactgrid-dijo.onrender.com";
   var IMPACTGRID_AI_MODE = "dashboard";
 </script>
 <script src="impactgrid-chat-bubble.js"></script>
@@ -3638,5 +3638,19 @@ window.obFinish     = obFinish;
 window.obSkip       = obSkip;
 </script>
 
+
+<script>
+/* ── Keep Dijo warm — ping every 10 minutes to prevent Render cold start ── */
+(function() {
+  var _dijoWarmUrl = "https://impactgrid-dijo.onrender.com/ping";
+  function _pingDijo() {
+    fetch(_dijoWarmUrl, { method: "GET", cache: "no-store" })
+      .then(function(r){ console.log("[Dijo] warm ping:", r.status); })
+      .catch(function(e){ console.log("[Dijo] ping failed:", e.message); });
+  }
+  _pingDijo(); /* immediate ping on load */
+  setInterval(_pingDijo, 10 * 60 * 1000); /* every 10 minutes */
+})();
+</script>
 </body>
 </html>
