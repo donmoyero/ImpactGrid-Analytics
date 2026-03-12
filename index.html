@@ -2376,7 +2376,7 @@ function _showGuestSoftNudge() {
   var nudge = document.createElement('div');
   nudge.id = 'guestSoftNudge';
   nudge.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:3500;max-width:320px;padding:16px 18px;background:linear-gradient(135deg,#0f1629,#1a2540);border:1px solid rgba(200,169,110,0.3);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,0.4);font-family:"DM Sans",sans-serif;animation:gg-modal-in 0.3s ease;';
-  nudge.innerHTML = '<div style="font-size:13px;font-weight:700;color:#edf0f7;margin-bottom:6px;">💾 Don't lose your data</div>'
+  nudge.innerHTML = '<div style="font-size:13px;font-weight:700;color:#edf0f7;margin-bottom:6px;">💾 Don\'t lose your data</div>'
     + '<div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:14px;">Create a free account to save your records and unlock charts, AI analysis, and risk scoring.</div>'
     + '<div style="display:flex;gap:8px;">'
     + '<button onclick="showGuestGate()" style="flex:1;padding:9px;background:linear-gradient(135deg,#8a6020,#d4a043);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Save my data →</button>'
@@ -2552,7 +2552,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var banner = document.createElement('div');
   banner.id = 'ggGuestBanner';
   banner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding:10px 16px;background:linear-gradient(135deg,rgba(176,125,46,0.08),rgba(212,160,67,0.04));border:1px solid rgba(176,125,46,0.2);border-radius:10px;font-size:12px;font-family:"DM Sans",sans-serif;color:var(--text-secondary,#4a5578);';
-  banner.innerHTML = '<span>👋 <strong style="color:var(--text-primary,#0f1629);">You\'re in guest mode.</strong> You're trying ImpactGrid free. Add up to 3 months of data and see your charts — no account needed yet.</span>'
+  banner.innerHTML = '<span>👋 <strong style="color:var(--text-primary,#0f1629);">You\'re in guest mode.</strong> You\'re trying ImpactGrid free. Add up to 3 months of data and see your charts — no account needed yet.</span>'
     + '<button onclick="showGuestGate()" style="flex-shrink:0;padding:6px 14px;background:linear-gradient(135deg,#8a6020,#d4a043);border:none;border-radius:7px;color:#fff;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:\'DM Sans\',sans-serif;">Sign up free →</button>';
   header.appendChild(banner);
 });
@@ -2638,7 +2638,7 @@ function _buddyRenderWelcome() {
 
   _buddyAppendMsg('ai',
     greeting + '<br><br>' +
-    'I'm <strong>Dija</strong> — your ImpactGrid financial adviser. I'll help you understand your numbers, spot risks, and figure out what to do next.<br><br>' +
+    'I am <strong>Dija</strong> — your ImpactGrid financial adviser. I will help you understand your numbers, spot risks, and figure out what to do next.<br><br>' +
     dataLine + '<br><br>' +
     'What would you like to know?'
   );
@@ -2836,7 +2836,7 @@ function _buddyFallbackLocal(message) {
 
       if (data.length === 0) {
         reply = ImpactGridAI.card('Dija',
-          '<p>No financial data yet. Add your monthly records on the dashboard and I'll give you a full analysis immediately.</p>',
+          '<p>No financial data yet. Add your monthly records on the dashboard and I will give you a full analysis immediately.</p>',
           ['How does ImpactGrid work?', 'What data do I need?']
         );
       } else {
@@ -2851,7 +2851,7 @@ function _buddyFallbackLocal(message) {
       }
 
       _buddyHistory.push({ role: 'assistant', content: message });
-      _buddyAppendMsg('ai', reply || 'I couldn't generate a response. Please try again.');
+      _buddyAppendMsg('ai', reply || "I could not generate a response. Please try again.");
 
     } catch(e) {
       console.error('[Buddy fallback]', e);
@@ -3269,7 +3269,7 @@ function _generateDijaRiskInsight(data, margin, volatility, avgGrowth, expRatio,
   el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;color:var(--text-muted);">'
     + '<div class="dijo-typing-dots">'
     + '<div class="dijo-dot"></div><div class="dijo-dot"></div><div class="dijo-dot"></div>'
-    + '</div><span style="font-size:12px;font-family:'JetBrains Mono',monospace;">Dija is analysing your risk profile…</span></div>';
+    + '</div><span style="font-size:12px;font-family:monospace;">Dija is analysing your risk profile…</span></div>';
 
   setTimeout(function() {
     /* Use local AI engine for instant insight */
@@ -3349,7 +3349,7 @@ window.refreshDijaRiskInsight = refreshDijaRiskInsight;
     _exitShown = true;
     /* Customise teaser message */
     var teaserTitle = document.querySelector('#ggTeaser div[style*="font-size:21px"]');
-    if (teaserTitle) teaserTitle.textContent = "Wait — don't lose your data!";
+    if (teaserTitle) teaserTitle.textContent = "Wait — do not lose your data!";
     var teaserSub = document.querySelector('#ggTeaser div[style*="font-size:13px"]');
     if (teaserSub) teaserSub.textContent = 'You have ' + window.businessData.length + ' month' + (window.businessData.length>1?'s':'') + ' of data entered. Create a free account in 20 seconds to save it.';
     showGuestGate();
@@ -3598,7 +3598,7 @@ function _obShowSampleBanner() {
   banner.id = 'sampleDataBanner';
   banner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding:11px 16px;background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(37,99,235,0.04));border:1px solid rgba(37,99,235,0.25);border-radius:10px;font-size:12px;font-family:"DM Sans",sans-serif;color:rgba(255,255,255,0.5);flex-wrap:wrap;gap:10px;';
   banner.innerHTML = '<span>📊 <strong style="color:#7eb3ff;">Sample data loaded</strong> — explore all features freely. Your own data will replace this.</span>'
-    + '<button onclick="obClearSampleData()" style="flex-shrink:0;padding:6px 14px;background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:7px;color:#7eb3ff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;">Clear sample data</button>';
+    + '<button onclick="obClearSampleData()" style="flex-shrink:0;padding:6px 14px;background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);border-radius:7px;color:#7eb3ff;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:sans-serif;">Clear sample data</button>';
   header.appendChild(banner);
 }
 
