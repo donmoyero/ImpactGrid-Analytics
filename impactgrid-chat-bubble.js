@@ -550,12 +550,9 @@
      MARKET RESEARCH
   ================================================================ */
   function igNeedsResearch(q) {
-    return /market|industry|competitor|benchmark|sector|trend|economy|
-      inflation|average|typical|compare|uk sme|small business|retail|
-      hospitality|café|cafe|restaurant|construction|consulting|ecommerce|
-      recession|interest rate|supply chain|is it normal|should i worry|
-      typical for|other business|similar|reddit|cost of living|
-      pricing|charge|rate|wage|staff|hiring|supplier|materials/xi.test(q);
+    var keywords = ["market","industry","competitor","benchmark","sector","trend","economy","inflation","average","typical","compare","uk sme","small business","retail","hospitality","café","cafe","restaurant","construction","consulting","ecommerce","recession","interest rate","supply chain","is it normal","should i worry","typical for","other business","similar","reddit","cost of living","pricing","charge","rate","wage","staff","hiring","supplier","materials"];
+    var lower = q.toLowerCase();
+    return keywords.some(function(k){ return lower.indexOf(k) !== -1; });
   }
 
   async function igReddit(query, businessType) {
