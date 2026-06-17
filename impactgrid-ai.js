@@ -427,4 +427,20 @@ function igFallback(data, currency) {
     + "⚙️ Paste your Gemini API key into <code>impactgrid-ai.js</code> to unlock full AI.</span>";
 }
 
+/* ================================================================
+   DETECT ANOMALIES
+   Called by script.js: ImpactGridAI.detectAnomalies(businessData)
+   Returns array of records with unusual revenue patterns
+================================================================ */
+ImpactGridAI.detectAnomalies = function(data) {
+  if (!data || data.length < 3) return [];
+  var revenues = data.map(function(d){ return d.revenue || 0; });
+  var mean     = revenues.reduce(function(a,b){ return a+b; }, 0) / revenues.length;
+  var stdDev   = Math.sqrt(revenues.reduce(function(s,v){ return s + Math.pow(v - mean, 2); }, 0) / revenues.length);
+  if (stdDev === 0) return [];
+  return data.filter(function(d) {
+    return Math.abs((d.revenue || 0) - mean) > 2 * stdDev;
+  });
+};
+
 window.ImpactGridAI = ImpactGridAI;
