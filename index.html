@@ -2602,7 +2602,7 @@ function _buddyAutoConnect() {
       var bar = document.getElementById('buddyConfigBar');
       if (bar) bar.style.display = 'none';
       /* Keep retrying server in background silently */
-      setTimeout(_buddyAutoConnect, 15000);
+      /* retry removed — AI runs via Gemini */
     });
 }
 
@@ -2619,7 +2619,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (bar) bar.style.display = 'none';
 
   /* Try Render in background — silently upgrade if it responds */
-  setTimeout(_buddyAutoConnect, 1500);
+  /* _buddyAutoConnect removed — AI runs via Gemini */
 });
 
 /* ── Welcome message ── */
@@ -2835,23 +2835,31 @@ function _buddyFallbackLocal(message) {
       var reply;
 
       if (data.length === 0) {
-        reply = ImpactGridAI.card('Dijo',
-          '<p>No financial data yet. Add your monthly records on the dashboard and I will give you a full analysis immediately.</p>',
-          ['How does ImpactGrid work?', 'What data do I need?']
-        );
-      } else {
-        reply = ImpactGridAI.analyze
-          ? null /* will use async path below */
-          : ImpactGridAI.adviser(message, data, currency, _buddyHistory);
-
-        if (!reply) {
-          /* ImpactGridAI.analyze is async — call adviser directly */
-          reply = ImpactGridAI.adviser(message, data, currency, _buddyHistory);
-        }
+        var noDataReply = 'No financial data yet — add your monthly records on the dashboard and I can give you a full analysis.';
+        _buddyHistory.push({ role: 'assistant', content: noDataReply });
+        _buddyAppendMsg('ai', noDataReply);
+        return;
       }
 
-      _buddyHistory.push({ role: 'assistant', content: message });
-      _buddyAppendMsg('ai', reply || "I could not generate a response. Please try again.");
+      /* Use ImpactGridAI.analyze (Gemini) — it's async so we call it and handle the promise */
+      ImpactGridAI.analyze(message, data, currency, _buddyHistory)
+        .then(function(reply) {
+          _buddyHistory.push({ role: 'assistant', content: reply });
+          _buddyAppendMsg('ai', reply || 'I could not generate a response. Please try again.');
+        })
+        .catch(function(err) {
+          console.error('[Buddy] analyze error:', err);
+          _buddyAppendMsg('ai', 'I ran into an issue. Please try again.');
+        })
+        .finally(function() {
+          _buddyTyping = false;
+          var typingEl = document.getElementById('buddyTyping');
+          if (typingEl) typingEl.style.display = 'none';
+          var sendBtn = document.querySelector('.buddy-send-btn');
+          if (sendBtn) sendBtn.disabled = false;
+          _buddyScrollBottom();
+        });
+      return; /* async handled above */
 
     } catch(e) {
       console.error('[Buddy fallback]', e);
@@ -3651,18 +3659,6 @@ window.obSkip       = obSkip;
 </script>
 
 
-<script>
-/* ── Keep Dijo warm — ping every 10 minutes to prevent Render cold start ── */
-(function() {
-  var _dijoWarmUrl = "https://impactgrid-dijo.onrender.com/ping";
-  function _pingDijo() {
-    fetch(_dijoWarmUrl, { method: "GET", cache: "no-store" })
-      .then(function(r){ console.log("[Dijo] warm ping:", r.status); })
-      .catch(function(e){ console.log("[Dijo] ping failed:", e.message); });
-  }
-  _pingDijo(); /* immediate ping on load */
-  setInterval(_pingDijo, 10 * 60 * 1000); /* every 10 minutes */
-})();
-</script>
+<!-- Dijo warm ping removed — AI now runs via Gemini directly -->
 </body>
 </html>
