@@ -119,13 +119,9 @@ async function igGoogle(query) {
    Detects questions that benefit from live market data
 ================================================================ */
 function igNeedsResearch(q) {
-  return /market|industry|competitor|benchmark|sector|trend|economy|
-    inflation|average|typical|compare|uk sme|small business|retail|
-    hospitality|café|cafe|restaurant|construction|consulting|ecommerce|
-    recession|interest rate|supply chain|others doing|is it normal|
-    should i be worried|common problem|typical for|how does|people say|
-    other business|similar business|reddit|what.s happening|cost of living|
-    pricing|charge|rate|wage|staff cost|hiring|supplier|materials/xi.test(q);
+  var keywords = ["market","industry","competitor","benchmark","sector","trend","economy","inflation","average","typical","compare","uk sme","small business","retail","hospitality","café","cafe","restaurant","construction","consulting","ecommerce","recession","interest rate","supply chain","others doing","is it normal","should i be worried","common problem","typical for","how does","people say","other business","similar business","reddit","cost of living","pricing","charge","rate","wage","staff cost","hiring","supplier","materials"];
+  var lower = q.toLowerCase();
+  return keywords.some(function(k){ return lower.indexOf(k) !== -1; });
 }
 
 /* ================================================================
