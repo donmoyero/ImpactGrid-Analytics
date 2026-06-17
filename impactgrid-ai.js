@@ -424,7 +424,7 @@ function igFallback(data, currency) {
     + "Profit: <strong>"+sym+prof.toLocaleString()+"</strong> · "
     + "Margin: <strong>"+mg+"%</strong><br><br>"
     + "<span style='color:var(--text-muted);font-size:11px'>"
-    + "⚙️ Paste your Gemini API key into <code>impactgrid-ai.js</code> to unlock full AI.</span>";
+    + "⚙️ AI is initialising — please try again in a moment.</span>";
 }
 
 /* ================================================================
