@@ -472,7 +472,7 @@
     } catch(e) {
       var errMsg;
       if (e.message === "no_key") {
-        errMsg = "Gemini API key not set yet — add it to <code>impactgrid-chat-bubble.js</code>.";
+        errMsg = "⚙️ AI is initialising — please try again in a moment.";
       } else if (e.message === "rate_limit") {
         errMsg = "⏱ Rate limit hit — free tier is 15 requests/min. Wait a moment.";
       } else {
