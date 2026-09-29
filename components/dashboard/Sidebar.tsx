@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { DashboardSection } from "@/lib/dashboard/sections";
+import SignOutButton from "./SignOutButton";
 
 export default function Sidebar({ sections }: { sections: DashboardSection[] }) {
   const path = usePathname();
@@ -39,6 +40,9 @@ export default function Sidebar({ sections }: { sections: DashboardSection[] }) 
           </ul>
         </div>
       ))}
+      <div className="border-t border-line pt-4">
+        <SignOutButton />
+      </div>
     </nav>
   );
 }

@@ -21,7 +21,7 @@ export async function getDashboardData(): Promise<DashboardData | "signed-out" |
   const { data: { user } } = await supabase.auth.getUser(); // validates the session with Supabase
   if (!user) return "signed-out";
 
-  const { data: client } = await supabase.from("clients").select("id, business_name").eq("user_id", user.id).maybeSingle();
+  const { data: client } = await supabase.from("clients").select("id, business_name").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (!client) return "no-project";
 
   const { data: project } = await supabase

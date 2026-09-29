@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 /**
  * Application-layer enforcement of website suspension and maintenance mode.
@@ -69,9 +70,35 @@ const PAGES = {
   maintenance: { html: page("Down for maintenance", "This website is undergoing maintenance and will be back shortly. If you own this website, please contact your web provider."), retry: "3600" },
 } as const;
 
+/** Keeps a signed-in customer's session fresh on dashboard pages (Server Components can't write refreshed cookies). Fails open. */
+async function refreshSession(req: NextRequest): Promise<NextResponse> {
+  let res = NextResponse.next({ request: req });
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) return res;
+  try {
+    const supabase = createServerClient(url, anon, {
+      cookies: {
+        getAll: () => req.cookies.getAll(),
+        setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
+          list.forEach(({ name, value }) => req.cookies.set(name, value));
+          res = NextResponse.next({ request: req });
+          list.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
+        },
+      },
+    });
+    await supabase.auth.getUser();
+  } catch (e) {
+    console.error("session refresh failed:", e);
+  }
+  return res;
+}
+
 export async function middleware(req: NextRequest) {
   const host = norm(req.headers.get("host") ?? req.nextUrl.host);
-  if (!host || isOwnHost(host)) return NextResponse.next();
+  if (!host || isOwnHost(host)) {
+    return req.nextUrl.pathname.startsWith("/dashboard") ? refreshSession(req) : NextResponse.next();
+  }
 
   const offline = await offlineStatus(host);
   if (offline) {
