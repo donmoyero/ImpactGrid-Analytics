@@ -1,0 +1,80 @@
+import PlatformFlow from "@/components/PlatformFlow";
+import IndustryTabs from "@/components/IndustryTabs";
+
+const timeline = [
+  { label: "Choose", detail: "Package and domain." },
+  { label: "Show", detail: "Tell us what you want or draw your idea." },
+  { label: "Approve", detail: "We review the project and issue your invoice." },
+  { label: "Build", detail: "Design, development, testing." },
+  { label: "Launch", detail: "Your website goes live." },
+  { label: "Manage", detail: "You control your website through ImpactGrid Analytics where your package supports it." },
+];
+
+const aiExamples = [
+  { area: "Content", prompt: "Write a product description." },
+  { area: "Marketing", prompt: "Create a campaign for our weekend sale." },
+  { area: "Products", prompt: "Suggest descriptions for these 20 products." },
+  { area: "Website", prompt: "Create a new promotional section." },
+  { area: "Business", prompt: "Summarise this month's sales." },
+];
+
+export default function HomeSections() {
+  return (
+    <>
+      {/* How it works */}
+      <section id="how" className="border-b border-line bg-ink2">
+        <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+          <p className="label-tag text-slate">How it works</p>
+          <ol className="mt-10 grid gap-8 md:grid-cols-6 md:gap-0">
+            {timeline.map((s, i) => (
+              <li key={s.label} className="relative md:pr-6">
+                <div className="hidden h-px bg-line2 md:block" />
+                <span className="absolute -top-[3px] left-0 hidden h-1.5 w-1.5 rounded-full bg-signal md:block" />
+                <span className="font-mono text-4xl text-slateLight md:mt-6 md:block lg:text-5xl">0{i + 1}</span>
+                <h3 className="mt-2 font-display text-xl">{s.label}</h3>
+                <p className="mt-2 text-sm text-slate">{s.detail}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* Industry examples */}
+      <section className="border-b border-line">
+        <div className="mx-auto max-w-4xl px-6 py-20 lg:px-10">
+          <p className="label-tag text-slate">Examples</p>
+          <h2 className="mt-3 mb-8 font-display text-3xl lg:text-4xl">Imagine your business online.</h2>
+          <IndustryTabs />
+        </div>
+      </section>
+
+      {/* Business platform */}
+      <section className="border-b border-white/10 bg-[#0c0d10] text-white">
+        <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+          <p className="label-tag text-white/60">Business package</p>
+          <h2 className="mt-3 max-w-2xl font-display text-3xl lg:text-5xl">More than a website.</h2>
+          <p className="mt-4 mb-10 max-w-xl text-white/65">
+            Your website can become the operating layer for your business.
+          </p>
+          <PlatformFlow />
+        </div>
+      </section>
+
+      {/* AI */}
+      <section className="border-b border-line">
+        <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+          <p className="label-tag text-slate">AI, Business package</p>
+          <h2 className="mt-3 max-w-2xl font-display text-3xl lg:text-4xl">AI that works with your business.</h2>
+          <ul className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
+            {aiExamples.map((a) => (
+              <li key={a.area} className="bg-ink2 p-6">
+                <span className="label-tag text-blueprint2">{a.area}</span>
+                <p className="mt-4 font-display text-lg leading-snug">&ldquo;{a.prompt}&rdquo;</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    </>
+  );
+}
