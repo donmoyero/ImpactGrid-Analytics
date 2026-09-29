@@ -22,6 +22,59 @@ export default function PricingPage() {
         ))}
       </div>
 
+      <div className="mt-20">
+        <p className="label-tag text-slate">What you pay, and when</p>
+        <h2 className="mt-3 font-display text-2xl lg:text-3xl">Build fee once. Care Plan yearly.</h2>
+        <p className="mt-3 max-w-2xl text-slate">
+          The build is a one-off invoice, paid by bank transfer. Hosting, maintenance and support
+          are the Care Plan, billed separately and free for the first year.
+        </p>
+
+        <div className="mt-8 overflow-x-auto rounded-2xl border border-line bg-ink2">
+          <table className="w-full min-w-[560px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-line">
+                <th className="p-5 font-normal text-slate"> </th>
+                {packages.map((p) => (
+                  <th key={p.id} className="p-5 font-display text-lg">
+                    {p.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-line">
+                <td className="p-5 text-slate">Website build (one-off, bank transfer)</td>
+                {packages.map((p) => (
+                  <td key={p.id} className="p-5 font-mono">{formatGBP(p.price)}</td>
+                ))}
+              </tr>
+              <tr className="border-b border-line">
+                <td className="p-5 text-slate">Care Plan, first year</td>
+                {packages.map((p) => (
+                  <td key={p.id} className="p-5 font-mono text-blueprint2">Free</td>
+                ))}
+              </tr>
+              <tr className="border-b border-line">
+                <td className="p-5 font-medium">Total in year one</td>
+                {packages.map((p) => (
+                  <td key={p.id} className="p-5 font-mono font-medium">{formatGBP(p.price)}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="p-5 text-slate">Care Plan from year two (card, yearly)</td>
+                {packages.map((p) => (
+                  <td key={p.id} className="p-5 font-mono">{formatGBP(p.carePlanYearly)}/yr</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs text-slate">
+          You can cancel the Care Plan before it renews.
+        </p>
+      </div>
+
       <div className="mt-20 grid gap-8 rounded-2xl border border-line bg-ink2 p-8 lg:grid-cols-2 lg:p-10">
         <div>
           <p className="label-tag text-slate">Care Plan</p>
