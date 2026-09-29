@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <AdminNav />
         <div className="ml-auto border-line lg:ml-0 lg:mt-auto lg:border-t lg:pt-4">
           <p className="hidden truncate px-3 pb-2 text-xs text-slateLight lg:block">{admin.email}</p>
-          <Link href="/dashboard" className="hidden px-3 py-1.5 text-sm text-slate hover:text-paper lg:block">My dashboard</Link>
+          <Link href="/dashboard" className="hidden px-3 py-1.5 text-sm text-slate hover:text-paper lg:block">Customer view</Link>
           <SignOutButton className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate hover:text-paper" />
         </div>
       </aside>

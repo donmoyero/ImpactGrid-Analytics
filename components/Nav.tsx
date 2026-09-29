@@ -34,14 +34,13 @@ export default function Nav() {
         setIsAdmin(false);
         return;
       }
-      supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", session.user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (!cancelled) setIsAdmin(!!data?.is_admin);
-        });
+      // Asked of our own server, which checks profiles.is_admin itself (no browser-side database rules involved).
+      fetch("/api/me", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : { isAdmin: false }))
+        .then((j) => {
+          if (!cancelled) setIsAdmin(!!j.isAdmin);
+        })
+        .catch(() => {});
     };
 
     supabase.auth.getSession().then(({ data }) => apply(data.session));
