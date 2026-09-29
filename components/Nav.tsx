@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const links = [
   { href: "/services", label: "Services" },
@@ -18,6 +19,15 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const isHome = usePathname() === "/";
+  const [signedIn, setSignedIn] = useState(false);
+
+  // Display only: the dashboard itself re-checks the session on the server.
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => setSignedIn(!!session));
+    return () => sub.subscription.unsubscribe();
+  }, []);
   // On the homepage the bar sits dark over the hero, then turns solid cream after scrolling.
   const dark = isHome && !scrolled && !open;
 
@@ -55,10 +65,10 @@ export default function Nav() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <Link
-            href="/login"
+            href={signedIn ? "/dashboard" : "/login"}
             className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
           >
-            Sign in
+            {signedIn ? "My dashboard" : "Sign in"}
           </Link>
           <Link
             href="/book-project"
@@ -89,8 +99,8 @@ export default function Nav() {
                 {l.label}
               </Link>
             ))}
-            <Link href="/login" className="text-base" onClick={() => setOpen(false)}>
-              Sign in
+            <Link href={signedIn ? "/dashboard" : "/login"} className="text-base" onClick={() => setOpen(false)}>
+              {signedIn ? "My dashboard" : "Sign in"}
             </Link>
             <Link
               href="/book-project"
