@@ -52,11 +52,15 @@ function clientEmailFor(type: ReminderType, inv: OpenInvoice) {
 }
 
 /** Reserve one reminder slot per invoice+type. Returns the row id if we own the send, else null. */
-async function claim(db: SupabaseClient, invoiceId: string, type: ReminderType): Promise<string | null> {
+export async function claim(
+  db: SupabaseClient,
+  target: { column: "invoice_id" | "care_plan_id"; id: string },
+  type: string
+): Promise<string | null> {
   const nowIso = new Date().toISOString();
   const ins = await db
     .from("payment_reminders")
-    .insert({ invoice_id: invoiceId, reminder_type: type, status: "pending", attempted_at: nowIso })
+    .insert({ [target.column]: target.id, reminder_type: type, status: "pending", attempted_at: nowIso })
     .select("id")
     .maybeSingle();
   if (!ins.error && ins.data) return ins.data.id;
@@ -67,7 +71,7 @@ async function claim(db: SupabaseClient, invoiceId: string, type: ReminderType):
   const retry = await db
     .from("payment_reminders")
     .update({ status: "pending", attempted_at: nowIso })
-    .eq("invoice_id", invoiceId)
+    .eq(target.column, target.id)
     .eq("reminder_type", type)
     .or(`status.eq.failed,and(status.eq.pending,attempted_at.lt.${stale})`)
     .select("id")
@@ -104,7 +108,7 @@ export async function runPaymentCycle(
         }
         if (!inv.client?.contact_email) throw new Error(`${inv.invoice_number}: client has no email`);
 
-        const claimId = await claim(db, inv.id, action.type);
+        const claimId = await claim(db, { column: "invoice_id", id: inv.id }, action.type);
         if (!claimId) continue; // someone else sent it, or it's already done
 
         // Re-read so a payment that landed a moment ago doesn't trigger a reminder.

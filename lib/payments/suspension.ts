@@ -44,3 +44,21 @@ export async function siteStatusForHost(host: string, db: SupabaseClient = getAd
   if (error) throw new Error(error.message);
   return (data as string | null) ?? null;
 }
+
+/** Manual maintenance mode. On: only a live site is moved. Off: only a maintenance site is restored. */
+export async function setMaintenance(projectId: string, on: boolean, reason?: string, db: SupabaseClient = getAdminDb()) {
+  if (on) {
+    const { data, error } = await db.rpc("put_website_in_maintenance", {
+      p_project_id: projectId,
+      p_reason: reason ?? null,
+      p_care_plan_id: null,
+    });
+    if (error) throw new Error(error.message);
+    if (data !== true) throw new Error("That website is suspended or still being built, so maintenance mode wasn't applied.");
+    return { status: "maintenance" };
+  }
+  const { data, error } = await db.from("websites").update({ status: "live" }).eq("project_id", projectId).eq("status", "maintenance").select().maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("That website isn't in maintenance mode.");
+  return data;
+}

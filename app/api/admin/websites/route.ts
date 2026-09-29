@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasBearer } from "@/lib/payments/auth";
-import { getSuspensionQueue, restoreWebsite, suspendWebsite } from "@/lib/payments/suspension";
+import { getSuspensionQueue, restoreWebsite, setMaintenance, suspendWebsite } from "@/lib/payments/suspension";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/** Body: { action: "suspend" | "restore", projectId, reason?, force? } */
+/** Body: { action: "suspend" | "restore" | "maintenance_on" | "maintenance_off", projectId, reason?, force? } */
 export async function POST(req: NextRequest) {
   if (!hasBearer(req, "ADMIN_API_KEY")) return unauthorised();
   const body = await req.json().catch(() => ({}));
@@ -29,8 +29,12 @@ export async function POST(req: NextRequest) {
       const site = await suspendWebsite(projectId, typeof reason === "string" ? reason : undefined, { force: force === true });
       return NextResponse.json({ ok: true, website: site });
     }
+    if (action === "maintenance_on" || action === "maintenance_off") {
+      const site = await setMaintenance(projectId, action === "maintenance_on", typeof reason === "string" ? reason : undefined);
+      return NextResponse.json({ ok: true, website: site });
+    }
     if (action === "restore") return NextResponse.json({ ok: true, website: await restoreWebsite(projectId) });
-    return NextResponse.json({ error: 'action must be "suspend" or "restore".' }, { status: 400 });
+    return NextResponse.json({ error: 'action must be suspend, restore, maintenance_on or maintenance_off.' }, { status: 400 });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Failed" }, { status: 409 });
   }

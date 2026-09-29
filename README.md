@@ -118,15 +118,43 @@ You are also emailed "payment overdue: suspend website?" when an invoice goes ov
 **Where suspension is enforced.** In the database (`websites.status`) and at the server: `middleware.ts` returns HTTP 503 for every
 request to a suspended website's hostname, before any page or API route runs. It fails open if the database can't be reached.
 This covers any client domain that is pointed at this app. Client sites hosted elsewhere must check
-`GET /api/site-status?host=<domain>` (Bearer `SITE_STATUS_TOKEN`) at their own server or edge and return 503 when `suspended` is true;
+`GET /api/site-status?host=<domain>` (Bearer `SITE_STATUS_TOKEN`) at their own server or edge and return 503 when `offline` is true (suspended or maintenance);
 for example in their middleware:
 
 ```ts
-const r = await fetch(`https://impactgridanalytics.com/api/site-status?host=${host}`, { headers: { Authorization: `Bearer ${process.env.SITE_STATUS_TOKEN}` } });
-if ((await r.json()).suspended) return new Response("Temporarily unavailable", { status: 503 });
+const r = await fetch(`https://www.impactgridanalytics.com/api/site-status?host=${host}`, { headers: { Authorization: `Bearer ${process.env.SITE_STATUS_TOKEN}` } });
+if ((await r.json()).offline) return new Response("Temporarily unavailable", { status: 503 }); // suspended or maintenance
 ```
 
 Resend only sends the emails; it can't take a site offline, so it isn't part of enforcement.
+
+## 5d. Care Plan expiry
+
+`care_plans` is the source of truth (statuses: trialing, active, past_due, cancelled, expired, suspended); each project mirrors
+`care_plan_status`, `care_plan_start_date`, `care_plan_renewal_date` and `care_plan_price`.
+
+```
+PAST DUE -> grace period (7 days) -> reminder -> final reminder -> website MAINTENANCE MODE
+day 0                  day 7            day 7        day 14              day 21
+```
+
+The database starts the grace period the moment Stripe reports the plan past due. Stripe keeps retrying the card throughout: if it
+succeeds, the plan returns to active, the website comes back automatically and the reminder chain resets. The same daily job as the
+invoice chain (`/api/cron/payment-reminders`) sends the reminders and applies maintenance mode. A site that is suspended (item 21)
+or still being built is never moved into maintenance. A cancelled plan whose paid period has ended becomes `expired` and you are
+emailed; the website is left as it is until you decide.
+
+One-time setup: run `supabase/migrations-care-plan-expiry.sql` (after `migrations-suspension.sql`).
+
+```
+npx tsx scripts/website.ts careplan               all Care Plans:  Active / Renews: 29 September 2027 / £200/year
+npx tsx scripts/website.ts careplan "ABC"         one client, with where a PAST DUE plan is up to
+npx tsx scripts/website.ts maintenance "ABC" on   manual maintenance mode (off to bring it back)
+npx tsx scripts/website.ts cycle --dry            preview both the invoice and Care Plan chains
+```
+
+The same data is at `GET /api/admin/care-plans` (Bearer `ADMIN_API_KEY`). Maintenance is enforced exactly like suspension: `middleware.ts`
+returns HTTP 503 (a "Down for maintenance" page) for that site's hostname.
 
 ## 5. Run it
 

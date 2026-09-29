@@ -6,6 +6,8 @@
  *   npx tsx scripts/website.ts suspend "ABC Fashion" "reason" --force     override the overdue requirement
  *   npx tsx scripts/website.ts restore "ABC Fashion"          bring it back manually
  *   npx tsx scripts/website.ts status abcfashion.co.uk        what the enforcement layer sees for a hostname
+ *   npx tsx scripts/website.ts careplan ["ABC Fashion"]      Care Plan status, renewal date, price and where the chain is up to
+ *   npx tsx scripts/website.ts maintenance "ABC Fashion" on|off   manual maintenance mode
  *   npx tsx scripts/website.ts cycle --dry                    show what the reminder job WOULD do
  *   npx tsx scripts/website.ts cycle                          run the reminder job now
  */
@@ -64,17 +66,36 @@ async function main() {
       console.log(`${a}: ${(await sus.siteStatusForHost(a)) ?? "not managed by ImpactGrid"}`);
       return;
     }
+    case "careplan": {
+      const { getCarePlans, describeCarePlan } = await import("../lib/care-plan/admin");
+      const rows = await getCarePlans(a);
+      if (!rows.length) return console.log(a ? `No Care Plan matches "${a}".` : "No Care Plans yet.");
+      for (const r of rows) {
+        console.log(`\n${r.business_name}`);
+        for (const l of describeCarePlan(r)) console.log(`  ${l}`);
+      }
+      return;
+    }
+    case "maintenance": {
+      if (!a || !["on", "off"].includes(b)) throw new Error('Usage: maintenance "<business name or project id>" on|off');
+      await sus.setMaintenance(await inv.resolveProject(a), b === "on");
+      console.log(b === "on" ? "Website is now in maintenance mode." : "Website is live again.");
+      return;
+    }
     case "cycle": {
       const { runPaymentCycle } = await import("../lib/payments/reminders");
-      const s = await runPaymentCycle({ dryRun: dry });
-      for (const l of [...s.reminded, ...s.overdue]) console.log(l);
-      for (const l of s.failed) console.log(`FAILED  ${l}`);
-      for (const l of s.errors) console.log(`ERROR   ${l}`);
-      if (!s.reminded.length && !s.overdue.length && !s.failed.length && !s.errors.length) console.log("Nothing to do.");
+      const { runCarePlanCycle } = await import("../lib/care-plan/cycle");
+      const i = await runPaymentCycle({ dryRun: dry });
+      const c = await runCarePlanCycle({ dryRun: dry });
+      const lines = [...i.reminded, ...i.overdue, ...c.reminded, ...c.maintenance, ...c.expired];
+      for (const l of lines) console.log(l);
+      for (const l of [...i.failed, ...c.failed]) console.log(`FAILED  ${l}`);
+      for (const l of [...i.errors, ...c.errors]) console.log(`ERROR   ${l}`);
+      if (!lines.length && !i.failed.length && !c.failed.length && !i.errors.length && !c.errors.length) console.log("Nothing to do.");
       return;
     }
     default:
-      console.log("Commands: queue | suspend <project> [reason] [--force] | restore <project> | status <host> | cycle [--dry]");
+      console.log("Commands: queue | suspend <project> [reason] [--force] | restore <project> | status <host> | careplan [name] | maintenance <project> on|off | cycle [--dry]");
   }
 }
 

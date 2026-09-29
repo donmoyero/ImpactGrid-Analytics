@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * For client sites hosted elsewhere: GET /api/site-status?host=example.com
- * with `Authorization: Bearer $SITE_STATUS_TOKEN`. Returns { host, status, suspended }.
+ * with `Authorization: Bearer $SITE_STATUS_TOKEN`. Returns { host, status, suspended, maintenance, offline }.
+ * Serve HTTP 503 whenever `offline` is true.
  */
 export async function GET(req: NextRequest) {
   if (!hasBearer(req, "SITE_STATUS_TOKEN")) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
   try {
     const status = await siteStatusForHost(host);
     return NextResponse.json(
-      { host, status, suspended: status === "suspended" },
+      { host, status, suspended: status === "suspended", maintenance: status === "maintenance", offline: status === "suspended" || status === "maintenance" },
       { headers: { "Cache-Control": "private, max-age=30" } }
     );
   } catch (e) {
