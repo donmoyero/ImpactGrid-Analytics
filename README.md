@@ -55,6 +55,11 @@ overwrite existing tables, but check column names line up.
 - On card registration the webhook creates the client, project (build `payment_status = pending`) and order,
   and emails you (via Resend, if set) to raise the build invoice. Mark the project paid once the transfer lands.
 - Existing database? Run `supabase/migrations-care-plan.sql` once.
+- Existing database? Then also run `supabase/migrations-operations.sql` once (safe to re-run). It adds the payment and
+  Care Plan lifecycle: `care_plans`, `invoices` (with a state machine and `IGA-YYYY-NNNNN` numbering), `payment_reminders`,
+  `websites` + `website_events` (audit log), `business_settings` (bank details for invoices), and the full domain statuses.
+  New installs get all of this from `schema.sql`.
+- `care_plans` is the source of truth for the Care Plan. `projects.care_plan_*` columns are read-only mirrors kept in sync by a trigger.
 - In Stripe: Settings > Billing > Subscriptions and emails, turn on the trial-ending reminder email.
 
 ## 5. Run it
