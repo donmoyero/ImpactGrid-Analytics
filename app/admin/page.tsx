@@ -24,7 +24,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { q?: 
 
   return (
     <div>
-      <h1 className="font-display text-3xl md:text-4xl">Admin</h1>
+      <h1 className="font-display text-3xl md:text-4xl">Customers</h1>
       <p className="mt-1 text-slate">Every customer, their website and their Care Plan.</p>
 
       {searchParams.ok && <p role="status" className="mt-6 rounded-xl border border-line2 bg-sand px-4 py-3 text-sm">{searchParams.ok}</p>}

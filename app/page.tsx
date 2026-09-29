@@ -5,6 +5,8 @@ import HeroScene from "@/components/HeroScene";
 import HomeSections from "@/components/HomeSections";
 import PackageCard from "@/components/PackageCard";
 import { packages } from "@/lib/packages";
+import { getHomepageContent } from "@/lib/site/content";
+import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
 
 const ideas = [
   { icon: MessageSquare, title: "Tell us", detail: "Describe your business and what you need.", live: true },
@@ -27,9 +29,20 @@ const services = [
   { icon: Search, name: "SEO & Google Business", detail: "Be findable the day your site goes live." },
 ];
 
-export default function Home() {
+export const revalidate = 60; // homepage is cached; saving in /admin/homepage refreshes it straight away
+
+export default async function Home() {
+  const c = await getHomepageContent();
   return (
     <main>
+      {c.announcement.text &&
+        (c.announcement.href ? (
+          <Link href={c.announcement.href} className="block bg-blueprint2 px-6 py-2 text-center text-sm text-white hover:opacity-90">
+            {c.announcement.text}
+          </Link>
+        ) : (
+          <p className="bg-blueprint2 px-6 py-2 text-center text-sm text-white">{c.announcement.text}</p>
+        ))}
       {/* Hero */}
       <section className="relative isolate overflow-hidden border-b border-line bg-[#0c0d10] text-white">
         <div
@@ -39,17 +52,17 @@ export default function Home() {
         <div className="relative z-10 mx-auto flex max-w-7xl flex-col justify-center px-6 pb-10 pt-20 lg:min-h-[calc(100vh-65px)] lg:px-10 lg:pb-24 lg:pt-24">
           <div className="max-w-xl">
             <div className="label-tag mb-6 flex items-center gap-2 text-white/60">
-              <span className="h-1.5 w-1.5 rounded-full bg-blueprint2" /> Website studio
+              <span className="h-1.5 w-1.5 rounded-full bg-blueprint2" /> {c.hero.eyebrow}
             </div>
             <h1 className="font-display text-5xl leading-[1.02] tracking-tight lg:text-7xl">
-              Your business.
+              {c.hero.line1}
               <br />
               <span className="bg-gradient-to-r from-white via-[#9db8ff] to-[#8b5cff] bg-clip-text text-transparent">
-                Built for the web.
+                {c.hero.line2}
               </span>
             </h1>
             <p className="mt-6 max-w-md text-lg text-white/65">
-              Websites, e-commerce and digital business systems designed around how you actually work.
+              {c.hero.sub}
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -57,12 +70,14 @@ export default function Home() {
                 href="/book-project"
                 className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-paper transition-colors hover:bg-blueprint2 hover:text-white"
               >
-                Start building
+                {c.hero.primaryLabel}
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
-              <Link href="/pricing" className="text-sm text-white/80 hover:text-white">
-                Explore packages
-              </Link>
+              {c.hero.secondaryLabel && (
+                <Link href="/pricing" className="text-sm text-white/80 hover:text-white">
+                  {c.hero.secondaryLabel}
+                </Link>
+              )}
             </div>
 
             <div className="mt-10 flex flex-wrap gap-3">
@@ -81,9 +96,18 @@ export default function Home() {
         </div>
 
         <div className="relative z-0 h-72 sm:h-96 lg:absolute lg:inset-0 lg:h-auto">
-          <HeroScene />
+          {c.hero.imageUrl ? (
+            <div className="flex h-full items-center justify-center px-6 lg:justify-end lg:pr-10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={c.hero.imageUrl} alt="" className="max-h-full w-full max-w-xl rounded-3xl object-cover shadow-2xl lg:max-h-[75%]" />
+            </div>
+          ) : (
+            <HeroScene />
+          )}
         </div>
       </section>
+
+      <HomeStats stats={c.stats} />
 
       {/* Start with an idea */}
       <section className="border-b border-line">
@@ -144,6 +168,9 @@ export default function Home() {
       </section>
 
       <HomeSections />
+
+      <HomeWork work={c.work} />
+      <HomeReviews reviews={c.reviews} />
 
       {/* Care Plan */}
       <section className="border-b border-line">
@@ -230,13 +257,13 @@ export default function Home() {
       <section>
         <div className="mx-auto max-w-7xl px-6 py-24 text-center lg:px-10">
           <h2 className="mx-auto max-w-2xl font-display text-3xl lg:text-4xl">
-            Tell us what you do. We&apos;ll take it from there.
+            {c.cta.heading}
           </h2>
           <Link
             href="/book-project"
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-signal px-7 py-3.5 text-sm font-medium text-ink hover:bg-blueprint2"
           >
-            Start your project
+            {c.cta.button}
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
