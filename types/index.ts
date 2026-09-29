@@ -61,6 +61,7 @@ export interface Client {
   business_name: string;
   contact_email: string;
   contact_phone: string | null;
+  billing_address: string | null;
   created_at: string;
 }
 
@@ -88,6 +89,11 @@ export interface CarePlan {
   updated_at: string;
 }
 
+export interface InvoiceLine {
+  description: string;
+  amount: number;
+}
+
 export interface Invoice {
   id: string;
   client_id: string;
@@ -97,6 +103,7 @@ export interface Invoice {
   amount_paid: number;
   amount_due: number;
   currency: string;
+  line_items: InvoiceLine[];
   status: InvoiceStatus;
   /** 0 = none sent, 1 = reminder 1, 2 = reminder 2, 3 = final reminder */
   reminder_stage: 0 | 1 | 2 | 3;

@@ -62,6 +62,26 @@ overwrite existing tables, but check column names line up.
 - `care_plans` is the source of truth for the Care Plan. `projects.care_plan_*` columns are read-only mirrors kept in sync by a trigger.
 - In Stripe: Settings > Billing > Subscriptions and emails, turn on the trial-ending reminder email.
 
+## 5b. Invoices (bank-transfer build fee)
+
+One-time setup, in order:
+1. `npm install pdf-lib` and `npm install -D tsx`
+2. Supabase SQL editor: run `supabase/migrations-invoicing.sql` (new installs get it from `schema.sql`).
+3. Copy `supabase/business-settings.example.sql`, replace every `REPLACE:` value with your real bank details and address, and run it.
+   Bank details are stored admin-only in `business_settings` and injected into each PDF. Invoices refuse to generate while they are missing or placeholders.
+
+Then, from the project folder (needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`):
+
+```
+npx tsx scripts/invoice.ts pending                    what still needs an invoice
+npx tsx scripts/invoice.ts create "ABC Fashion"       issue an invoice (PDF saved to invoices-out\)
+npx tsx scripts/invoice.ts pay IGA-2026-00001 400     record a bank transfer (partial payments supported)
+npx tsx scripts/invoice.ts list
+npx tsx scripts/invoice.ts pdf IGA-2026-00001         re-save the PDF
+```
+
+Recording the final payment marks the invoice paid, the project's build fee paid, and the order paid.
+
 ## 5. Run it
 
 ```bash
