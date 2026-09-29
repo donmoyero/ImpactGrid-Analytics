@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import SignOutButton from "@/components/dashboard/SignOutButton";
 
 const links = [
   { href: "/services", label: "Services" },
@@ -70,6 +71,11 @@ export default function Nav() {
           >
             {signedIn ? "My dashboard" : "Sign in"}
           </Link>
+          {signedIn && (
+            <SignOutButton
+              className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
+            />
+          )}
           <Link
             href="/book-project"
             className={cn(
@@ -102,6 +108,7 @@ export default function Nav() {
             <Link href={signedIn ? "/dashboard" : "/login"} className="text-base" onClick={() => setOpen(false)}>
               {signedIn ? "My dashboard" : "Sign in"}
             </Link>
+            {signedIn && <SignOutButton className="text-left text-base" onDone={() => setOpen(false)} />}
             <Link
               href="/book-project"
               className="mt-2 rounded-full bg-paper px-4 py-3 text-center text-sm font-medium text-ink"
