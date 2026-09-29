@@ -55,6 +55,12 @@ export default function Nav() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <Link
+            href="/login"
+            className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
+          >
+            Sign in
+          </Link>
+          <Link
             href="/book-project"
             className={cn(
               "group flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-blueprint2 hover:text-white",
@@ -83,6 +89,9 @@ export default function Nav() {
                 {l.label}
               </Link>
             ))}
+            <Link href="/login" className="text-base" onClick={() => setOpen(false)}>
+              Sign in
+            </Link>
             <Link
               href="/book-project"
               className="mt-2 rounded-full bg-paper px-4 py-3 text-center text-sm font-medium text-ink"
