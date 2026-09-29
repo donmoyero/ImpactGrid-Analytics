@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, Palette, Search, ShoppingBag, LayoutDashboard } from "lucide-react";
-import BlueprintGrid from "@/components/BlueprintGrid";
+import HeroScene from "@/components/HeroScene";
 import PackageCard from "@/components/PackageCard";
 import { packages } from "@/lib/packages";
 
@@ -23,19 +23,24 @@ export default function Home() {
   return (
     <main>
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-line">
-        <BlueprintGrid />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 pb-20 pt-16 lg:grid-cols-2 lg:px-10 lg:pb-28 lg:pt-24">
-          <div>
-            <div className="label-tag mb-6 flex items-center gap-2 text-slate">
-              <span className="h-1.5 w-1.5 rounded-full bg-signal" /> Website studio
+      <section className="relative isolate overflow-hidden border-b border-line bg-[#0c0d10] text-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_75%_40%,rgba(45,110,219,0.18),transparent)]"
+        />
+        <div className="relative z-10 mx-auto flex max-w-7xl flex-col justify-center px-6 pb-10 pt-20 lg:min-h-[calc(100vh-65px)] lg:px-10 lg:pb-24 lg:pt-24">
+          <div className="max-w-xl">
+            <div className="label-tag mb-6 flex items-center gap-2 text-white/60">
+              <span className="h-1.5 w-1.5 rounded-full bg-blueprint2" /> Website studio
             </div>
-            <h1 className="font-display text-5xl leading-[1.05] tracking-tight lg:text-6xl">
+            <h1 className="font-display text-5xl leading-[1.02] tracking-tight lg:text-7xl">
               Websites for businesses,
               <br />
-              <span className="text-slate">built for you.</span>
+              <span className="bg-gradient-to-r from-white via-[#9db8ff] to-[#8b5cff] bg-clip-text text-transparent">
+                built for you.
+              </span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg text-slate">
+            <p className="mt-6 max-w-md text-lg text-white/65">
               Choose a package, pay online, and we design and build your website
               from start to launch. No page builders, no guesswork.
             </p>
@@ -43,26 +48,33 @@ export default function Home() {
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
                 href="/book-project"
-                className="inline-flex items-center gap-2 rounded-full bg-signal px-7 py-3.5 text-sm font-medium text-ink transition-colors hover:bg-blueprint2"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-paper transition-colors hover:bg-blueprint2 hover:text-white"
               >
                 Start your project
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
-              <Link href="/pricing" className="text-sm text-paper hover:text-blueprint2">
+              <Link href="/pricing" className="text-sm text-white/80 hover:text-white">
                 See packages
               </Link>
             </div>
-          </div>
 
-          <Image
-            src="/images/hero-site.svg"
-            alt="A finished business website shown on a laptop and a phone"
-            width={760}
-            height={560}
-            priority
-            unoptimized
-            className="w-full"
-          />
+            <div className="mt-10 flex flex-wrap gap-3">
+              {packages.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/book-project?package=${p.id}`}
+                  className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur transition-colors hover:border-[#8b5cff]"
+                >
+                  <span className="block text-sm font-medium">{p.name}</span>
+                  <span className="block font-mono text-xs text-white/60">{p.priceLabel}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-0 h-72 sm:h-96 lg:absolute lg:inset-0 lg:h-auto">
+          <HeroScene />
         </div>
       </section>
 
