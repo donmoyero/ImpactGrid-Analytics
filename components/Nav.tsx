@@ -21,14 +21,40 @@ export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const isHome = usePathname() === "/";
   const [signedIn, setSignedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Display only: the dashboard itself re-checks the session on the server.
+  // Display only: the dashboard and admin pages re-check the session on the server (requireAdmin).
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => setSignedIn(!!session));
-    return () => sub.subscription.unsubscribe();
+    let cancelled = false;
+
+    const apply = (session: { user: { id: string } } | null) => {
+      setSignedIn(!!session);
+      if (!session) {
+        setIsAdmin(false);
+        return;
+      }
+      supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", session.user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!cancelled) setIsAdmin(!!data?.is_admin);
+        });
+    };
+
+    supabase.auth.getSession().then(({ data }) => apply(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => apply(session));
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
+
+  const dashHref = isAdmin ? "/admin" : "/dashboard";
+  const dashLabel = isAdmin ? "Admin dashboard" : "My dashboard";
+
   // On the homepage the bar sits dark over the hero, then turns solid cream after scrolling.
   const dark = isHome && !scrolled && !open;
 
@@ -66,10 +92,10 @@ export default function Nav() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <Link
-            href={signedIn ? "/dashboard" : "/login"}
+            href={signedIn ? dashHref : "/login"}
             className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
           >
-            {signedIn ? "My dashboard" : "Sign in"}
+            {signedIn ? dashLabel : "Sign in"}
           </Link>
           {signedIn && (
             <SignOutButton
@@ -105,8 +131,8 @@ export default function Nav() {
                 {l.label}
               </Link>
             ))}
-            <Link href={signedIn ? "/dashboard" : "/login"} className="text-base" onClick={() => setOpen(false)}>
-              {signedIn ? "My dashboard" : "Sign in"}
+            <Link href={signedIn ? dashHref : "/login"} className="text-base" onClick={() => setOpen(false)}>
+              {signedIn ? dashLabel : "Sign in"}
             </Link>
             {signedIn && <SignOutButton className="text-left text-base" onDone={() => setOpen(false)} />}
             <Link
