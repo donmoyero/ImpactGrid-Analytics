@@ -97,7 +97,7 @@ async function refreshSession(req: NextRequest): Promise<NextResponse> {
 export async function middleware(req: NextRequest) {
   const host = norm(req.headers.get("host") ?? req.nextUrl.host);
   if (!host || isOwnHost(host)) {
-    return req.nextUrl.pathname.startsWith("/dashboard") ? refreshSession(req) : NextResponse.next();
+    return /^\/(dashboard|admin)(\/|$)/.test(req.nextUrl.pathname) ? refreshSession(req) : NextResponse.next();
   }
 
   const offline = await offlineStatus(host);
