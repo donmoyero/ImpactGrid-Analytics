@@ -82,6 +82,52 @@ npx tsx scripts/invoice.ts pdf IGA-2026-00001         re-save the PDF
 
 Recording the final payment marks the invoice paid, the project's build fee paid, and the order paid.
 
+## 5c. Payment suspension system
+
+Invoice chain (a state machine enforced by database triggers, so no code path can skip a step):
+
+```
+issued -> partially_paid -> reminder 1 -> reminder 2 -> final reminder -> overdue
+                                                                            |
+                                              admin sees "SUSPEND WEBSITE" -+-> websites.status = suspended
+ full payment (or void) of that invoice  ------------------------------------> website restored automatically
+```
+
+Timing (days after the invoice due date; edit `RULES` in `lib/payments/schedule.ts`): reminder 1 = day 1, reminder 2 = day 8,
+final reminder = day 15, overdue = day 22 (only after the final reminder has actually been sent). One step per run, so a missed
+day never skips a reminder. Reminders go out via Resend from `RESEND_FROM_EMAIL` and state the outstanding balance.
+
+One-time setup:
+1. Supabase SQL editor: run `supabase/migrations-suspension.sql` (after `migrations-operations.sql`).
+2. Set `CRON_SECRET`, `ADMIN_API_KEY`, `SITE_STATUS_TOKEN` (long random strings) in Vercel. `vercel.json` schedules the daily job at 08:00 UTC.
+3. Make sure the client's domain is stored in `domains.domain_name` (or `projects.domain`), because that is how a request is matched to a website.
+
+Day to day:
+
+```
+npx tsx scripts/website.ts queue                 overdue invoices and the action for each (SUSPEND WEBSITE / SUSPENDED)
+npx tsx scripts/website.ts suspend "ABC Fashion" suspend (refused unless an invoice is overdue; --force overrides)
+npx tsx scripts/website.ts restore "ABC Fashion"
+npx tsx scripts/website.ts status abcfashion.co.uk
+npx tsx scripts/website.ts cycle --dry           preview what the reminder job would do
+```
+
+You are also emailed "payment overdue: suspend website?" when an invoice goes overdue. The same actions are available at
+`GET/POST /api/admin/websites` (Bearer `ADMIN_API_KEY`).
+
+**Where suspension is enforced.** In the database (`websites.status`) and at the server: `middleware.ts` returns HTTP 503 for every
+request to a suspended website's hostname, before any page or API route runs. It fails open if the database can't be reached.
+This covers any client domain that is pointed at this app. Client sites hosted elsewhere must check
+`GET /api/site-status?host=<domain>` (Bearer `SITE_STATUS_TOKEN`) at their own server or edge and return 503 when `suspended` is true;
+for example in their middleware:
+
+```ts
+const r = await fetch(`https://impactgridanalytics.com/api/site-status?host=${host}`, { headers: { Authorization: `Bearer ${process.env.SITE_STATUS_TOKEN}` } });
+if ((await r.json()).suspended) return new Response("Temporarily unavailable", { status: 503 });
+```
+
+Resend only sends the emails; it can't take a site offline, so it isn't part of enforcement.
+
 ## 5. Run it
 
 ```bash
@@ -104,7 +150,7 @@ by real data. The removed code is in your original upload / git history.
 
 ## Not built yet
 
-Automatic build invoices and customer welcome emails (you currently get an admin email and send the invoice yourself), and a real domain registrar lookup.
+Automatic build invoices, customer welcome emails and an admin web dashboard button for suspension (use the CLI or `/api/admin/websites` for now) (you currently get an admin email and send the invoice yourself), and a real domain registrar lookup.
 
 ## Folder structure
 
