@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 type Mode = "signin" | "signup";
 
 export default function LoginForm({ next, linkError }: { next: string; linkError: boolean }) {
-  const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +15,9 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
   const [busy, setBusy] = useState(false);
 
   const callback = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+
+  // Full page load so the server sees the fresh session; /auth/continue sends admins to /admin, customers to /dashboard.
+  const goAfterLogin = () => window.location.assign(`/auth/continue?next=${encodeURIComponent(next)}`);
 
   async function google() {
     setBusy(true);
@@ -42,8 +43,7 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
         setBusy(false);
         return;
       }
-      router.replace(next);
-      router.refresh();
+      goAfterLogin();
       return;
     }
 
@@ -54,8 +54,7 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
       return;
     }
     if (data.session) {
-      router.replace(next);
-      router.refresh();
+      goAfterLogin();
     } else {
       setNotice("Check your email and click the link to finish creating your account.");
     }

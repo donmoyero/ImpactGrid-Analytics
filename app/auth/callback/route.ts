@@ -39,5 +39,6 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     console.error("client link failed:", e); // never block sign-in because linking failed
   }
-  return NextResponse.redirect(`${origin}${next}`);
+  // /auth/continue sends admins to /admin and customers to /dashboard.
+  return NextResponse.redirect(`${origin}/auth/continue?next=${encodeURIComponent(next)}`);
 }
