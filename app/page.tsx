@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight, Palette, Search, ShoppingBag, LayoutDashboard } from "lucide-react";
+import { ArrowUpRight, Palette, Search, ShoppingBag, LayoutDashboard, MessageSquare, Upload, PenLine } from "lucide-react";
 import HeroScene from "@/components/HeroScene";
 import PackageCard from "@/components/PackageCard";
 import { packages } from "@/lib/packages";
@@ -10,6 +10,20 @@ const process = [
   { label: "Choose", detail: "Pick a package and any add-ons you need." },
   { label: "Confirm", detail: "Register a card for the Care Plan. The first year is free." },
   { label: "We build", detail: "Pay the build invoice by bank transfer and we design, build and launch." },
+];
+
+const ideas = [
+  { icon: MessageSquare, title: "Tell us", detail: "Describe your business and what you need.", live: true },
+  { icon: Upload, title: "Show us", detail: "Upload a design, screenshot or inspiration.", live: false },
+  { icon: PenLine, title: "Draw it", detail: "Sketch your idea and we build the prototype.", live: false },
+];
+
+const health = [
+  ["SSL", "Protected"],
+  ["Hosting", "Active"],
+  ["Backups", "Daily"],
+  ["Monitoring", "Active"],
+  ["Care Plan", "Active"],
 ];
 
 const services = [
@@ -34,15 +48,14 @@ export default function Home() {
               <span className="h-1.5 w-1.5 rounded-full bg-blueprint2" /> Website studio
             </div>
             <h1 className="font-display text-5xl leading-[1.02] tracking-tight lg:text-7xl">
-              Websites for businesses,
+              Your business.
               <br />
               <span className="bg-gradient-to-r from-white via-[#9db8ff] to-[#8b5cff] bg-clip-text text-transparent">
-                built for you.
+                Built for the web.
               </span>
             </h1>
             <p className="mt-6 max-w-md text-lg text-white/65">
-              Choose a package, pay online, and we design and build your website
-              from start to launch. No page builders, no guesswork.
+              Websites, e-commerce and digital business systems designed around how you actually work.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -50,11 +63,11 @@ export default function Home() {
                 href="/book-project"
                 className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-paper transition-colors hover:bg-blueprint2 hover:text-white"
               >
-                Start your project
+                Start building
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
               <Link href="/pricing" className="text-sm text-white/80 hover:text-white">
-                See packages
+                Explore packages
               </Link>
             </div>
 
@@ -78,8 +91,66 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Process */}
+      {/* Start with an idea */}
+      <section className="border-b border-line">
+        <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+          <p className="label-tag text-slate">Start with an idea</p>
+          <h2 className="mt-3 max-w-2xl font-display text-3xl lg:text-4xl">
+            You bring the idea. We build the infrastructure.
+          </h2>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {ideas.map((i) => (
+              <Link
+                key={i.title}
+                href="/book-project"
+                className="crosshair group rounded-2xl border border-line bg-ink2 p-6 transition-colors hover:border-paper"
+              >
+                <div className="flex items-center justify-between">
+                  <i.icon className="h-5 w-5 text-blueprint2" />
+                  {!i.live && <span className="label-tag text-slateLight">Coming soon</span>}
+                </div>
+                <h3 className="mt-4 font-display text-xl">{i.title}</h3>
+                <p className="mt-2 text-sm text-slate">{i.detail}</p>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-8 flex items-center gap-4 font-mono text-xs text-slate" aria-label="Sketch, then prototype, then website">
+            <span className="rounded-full border border-dashed border-line2 px-4 py-2">Sketch</span>
+            <span aria-hidden>→</span>
+            <span className="rounded-full border border-line2 px-4 py-2">Prototype</span>
+            <span aria-hidden>→</span>
+            <span className="rounded-full bg-signal px-4 py-2 text-ink">Website</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Domain */}
       <section className="border-b border-line bg-ink2">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-2 lg:px-10">
+          <div>
+            <p className="label-tag text-slate">Your domain</p>
+            <h2 className="mt-3 font-display text-3xl lg:text-4xl">Your website starts with the right address.</h2>
+            <p className="mt-4 max-w-md text-slate">
+              Tell us the address you want. We check it and register it as part of your build.
+            </p>
+          </div>
+          <form action="/book-project" method="get" className="self-center">
+            <label htmlFor="domain" className="label-tag text-slate">Domain you would like</label>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              <input id="domain" name="domain" placeholder="yourbusiness.co.uk" className="input" />
+              <button
+                type="submit"
+                className="shrink-0 rounded-full bg-signal px-7 py-3 text-sm font-medium text-ink hover:bg-blueprint2"
+              >
+                Continue
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      {/* Process */}
+      <section id="how" className="border-b border-line bg-ink2">
         <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10">
           <p className="label-tag text-slate">How it works</p>
           <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-4">
@@ -90,6 +161,36 @@ export default function Home() {
                 <p className="mt-2 text-sm text-slate">{step.detail}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Care Plan */}
+      <section className="border-b border-line">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-20 lg:grid-cols-2 lg:px-10">
+          <div>
+            <p className="label-tag text-slate">Care Plan</p>
+            <h2 className="mt-3 font-display text-3xl lg:text-4xl">Your website stays looked after. First year included.</h2>
+            <p className="mt-4 max-w-md text-slate">
+              Hosting, SSL, backups, security updates and monitoring. Then{" "}
+              {packages.map((p) => `${p.name} £${p.carePlanYearly}`).join(", ")} a year.
+            </p>
+          </div>
+          <div className="rounded-2xl bg-[#0c0d10] p-6 text-white">
+            <div className="flex items-center justify-between">
+              <span className="label-tag text-white/60">Website health</span>
+              <span className="label-tag flex items-center gap-2 text-white/60">
+                <span className="h-2 w-2 rounded-full bg-blueprint2" /> Live · example
+              </span>
+            </div>
+            <dl className="mt-5 divide-y divide-white/10">
+              {health.map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between py-3 text-sm">
+                  <dt className="text-white/60">{k}</dt>
+                  <dd className="font-mono">{v}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
       </section>
@@ -135,7 +236,7 @@ export default function Home() {
       <section className="border-b border-line bg-ink2">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
           <p className="label-tag text-slate">Packages</p>
-          <h2 className="mt-3 font-display text-3xl lg:text-4xl">Clear prices. Nothing to configure.</h2>
+          <h2 className="mt-3 font-display text-3xl lg:text-4xl">Choose how far you want to go.</h2>
 
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {packages.map((pkg, i) => (
