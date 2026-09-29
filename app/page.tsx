@@ -2,15 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, Palette, Search, ShoppingBag, LayoutDashboard, MessageSquare, Upload, PenLine } from "lucide-react";
 import HeroScene from "@/components/HeroScene";
+import HomeSections from "@/components/HomeSections";
 import PackageCard from "@/components/PackageCard";
 import { packages } from "@/lib/packages";
-
-const process = [
-  { label: "Tell us", detail: "Share your business, your goals, and the domain you'd like." },
-  { label: "Choose", detail: "Pick a package and any add-ons you need." },
-  { label: "Confirm", detail: "Register a card for the Care Plan. The first year is free." },
-  { label: "We build", detail: "Pay the build invoice by bank transfer and we design, build and launch." },
-];
 
 const ideas = [
   { icon: MessageSquare, title: "Tell us", detail: "Describe your business and what you need.", live: true },
@@ -149,21 +143,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Process */}
-      <section id="how" className="border-b border-line bg-ink2">
-        <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10">
-          <p className="label-tag text-slate">How it works</p>
-          <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-4">
-            {process.map((step, i) => (
-              <div key={step.label} className="bg-ink2 p-6">
-                <span className="font-mono text-xs text-slateLight">0{i + 1}</span>
-                <h3 className="mt-3 font-display text-xl">{step.label}</h3>
-                <p className="mt-2 text-sm text-slate">{step.detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomeSections />
 
       {/* Care Plan */}
       <section className="border-b border-line">
