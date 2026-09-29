@@ -8,8 +8,8 @@ import { packages } from "@/lib/packages";
 const process = [
   { label: "Tell us", detail: "Share your business, your goals, and the domain you'd like." },
   { label: "Choose", detail: "Pick a package and any add-ons you need." },
-  { label: "Pay", detail: "Checkout securely online with one clear price." },
-  { label: "We build", detail: "We design, build, and launch. We keep you updated by email." },
+  { label: "Confirm", detail: "Register a card for the Care Plan. The first year is free." },
+  { label: "We build", detail: "Pay the build invoice by bank transfer and we design, build and launch." },
 ];
 
 const services = [
@@ -33,7 +33,7 @@ export default function Home() {
             <h1 className="font-display text-5xl leading-[1.05] tracking-tight lg:text-6xl">
               Websites for businesses,
               <br />
-              <span className="italic text-blueprint2">built for you.</span>
+              <span className="text-slate">built for you.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-slate">
               Choose a package, pay online, and we design and build your website

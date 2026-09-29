@@ -1,4 +1,4 @@
--- ImpactGrid Digital — core schema
+-- ImpactGrid Analytics — core schema
 -- Run against your existing Supabase project (SQL editor, or via CLI migration).
 -- Extends auth.users with an admin flag and covers every entity in the spec:
 -- users, clients, projects, domains, orders, payments, services, addons,
@@ -54,8 +54,14 @@ create table if not exists public.projects (
   stage project_stage not null default 'planning',
   progress jsonb not null default '{"planning":0,"design":0,"development":0,"testing":0,"completed":0}',
   deadline date,
-  payment_status payment_status not null default 'pending',
+  payment_status payment_status not null default 'pending', -- build fee, paid by bank transfer
   notes text,
+  -- Care Plan: yearly Stripe subscription, first year free (trial)
+  care_plan_status text,            -- trialing | active | past_due | canceled
+  care_plan_trial_ends_at timestamptz,
+  care_plan_price numeric(10,2),
+  stripe_customer_id text,
+  stripe_subscription_id text unique,
   created_at timestamptz not null default now()
 );
 
@@ -222,7 +228,5 @@ insert into public.addons (id, name, description, price) values
   ('logo', 'Logo design', 'A custom logo with source files.', 250),
   ('branding', 'Brand identity', 'Colours, type, and a short brand guide.', 450),
   ('seo', 'SEO package', 'Keyword research and on-page optimisation.', 350),
-  ('hosting', 'Hosting (annual)', 'Managed hosting, SSL, and backups.', 180),
-  ('maintenance', 'Maintenance (monthly)', 'Updates, monitoring, and small edits.', 60),
   ('gbp', 'Google Business setup', 'Verified listing with photos and hours.', 120)
 on conflict (id) do nothing;

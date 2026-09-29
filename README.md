@@ -1,4 +1,4 @@
-# ImpactGrid Digital
+# ImpactGrid Analytics
 
 A done-for-you website studio platform: customers pick a
 package, pay online, then your team builds the site.
@@ -42,13 +42,20 @@ If you already have some of these tables from another project, review the
 script before running it — it uses `create table if not exists`, so it won't
 overwrite existing tables, but check column names line up.
 
-## 4. Stripe webhook
+## 4. Billing: bank transfer build + Stripe Care Plan
 
-Point a webhook endpoint at `/api/webhooks/stripe` (locally, use the Stripe
-CLI: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`) and set
-`STRIPE_WEBHOOK_SECRET` to the signing secret it gives you. This is what
-triggers the "payment succeeds → create client → create project → record
-payment" chain in `app/api/webhooks/stripe/route.ts`.
+- The **website build** is invoiced by **bank transfer** (not through Stripe).
+- The **Care Plan** (hosting, SSL, backups, updates) is a **Stripe subscription**: the customer
+  registers a card and agrees to a yearly debit. The **first year is free** (a 365-day trial), then
+  Stripe charges the card once a year. Yearly prices per package are `carePlanYearly` in
+  `lib/packages.ts` (and mirrored in the API's `lib/catalog.js`).
+- Point a webhook at `/api/webhooks/stripe` (locally: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`)
+  and set `STRIPE_WEBHOOK_SECRET`. Events to send: `checkout.session.completed`,
+  `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
+- On card registration the webhook creates the client, project (build `payment_status = pending`) and order,
+  and emails you (via Resend, if set) to raise the build invoice. Mark the project paid once the transfer lands.
+- Existing database? Run `supabase/migrations-care-plan.sql` once.
+- In Stripe: Settings > Billing > Subscriptions and emails, turn on the trial-ending reminder email.
 
 ## 5. Run it
 
@@ -60,8 +67,8 @@ npm run dev
 
 - Marketing pages: home, services, pricing, about, support, contact
 - Contact form (needs `RESEND_API_KEY`; without it the page shows a plain email link)
-- 7-step project booking flow, Stripe Checkout, success page
-- Stripe webhook: on payment, creates the client, project, and payment record in Supabase
+- 7-step project booking flow, Stripe Care Plan checkout (free first year), success page
+- Stripe webhook: on card registration, creates the client, project and order in Supabase, and tracks Care Plan status
 
 ## Removed until they're real
 
@@ -72,7 +79,7 @@ by real data. The removed code is in your original upload / git history.
 
 ## Not built yet
 
-Welcome/invoice emails (see TODOs in the webhook route), and a real domain registrar lookup.
+Automatic build invoices and customer welcome emails (you currently get an admin email and send the invoice yourself), and a real domain registrar lookup.
 
 ## Folder structure
 

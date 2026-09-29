@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="col-span-2">
             <div className="flex items-center gap-2 font-display text-xl">
               <span className="inline-block h-2 w-2 rounded-full bg-signal" />
-              ImpactGrid Digital
+              ImpactGrid Analytics
             </div>
             <p className="mt-4 max-w-xs text-sm text-slate">
               A done-for-you web studio. Pick a package and we design, build, and
@@ -55,7 +55,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-line pt-8 text-xs text-slateLight lg:flex-row lg:items-center">
-          <span>© {new Date().getFullYear()} ImpactGrid Digital. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} ImpactGrid Analytics. All rights reserved.</span>
         </div>
       </div>
     </footer>

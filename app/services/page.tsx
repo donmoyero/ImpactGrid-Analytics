@@ -10,12 +10,11 @@ const services = [
   { name: "SEO", detail: "Technical setup and content structure so you're found on Google." },
   { name: "Brand identity", detail: "Logo, palette, and a short guide so everything looks consistent." },
   { name: "Logo design", detail: "A mark that works everywhere — from favicon to signage." },
-  { name: "Hosting", detail: "Managed hosting with SSL, backups, and uptime monitoring." },
-  { name: "Maintenance", detail: "Ongoing updates and small edits so the site keeps working." },
+  { name: "Care Plan", detail: "Hosting, SSL, backups, monitoring and small edits. First year free, then yearly." },
   { name: "Google Business setup", detail: "A verified, complete listing so you show up on Maps." },
 ];
 
-export const metadata = { title: "Services — ImpactGrid Digital" };
+export const metadata = { title: "Services — ImpactGrid Analytics" };
 
 export default function ServicesPage() {
   return (

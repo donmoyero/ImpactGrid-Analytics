@@ -252,9 +252,29 @@ export default function BookProjectFlow() {
               <Row label="Email" value={form.email || "—"} />
               <Row label="Palette" value={form.palette} />
             </dl>
-            <div className="mt-6 flex items-center justify-between border-t border-line pt-4">
-              <span className="label-tag text-slate">Total due today</span>
-              <span className="font-display text-2xl text-signal">{formatGBP(total)}</span>
+            <div className="mt-6 space-y-3 border-t border-line pt-4 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-slate">Website build (invoiced by bank transfer)</span>
+                <span className="font-display text-xl">{formatGBP(total)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate">Care Plan, year 1</span>
+                <span className="font-display text-xl text-blueprint2">Free</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate">Care Plan, from year 2</span>
+                <span className="font-medium">{formatGBP(selectedPackage.carePlanYearly)} / year</span>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-xl border border-line bg-ink p-4 text-sm text-slate">
+              <p className="font-medium text-paper">Next: register your card for the Care Plan</p>
+              <p className="mt-1">
+                You pay nothing today. Stripe securely saves your card and you agree to a yearly debit of{" "}
+                {formatGBP(selectedPackage.carePlanYearly)} starting after your free first year. Cancel any time
+                before then and you won&apos;t be charged. We&apos;ll email your build invoice with bank transfer
+                details.
+              </p>
             </div>
           </div>
         )}
@@ -286,7 +306,7 @@ export default function BookProjectFlow() {
             className="flex items-center gap-2 rounded-full bg-signal px-6 py-2.5 text-sm font-medium text-ink hover:bg-blueprint2 disabled:opacity-50"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Proceed to payment
+            Register card — pay £0 today
           </button>
         )}
       </div>

@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import Stripe from "stripe";
+import { getPackage } from "@/lib/packages";
 
 /**
- * The automation chain described in the product spec:
- * payment succeeds -> create client -> create project -> send invoice
- * -> send welcome email -> notify admin -> create task board.
+ * Stripe is only used for the yearly Care Plan (card on file, free first year).
+ * The website build is invoiced by bank transfer, so this webhook creates the
+ * client / project / order with payment_status = "pending" and you mark the
+ * project "paid" yourself once the transfer lands.
  *
- * Each TODO below is a placeholder for wiring your existing Resend /
- * invoicing / task-board services on Render — the shape of the data
- * being passed is already set up for you.
+ * Events handled:
+ *  - checkout.session.completed      card registered -> create client, project, order
+ *  - customer.subscription.updated   keep care_plan_status in sync
+ *  - customer.subscription.deleted   care plan cancelled
+ *  - invoice.payment_failed          yearly charge failed -> past_due
  */
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -24,65 +28,142 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const supabase = createServiceRoleClient();
+  const supabase = createServiceRoleClient();
 
-    const { packageId, businessName, domain, phone, notes, palette } = session.metadata ?? {};
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      if (session.mode !== "subscription" || typeof session.subscription !== "string") break;
 
-    // 1. Create / upsert client
-    const { data: client, error: clientError } = await supabase
-      .from("clients")
-      .insert({
-        business_name: businessName || "New client",
-        contact_email: session.customer_email,
-        contact_phone: phone || null,
-      })
-      .select()
-      .single();
+      // Stripe retries webhooks — never create the same project twice.
+      const { data: existing } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("stripe_subscription_id", session.subscription)
+        .maybeSingle();
+      if (existing) return NextResponse.json({ received: true, duplicate: true });
 
-    if (clientError) {
-      console.error("Failed to create client:", clientError);
-      return NextResponse.json({ error: "Client creation failed" }, { status: 500 });
-    }
+      const subscription = await getStripe().subscriptions.retrieve(session.subscription);
+      const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null;
 
-    // 2. Create project
-    const { data: project, error: projectError } = await supabase
-      .from("projects")
-      .insert({
+      const { packageId, businessName, domain, phone, notes, palette, addonIds, buildTotal, carePlanYearly } =
+        session.metadata ?? {};
+      const email = session.customer_details?.email ?? session.customer_email;
+      const name = businessName || "New client";
+
+      // 1. Client
+      const { data: client, error: clientError } = await supabase
+        .from("clients")
+        .insert({ business_name: name, contact_email: email, contact_phone: phone || null })
+        .select()
+        .single();
+      if (clientError) {
+        console.error("Failed to create client:", clientError);
+        return NextResponse.json({ error: "Client creation failed" }, { status: 500 });
+      }
+
+      // 2. Project (build fee unpaid until the bank transfer arrives)
+      const { data: project, error: projectError } = await supabase
+        .from("projects")
+        .insert({
+          client_id: client.id,
+          business_name: name,
+          package: packageId,
+          domain: domain || null,
+          stage: "planning",
+          payment_status: "pending",
+          notes: [palette && `Palette: ${palette}`, notes].filter(Boolean).join("\n") || null,
+          care_plan_status: subscription.status === "trialing" ? "trialing" : "active",
+          care_plan_trial_ends_at: trialEnd,
+          care_plan_price: Number(carePlanYearly) || getPackage(packageId ?? "")?.carePlanYearly || null,
+          stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+          stripe_subscription_id: session.subscription,
+        })
+        .select()
+        .single();
+      if (projectError) {
+        console.error("Failed to create project:", projectError);
+        return NextResponse.json({ error: "Project creation failed" }, { status: 500 });
+      }
+
+      // 3. Order = the build invoice you need to raise
+      await supabase.from("orders").insert({
         client_id: client.id,
-        business_name: businessName || "New client",
+        project_id: project.id,
         package: packageId,
-        domain: domain || null,
-        stage: "planning",
-        payment_status: "paid",
-        notes: [palette && `Palette: ${palette}`, notes].filter(Boolean).join("\n") || null,
-      })
-      .select()
-      .single();
+        addon_ids: addonIds ? addonIds.split(",") : [],
+        total: Number(buildTotal) || getPackage(packageId ?? "")?.price || 0,
+        status: "pending",
+      });
 
-    if (projectError) {
-      console.error("Failed to create project:", projectError);
-      return NextResponse.json({ error: "Project creation failed" }, { status: 500 });
+      // 4. Tell you there's a build invoice to send
+      await notifyAdmin({
+        subject: `New project: ${name} (${packageId}) — raise build invoice`,
+        text:
+          `${name} has registered a card for the Care Plan (first year free, ` +
+          `then £${carePlanYearly}/yr from ${trialEnd ? trialEnd.slice(0, 10) : "the end of the trial"}).\n\n` +
+          `Package: ${packageId}\nBuild total to invoice by bank transfer: £${buildTotal}\n` +
+          `Add-ons: ${addonIds || "none"}\nEmail: ${email}\nPhone: ${phone || "-"}\nDomain: ${domain || "to be chosen"}\n\n` +
+          `Send the invoice, then mark the project as paid when the transfer arrives.`,
+      });
+      break;
     }
 
-    // 3. Record payment
-    await supabase.from("payments").insert({
-      project_id: project.id,
-      client_id: client.id,
-      amount: (session.amount_total ?? 0) / 100,
-      currency: session.currency,
-      stripe_session_id: session.id,
-      status: "paid",
-    });
+    case "customer.subscription.updated": {
+      const sub = event.data.object as Stripe.Subscription;
+      await supabase
+        .from("projects")
+        .update({ care_plan_status: mapStatus(sub.status) })
+        .eq("stripe_subscription_id", sub.id);
+      break;
+    }
 
-    // 4. TODO: send invoice via your invoicing service
-    // 5. TODO: send welcome email via Resend
-    // 6. TODO: notify admin (email / Slack)
-    // 7. TODO: create default task board rows in `tasks`
+    case "customer.subscription.deleted": {
+      const sub = event.data.object as Stripe.Subscription;
+      await supabase.from("projects").update({ care_plan_status: "canceled" }).eq("stripe_subscription_id", sub.id);
+      break;
+    }
 
-    return NextResponse.json({ received: true, projectId: project.id });
+    case "invoice.payment_failed": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subId = typeof invoice.subscription === "string" ? invoice.subscription : null;
+      if (subId) {
+        await supabase.from("projects").update({ care_plan_status: "past_due" }).eq("stripe_subscription_id", subId);
+        await notifyAdmin({
+          subject: "Care Plan payment failed",
+          text: `The yearly Care Plan charge failed for ${invoice.customer_email ?? "a customer"} (subscription ${subId}). Stripe will retry automatically.`,
+        });
+      }
+      break;
+    }
   }
 
   return NextResponse.json({ received: true });
+}
+
+function mapStatus(status: Stripe.Subscription.Status): "trialing" | "active" | "past_due" | "canceled" {
+  if (status === "trialing") return "trialing";
+  if (status === "active") return "active";
+  if (status === "canceled" || status === "incomplete_expired") return "canceled";
+  return "past_due"; // past_due, unpaid, incomplete, paused
+}
+
+/** Email you via Resend if configured; otherwise just log. Never fails the webhook. */
+async function notifyAdmin({ subject, text }: { subject: string; text: string }) {
+  const key = process.env.RESEND_API_KEY;
+  const to = process.env.CONTACT_EMAIL;
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!key || !to || !from) {
+    console.log(`[admin notice] ${subject}\n${text}`);
+    return;
+  }
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: `ImpactGrid Analytics <${from}>`, to: [to], subject, text }),
+    });
+  } catch (err) {
+    console.error("Admin notification failed:", err);
+  }
 }

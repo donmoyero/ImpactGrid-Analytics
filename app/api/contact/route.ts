@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Please fill in every field." }, { status: 400 });
   }
 
-  const to = process.env.CONTACT_EMAIL ?? "hello@impactgrid.digital";
-  const from = process.env.RESEND_FROM_EMAIL ?? "hello@impactgrid.digital";
+  const to = process.env.CONTACT_EMAIL ?? "hello@impactgridanalytics.com";
+  const from = process.env.RESEND_FROM_EMAIL ?? "hello@impactgridanalytics.com";
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

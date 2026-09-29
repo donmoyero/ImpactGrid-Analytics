@@ -1,10 +1,10 @@
 import ContactForm from "@/components/ContactForm";
 
-export const metadata = { title: "Contact — ImpactGrid Digital" };
+export const metadata = { title: "Contact — ImpactGrid Analytics" };
 export const dynamic = "force-dynamic"; // reads env vars at request time
 
 export default function ContactPage() {
-  const email = process.env.CONTACT_EMAIL ?? "hello@impactgrid.digital";
+  const email = process.env.CONTACT_EMAIL ?? "hello@impactgridanalytics.com";
   const formEnabled = Boolean(process.env.RESEND_API_KEY);
 
   return (

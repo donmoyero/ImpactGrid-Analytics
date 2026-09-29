@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import BookProjectFlow from "./BookProjectFlow";
 
-export const metadata = { title: "Start a project — ImpactGrid Digital" };
+export const metadata = { title: "Start a project — ImpactGrid Analytics" };
 
 export default function BookProjectPage() {
   return (
@@ -9,8 +9,8 @@ export default function BookProjectPage() {
       <p className="label-tag text-slate">Start a project</p>
       <h1 className="mt-3 font-display text-4xl">Let's set up your build.</h1>
       <p className="mt-4 text-slate">
-        A few quick steps, then straight to checkout. Nothing is charged until
-        you confirm payment.
+        A few quick steps, then register a card for your Care Plan. Nothing is
+        charged today.
       </p>
 
       <div className="mt-12">

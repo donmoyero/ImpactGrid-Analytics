@@ -19,7 +19,7 @@ export default function Nav() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
         <Link href="/" className="flex items-center gap-2 font-display text-lg tracking-tight">
           <span className="inline-block h-2 w-2 rounded-full bg-signal" />
-          ImpactGrid <span className="text-slate">Digital</span>
+          ImpactGrid <span className="text-slate">Analytics</span>
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">

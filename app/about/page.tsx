@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-export const metadata = { title: "About — ImpactGrid Digital" };
+export const metadata = { title: "About — ImpactGrid Analytics" };
 
 export default function AboutPage() {
   return (
@@ -11,7 +11,7 @@ export default function AboutPage() {
           <h1 className="mt-3 font-display text-4xl lg:text-5xl">A studio, not a self-serve tool.</h1>
           <div className="mt-8 space-y-5 text-slate">
             <p>
-              ImpactGrid Digital is the website studio inside the ImpactGrid
+              ImpactGrid Analytics is the website studio inside the ImpactGrid
               ecosystem. Where most page builders hand you a blank canvas and
               hope for the best, we work the way a good agency always has: you
               tell us about your business, and we design and build it for you.

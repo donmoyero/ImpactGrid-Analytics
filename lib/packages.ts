@@ -1,5 +1,19 @@
 import { AddOn, WebsitePackage } from "@/types";
 
+/**
+ * Care plan = hosting, SSL, backups, monitoring, updates and small edits.
+ * Every package includes it. The first year is free; after that the card the
+ * customer registered with Stripe is charged once a year.
+ * Yearly price per package is set via `carePlanYearly` below.
+ */
+export const CARE_PLAN_TRIAL_DAYS = 365;
+export const carePlanIncludes = [
+  "Managed hosting with SSL",
+  "Daily backups and uptime monitoring",
+  "Software and security updates",
+  "Small content edits",
+];
+
 export const packages: WebsitePackage[] = [
   {
     id: "starter",
@@ -8,6 +22,7 @@ export const packages: WebsitePackage[] = [
     priceLabel: "£800",
     tagline: "A clean, credible site for a business just getting online.",
     features: ["5 pages", "Responsive design", "Contact form", "Core SEO setup", "1 revision round"],
+    carePlanYearly: 180,
   },
   {
     id: "business",
@@ -17,6 +32,7 @@ export const packages: WebsitePackage[] = [
     tagline: "For businesses that take bookings and want to track what's working.",
     features: ["10 pages", "Content management", "Booking system", "Analytics dashboard", "Speed optimisation"],
     highlighted: true,
+    carePlanYearly: 300,
   },
   {
     id: "premium",
@@ -32,6 +48,7 @@ export const packages: WebsitePackage[] = [
       "Third-party API integrations",
       "Priority support",
     ],
+    carePlanYearly: 480,
   },
 ];
 
@@ -39,8 +56,6 @@ export const addons: AddOn[] = [
   { id: "logo", name: "Logo design", price: 250, description: "A custom logo with source files." },
   { id: "branding", name: "Brand identity", price: 450, description: "Colours, type, and a short brand guide." },
   { id: "seo", name: "SEO package", price: 350, description: "Keyword research and on-page optimisation." },
-  { id: "hosting", name: "Hosting (annual)", price: 180, description: "Managed hosting, SSL, and backups." },
-  { id: "maintenance", name: "Maintenance (monthly)", price: 60, description: "Updates, monitoring, and small edits." },
   { id: "gbp", name: "Google Business setup", price: 120, description: "Verified listing with photos and hours." },
 ];
 

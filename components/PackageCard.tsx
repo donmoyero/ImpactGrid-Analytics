@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { WebsitePackage } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, formatGBP } from "@/lib/utils";
 
 export default function PackageCard({ pkg, index }: { pkg: WebsitePackage; index: number }) {
   return (
@@ -24,6 +24,10 @@ export default function PackageCard({ pkg, index }: { pkg: WebsitePackage; index
       <p className="mt-2 text-sm text-slate">{pkg.tagline}</p>
 
       <div className="mt-6 font-display text-4xl">{pkg.priceLabel}</div>
+      <p className="mt-2 text-xs text-slate">One-off build fee, by bank transfer</p>
+      <p className="mt-3 rounded-lg bg-ink px-3 py-2 text-xs text-slate">
+        <span className="font-medium text-paper">Care Plan: first year free</span>, then {formatGBP(pkg.carePlanYearly)}/year
+      </p>
 
       <ul className="mt-8 flex-1 space-y-3">
         {pkg.features.map((f) => (

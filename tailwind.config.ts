@@ -7,25 +7,29 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // ImpactGrid design system (matches the Events site): warm cream page,
+      // white cards, near-black ink. Names kept so existing classes still work:
+      //   ink = page background, ink2 = card surface, paper = main text colour.
       colors: {
-        ink: "#0F1115",
-        ink2: "#15181F",
-        paper: "#F7F5EF",
-        line: "#262A33",
-        line2: "#E4E0D6",
-        blueprint: "#3856F0",
-        blueprint2: "#6E85FF",
-        signal: "#FF5A3C",
-        slate: "#8A8F9C",
-        slateLight: "#6B6F76",
+        ink: "#faf7f2",
+        ink2: "#ffffff",
+        sand: "#f3ede3",
+        paper: "#0d0d0d",
+        line: "#e6dfd2",
+        line2: "#d9d0bf",
+        blueprint: "#161616",
+        blueprint2: "#2d6edb",
+        signal: "#161616",
+        slate: "#4a4a4a",
+        slateLight: "#6b6b6b",
       },
       fontFamily: {
-        display: ["var(--font-fraunces)", "serif"],
-        body: ["var(--font-inter)", "sans-serif"],
-        mono: ["var(--font-plex-mono)", "monospace"],
+        display: ["var(--font-display)", "serif"],
+        body: ["var(--font-body)", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
       },
       backgroundImage: {
-        grid: "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
+        grid: "linear-gradient(rgba(13,13,13,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(13,13,13,0.05) 1px, transparent 1px)",
         gridLight: "linear-gradient(rgba(15,17,21,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(15,17,21,0.05) 1px, transparent 1px)",
       },
       backgroundSize: {
