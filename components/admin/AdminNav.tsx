@@ -9,6 +9,7 @@ const items = [
   { href: "/admin/invoices", label: "Invoices", exact: false },
   { href: "/admin", label: "Customers", exact: true },
   { href: "/admin/homepage", label: "Homepage", exact: false },
+  { href: "/admin/settings", label: "Settings", exact: false },
 ];
 
 export default function AdminNav({ pending = 0 }: { pending?: number }) {

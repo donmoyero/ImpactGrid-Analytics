@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandMark from "@/components/BrandMark";
 
 const columns = [
   {
@@ -29,7 +30,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-10 lg:grid-cols-5">
           <div className="col-span-2">
             <div className="flex items-center gap-2 font-display text-xl">
-              <span className="inline-block h-2 w-2 rounded-full bg-signal" />
+              <BrandMark dot="inline-block h-2 w-2 rounded-full bg-signal" />
               ImpactGrid Analytics
             </div>
             <p className="mt-4 max-w-xs text-sm text-slate">

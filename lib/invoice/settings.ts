@@ -12,6 +12,37 @@ export interface BusinessProfile {
   email?: string;
   website?: string;
   address_lines: string[];
+  phone?: string;
+  /** Logo as a data URL (png/jpeg), set in Admin → Settings. */
+  logo_data?: string;
+}
+
+/** Decodes a stored logo data URL into bytes the PDF can embed. Returns null if missing or unusable. */
+export function decodeLogo(dataUrl?: string): { bytes: Uint8Array; type: "png" | "jpg" } | null {
+  const m = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl ?? "");
+  if (!m) return null;
+  return { bytes: new Uint8Array(Buffer.from(m[2], "base64")), type: m[1] === "png" ? "png" : "jpg" };
+}
+
+/** Raw settings for the admin Settings form. Never throws on missing rows. */
+export async function loadSettingsForEdit(db: SupabaseClient) {
+  const { data } = await db.from("business_settings").select("key, value").in("key", ["bank_details", "business_profile"]);
+  const byKey = Object.fromEntries((data ?? []).map((r) => [r.key, (r.value ?? {}) as Record<string, unknown>]));
+  const b = byKey["bank_details"] ?? {};
+  const p = byKey["business_profile"] ?? {};
+  const s = (v: unknown) => (typeof v === "string" ? v : "");
+  return {
+    name: s(p.name) || "ImpactGrid Analytics",
+    email: s(p.email),
+    website: s(p.website),
+    phone: s(p.phone),
+    address: Array.isArray(p.address_lines) ? (p.address_lines as unknown[]).map(String).join("\n") : "",
+    hasLogo: !!decodeLogo(s(p.logo_data) || undefined),
+    account_name: s(b.account_name),
+    sort_code: s(b.sort_code),
+    account_number: s(b.account_number),
+    bank_name: s(b.bank_name),
+  };
 }
 
 /**
@@ -30,7 +61,7 @@ export async function loadInvoiceSettings(db: SupabaseClient): Promise<{ bank: B
   const b = byKey["bank_details"];
   if (!b) {
     throw new Error(
-      "Bank details are not set. Fill in supabase/business-settings.example.sql with your real details and run it in the Supabase SQL editor."
+      "Bank details are not set. Go to Admin → Settings, enter your bank details and save."
     );
   }
 
@@ -58,6 +89,8 @@ export async function loadInvoiceSettings(db: SupabaseClient): Promise<{ bank: B
       email: p.email ? String(p.email) : undefined,
       website: p.website ? String(p.website) : undefined,
       address_lines: lines,
+      phone: p.phone ? String(p.phone) : undefined,
+      logo_data: p.logo_data ? String(p.logo_data) : undefined,
     },
   };
 }

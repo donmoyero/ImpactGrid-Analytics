@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import BrandMark from "@/components/BrandMark";
 import SignOutButton from "@/components/dashboard/SignOutButton";
 
 const links = [
@@ -73,7 +74,7 @@ export default function Nav() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
         <Link href="/" className="flex items-center gap-2 font-display text-lg tracking-tight">
-          <span className={cn("inline-block h-2 w-2 rounded-full", dark ? "bg-blueprint2" : "bg-signal")} />
+          <BrandMark dot={cn("inline-block h-2 w-2 rounded-full", dark ? "bg-blueprint2" : "bg-signal")} />
           ImpactGrid <span className={dark ? "text-white/60" : "text-slate"}>Analytics</span>
         </Link>
 

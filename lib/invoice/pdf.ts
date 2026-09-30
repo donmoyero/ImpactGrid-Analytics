@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import type { InvoiceLine, InvoiceStatus } from "../../types";
-import type { BankDetails, BusinessProfile } from "./settings";
+import { decodeLogo, type BankDetails, type BusinessProfile } from "./settings";
 
 export interface InvoicePdfInput {
   invoice: {
@@ -104,10 +104,24 @@ export async function generateInvoicePdf(input: InvoicePdfInput): Promise<Uint8A
 
   // ---- Header ----
   let y = PAGE_H - M - 10;
-  text(business.name.toUpperCase(), M, y, { size: 14, font: bold });
+  let nameX = M;
+  const logo = decodeLogo(business.logo_data);
+  if (logo) {
+    try {
+      const img = logo.type === "png" ? await doc.embedPng(logo.bytes) : await doc.embedJpg(logo.bytes);
+      const scale = Math.min(44 / img.height, 160 / img.width);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      page.drawImage(img, { x: M, y: y - h + 12, width: w, height: h });
+      nameX = M + w + 12;
+    } catch {
+      // A bad logo must never block an invoice; fall back to text only.
+    }
+  }
+  text(business.name.toUpperCase(), nameX, y, { size: 14, font: bold });
   text("INVOICE", PAGE_W - M, y - 2, { size: 26, font: bold, align: "right", color: ACCENT });
-  y -= 18;
-  for (const l of [...business.address_lines, business.email, business.website].filter(Boolean) as string[]) {
+  y -= logo ? 40 : 18;
+  for (const l of [...business.address_lines, business.phone, business.email, business.website].filter(Boolean) as string[]) {
     text(l, M, y, { size: 9, color: MUTED });
     y -= 12;
   }
