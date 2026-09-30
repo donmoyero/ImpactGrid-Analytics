@@ -266,6 +266,20 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         </div>
       )}
 
+      <Card title="Services page" hint={`The /services page. Add up to ${LIMITS.servicesPage} services, each with an optional photo. Without a photo a soft placeholder is shown.`}>
+        <Field label="Small label" value={c.servicesPage.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, eyebrow: v } }))} />
+        <Field label="Heading" value={c.servicesPage.heading} max={140} onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, heading: v } }))} />
+        <Field label="Intro (optional)" value={c.servicesPage.intro} max={300} multiline onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, intro: v } }))} />
+        {c.servicesPage.items.map((it, i) => (
+          <Row key={i} onRemove={() => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: d.servicesPage.items.filter((_, n) => n !== i) } }))}>
+            <Field label="Service name" value={it.name} max={60} onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: setAt(d.servicesPage.items, i, { name: v }) } }))} />
+            <Field label="Description" value={it.detail} max={200} multiline onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: setAt(d.servicesPage.items, i, { detail: v }) } }))} />
+            <ImageField label="Photo" value={it.imageUrl} onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: setAt(d.servicesPage.items, i, { imageUrl: v }) } }))} />
+          </Row>
+        ))}
+        <Add disabled={c.servicesPage.items.length >= LIMITS.servicesPage} onClick={() => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: [...d.servicesPage.items, { name: "", detail: "", imageUrl: "" }] } }))} label="Add a service" />
+      </Card>
+
       <div className="mt-8 rounded-2xl border border-line bg-ink2 p-6">
         <h2 className="font-display text-xl">Add a section</h2>
         {missing.length > 0 && (

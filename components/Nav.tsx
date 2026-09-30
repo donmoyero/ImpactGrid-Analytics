@@ -11,7 +11,6 @@ import SignOutButton from "@/components/dashboard/SignOutButton";
 
 const links = [
   { href: "/services", label: "Services" },
-  { href: "/how-it-works", label: "How it works" },
   { href: "/pricing", label: "Packages" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },

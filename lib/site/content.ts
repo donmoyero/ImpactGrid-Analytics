@@ -33,6 +33,8 @@ export interface HomepageContent {
   ai: { eyebrow: string; heading: string; items: { area: string; prompt: string }[] };
   careplan: { eyebrow: string; heading: string; text: string; healthTitle: string; rows: { k: string; v: string }[] };
   services: { eyebrow: string; heading: string; linkLabel: string; items: { name: string; detail: string }[] };
+  /** The /services page (separate from the homepage "What we build" section). */
+  servicesPage: { eyebrow: string; heading: string; intro: string; items: { name: string; detail: string; imageUrl: string }[] };
   /** Ordered list of everything shown on the page. Delete a block to hide it; add it back from the picker. */
   blocks: Block[];
 }
@@ -125,10 +127,28 @@ export const DEFAULT_HOMEPAGE: HomepageContent = {
       { name: "SEO & Google Business", detail: "Be findable the day your site goes live." },
     ],
   },
+  servicesPage: {
+    eyebrow: "Services",
+    heading: "Everything a business needs to be online, done for you.",
+    intro: "",
+    items: [
+      { name: "Business website", detail: "A credible site that explains what you do and how to book you.", imageUrl: "" },
+      { name: "E-commerce website", detail: "Sell products online with secure checkout and inventory.", imageUrl: "" },
+      { name: "Booking website", detail: "Let customers book appointments without a phone call.", imageUrl: "" },
+      { name: "Restaurant website", detail: "Menu, location, and ordering — built for hungry visitors.", imageUrl: "" },
+      { name: "Hair salon website", detail: "Gallery-led sites that show off the work and fill the chair.", imageUrl: "" },
+      { name: "AI integration", detail: "Chat assistants, quote tools, and automations tailored to your site.", imageUrl: "" },
+      { name: "SEO", detail: "Technical setup and content structure so you're found on Google.", imageUrl: "" },
+      { name: "Brand identity", detail: "Logo, palette, and a short guide so everything looks consistent.", imageUrl: "" },
+      { name: "Logo design", detail: "A mark that works everywhere — from favicon to signage.", imageUrl: "" },
+      { name: "Care Plan", detail: "Hosting, SSL, backups, monitoring and small edits. First year free, then yearly.", imageUrl: "" },
+      { name: "Google Business setup", detail: "A verified, complete listing so you show up on Maps.", imageUrl: "" },
+    ],
+  },
   blocks: DEFAULT_BLOCKS,
 };
 
-export const LIMITS = { services: 8, health: 8, stats: 4, work: 6, reviews: 6, blocks: 40, cards: 6, faq: 10, gallery: 8 };
+export const LIMITS = { servicesPage: 12, services: 8, health: 8, stats: 4, work: 6, reviews: 6, blocks: 40, cards: 6, faq: 10, gallery: 8 };
 
 export const BUILTIN_LABELS: Record<BuiltinType, string> = {
   announcement: "Announcement bar", hero: "Top section", stats: "Numbers", idea: "Start with an idea",
@@ -259,6 +279,7 @@ export function sanitizeHomepage(input: unknown): HomepageContent {
   const a = obj(i.announcement);
   const h = obj(i.hero);
   const c = obj(i.cta);
+  const sp = obj(i.servicesPage);
   const id = obj(i.idea), dm = obj(i.domain), hw = obj(i.how), ai = obj(i.ai), cp = obj(i.careplan), sv = obj(i.services);
   const text = opt(a.text, 140);
   return {
@@ -320,6 +341,17 @@ export function sanitizeHomepage(input: unknown): HomepageContent {
       items: Array.isArray(sv.items)
         ? list(sv.items, LIMITS.services, (x) => { const name = opt(x.name, 50), detail = opt(x.detail, 160); return name ? { name, detail } : null; })
         : d.services.items,
+    },
+    servicesPage: {
+      eyebrow: opt(sp.eyebrow, 40, d.servicesPage.eyebrow),
+      heading: req(sp.heading, 140, d.servicesPage.heading),
+      intro: opt(sp.intro, 300),
+      items: Array.isArray(sp.items)
+        ? list(sp.items, LIMITS.servicesPage, (x) => {
+            const name = opt(x.name, 60);
+            return name ? { name, detail: opt(x.detail, 200), imageUrl: img(x.imageUrl) } : null;
+          })
+        : d.servicesPage.items,
     },
     blocks: sanitizeBlocks(i.blocks),
   };
