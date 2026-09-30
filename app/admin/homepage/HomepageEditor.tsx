@@ -107,6 +107,90 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         <Add disabled={c.reviews.length >= LIMITS.reviews} onClick={() => edit((d) => ({ ...d, reviews: [...d.reviews, { quote: "", name: "", role: "" }] }))} label="Add a review" />
           </>
         );
+      case "idea":
+        return (
+          <>
+            <Field label="Small label" value={c.idea.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, idea: { ...d.idea, eyebrow: v } }))} />
+            <Field label="Heading" value={c.idea.heading} max={120} onChange={(v) => edit((d) => ({ ...d, idea: { ...d.idea, heading: v } }))} />
+            {c.idea.items.map((it, i) => (
+              <div key={i} className="space-y-3 rounded-xl border border-line p-4">
+                <Field label={`Card ${i + 1} title`} value={it.title} max={40} onChange={(v) => edit((d) => ({ ...d, idea: { ...d.idea, items: setAt(d.idea.items, i, { title: v }) } }))} />
+                <Field label={`Card ${i + 1} text`} value={it.detail} max={140} onChange={(v) => edit((d) => ({ ...d, idea: { ...d.idea, items: setAt(d.idea.items, i, { detail: v }) } }))} />
+              </div>
+            ))}
+          </>
+        );
+      case "domain":
+        return (
+          <>
+            <Field label="Small label" value={c.domain.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, eyebrow: v } }))} />
+            <Field label="Heading" value={c.domain.heading} max={120} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, heading: v } }))} />
+            <Field label="Text" value={c.domain.text} max={260} multiline onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, text: v } }))} />
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Box label" value={c.domain.label} max={60} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, label: v } }))} />
+              <Field label="Box example" value={c.domain.placeholder} max={60} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, placeholder: v } }))} />
+              <Field label="Button" value={c.domain.button} max={30} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, button: v } }))} />
+            </div>
+          </>
+        );
+      case "how":
+        return (
+          <>
+            <Field label="Small label" value={c.how.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, how: { ...d.how, eyebrow: v } }))} />
+            {c.how.steps.map((st, i) => (
+              <div key={i} className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-[160px_1fr]">
+                <Field label={`Step ${i + 1}`} value={st.label} max={24} onChange={(v) => edit((d) => ({ ...d, how: { ...d.how, steps: setAt(d.how.steps, i, { label: v }) } }))} />
+                <Field label="Description" value={st.detail} max={140} onChange={(v) => edit((d) => ({ ...d, how: { ...d.how, steps: setAt(d.how.steps, i, { detail: v }) } }))} />
+              </div>
+            ))}
+          </>
+        );
+      case "ai":
+        return (
+          <>
+            <Field label="Small label" value={c.ai.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, ai: { ...d.ai, eyebrow: v } }))} />
+            <Field label="Heading" value={c.ai.heading} max={120} onChange={(v) => edit((d) => ({ ...d, ai: { ...d.ai, heading: v } }))} />
+            {c.ai.items.map((it, i) => (
+              <div key={i} className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-[160px_1fr]">
+                <Field label="Area" value={it.area} max={24} onChange={(v) => edit((d) => ({ ...d, ai: { ...d.ai, items: setAt(d.ai.items, i, { area: v }) } }))} />
+                <Field label="Example request" value={it.prompt} max={120} onChange={(v) => edit((d) => ({ ...d, ai: { ...d.ai, items: setAt(d.ai.items, i, { prompt: v }) } }))} />
+              </div>
+            ))}
+          </>
+        );
+      case "careplan":
+        return (
+          <>
+            <Field label="Small label" value={c.careplan.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, eyebrow: v } }))} />
+            <Field label="Heading" value={c.careplan.heading} max={120} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, heading: v } }))} />
+            <Field label="Text (yearly prices are added after it automatically)" value={c.careplan.text} max={260} multiline onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, text: v } }))} />
+            <Field label="Example box title" value={c.careplan.healthTitle} max={40} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, healthTitle: v } }))} />
+            {c.careplan.rows.map((r, i) => (
+              <Row key={i} onRemove={() => edit((d) => ({ ...d, careplan: { ...d.careplan, rows: d.careplan.rows.filter((_, n) => n !== i) } }))}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Item" value={r.k} max={30} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, rows: setAt(d.careplan.rows, i, { k: v }) } }))} />
+                  <Field label="Status" value={r.v} max={30} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, rows: setAt(d.careplan.rows, i, { v }) } }))} />
+                </div>
+              </Row>
+            ))}
+            <Add disabled={c.careplan.rows.length >= LIMITS.health} onClick={() => edit((d) => ({ ...d, careplan: { ...d.careplan, rows: [...d.careplan.rows, { k: "", v: "" }] } }))} label="Add a row" />
+          </>
+        );
+      case "services":
+        return (
+          <>
+            <Field label="Small label" value={c.services.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, services: { ...d.services, eyebrow: v } }))} />
+            <Field label="Heading" value={c.services.heading} max={120} onChange={(v) => edit((d) => ({ ...d, services: { ...d.services, heading: v } }))} />
+            <Field label="Link text (goes to the Services page; empty hides it)" value={c.services.linkLabel} max={30} onChange={(v) => edit((d) => ({ ...d, services: { ...d.services, linkLabel: v } }))} />
+            {c.services.items.map((it, i) => (
+              <Row key={i} onRemove={() => edit((d) => ({ ...d, services: { ...d.services, items: d.services.items.filter((_, n) => n !== i) } }))}>
+                <Field label="Name" value={it.name} max={50} onChange={(v) => edit((d) => ({ ...d, services: { ...d.services, items: setAt(d.services.items, i, { name: v }) } }))} />
+                <Field label="Description" value={it.detail} max={160} multiline onChange={(v) => edit((d) => ({ ...d, services: { ...d.services, items: setAt(d.services.items, i, { detail: v }) } }))} />
+              </Row>
+            ))}
+            <Add disabled={c.services.items.length >= LIMITS.services} onClick={() => edit((d) => ({ ...d, services: { ...d.services, items: [...d.services.items, { name: "", detail: "" }] } }))} label="Add a service" />
+          </>
+        );
       case "cta":
         return (
           <>
@@ -115,7 +199,7 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
           </>
         );
       default:
-        return <p className="text-sm text-slate">This section has a fixed layout and wording. You can move it, delete it, or add it back, but its text isn&apos;t editable here.</p>;
+        return <p className="text-sm text-slate">This section stays as designed. You can move it, delete it or add it back, but its text isn&apos;t editable here.</p>;
     }
   };
 
@@ -138,16 +222,23 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         <p className="mt-1 text-sm text-slate">Everything on your homepage, top to bottom. Move sections with the arrows, delete ones you don&apos;t want, or add more below. Nothing changes on the live site until you press Save.</p>
       </div>
 
+      {c.blocks.length > 0 && (
+        <div className="mt-4 flex gap-4 text-sm">
+          <button type="button" onClick={() => setOpenId("*")} className="underline">Open all</button>
+          <button type="button" onClick={() => setOpenId(null)} className="underline">Close all</button>
+        </div>
+      )}
+
       {c.blocks.length === 0 && <p className="mt-6 rounded-xl border border-dashed border-line2 p-6 text-center text-sm text-slate">The homepage is empty. Add a section below.</p>}
 
       {c.blocks.map((b, idx) => (
         <BlockShell
           key={b.id}
           title={isBuiltin(b) ? BUILTIN_LABELS[b.type] : WIDGET_LABELS[b.type].name}
-          kind={isBuiltin(b) ? (EDITABLE_BUILTINS.includes(b.type) ? "Standard section" : "Standard section, fixed layout") : "Widget"}
+          kind={isBuiltin(b) ? (EDITABLE_BUILTINS.includes(b.type) ? "Standard section" : "Standard section, fixed") : "Widget"}
           first={idx === 0}
           last={idx === c.blocks.length - 1}
-          open={openId === b.id}
+          open={openId === b.id || openId === "*"}
           onToggle={() => setOpenId(openId === b.id ? null : b.id)}
           onMove={(dir) => moveBlock(idx, dir)}
           onDelete={() => deleteBlock(idx)}

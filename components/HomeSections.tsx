@@ -1,30 +1,14 @@
 import PlatformFlow from "@/components/PlatformFlow";
 import IndustryTabs from "@/components/IndustryTabs";
+import type { HomepageContent } from "@/lib/site/content";
 
-const timeline = [
-  { label: "Choose", detail: "Package and domain." },
-  { label: "Show", detail: "Tell us what you want or draw your idea." },
-  { label: "Approve", detail: "We review the project and issue your invoice." },
-  { label: "Build", detail: "Design, development, testing." },
-  { label: "Launch", detail: "Your website goes live." },
-  { label: "Manage", detail: "You control your website through ImpactGrid Analytics where your package supports it." },
-];
-
-const aiExamples = [
-  { area: "Content", prompt: "Write a product description." },
-  { area: "Marketing", prompt: "Create a campaign for our weekend sale." },
-  { area: "Products", prompt: "Suggest descriptions for these 20 products." },
-  { area: "Website", prompt: "Create a new promotional section." },
-  { area: "Business", prompt: "Summarise this month's sales." },
-];
-
-export function HowItWorks() {
+export function HowItWorks({ how }: { how: HomepageContent["how"] }) {
   return (
       <section id="how" className="border-b border-line bg-ink2">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
-          <p className="label-tag text-slate">How it works</p>
+          {how.eyebrow && <p className="label-tag text-slate">{how.eyebrow}</p>}
           <ol className="mt-10 grid gap-8 md:grid-cols-6 md:gap-0">
-            {timeline.map((s, i) => (
+            {how.steps.map((s, i) => (
               <li key={s.label} className="relative md:pr-6">
                 <div className="hidden h-px bg-line2 md:block" />
                 <span className="absolute -top-[3px] left-0 hidden h-1.5 w-1.5 rounded-full bg-signal md:block" />
@@ -66,14 +50,14 @@ export function Platform() {
   );
 }
 
-export function AiSection() {
+export function AiSection({ ai }: { ai: HomepageContent["ai"] }) {
   return (
       <section className="border-b border-line">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
-          <p className="label-tag text-slate">AI, Business package</p>
-          <h2 className="mt-3 max-w-2xl font-display text-3xl lg:text-4xl">AI that works with your business.</h2>
+          {ai.eyebrow && <p className="label-tag text-slate">{ai.eyebrow}</p>}
+          <h2 className="mt-3 max-w-2xl font-display text-3xl lg:text-4xl">{ai.heading}</h2>
           <ul className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-5">
-            {aiExamples.map((a) => (
+            {ai.items.map((a) => (
               <li key={a.area} className="bg-ink2 p-6">
                 <span className="label-tag text-blueprint2">{a.area}</span>
                 <p className="mt-4 font-display text-lg leading-snug">&ldquo;{a.prompt}&rdquo;</p>
@@ -85,13 +69,3 @@ export function AiSection() {
   );
 }
 
-export default function HomeSections() {
-  return (
-    <>
-      <HowItWorks />
-      <Examples />
-      <Platform />
-      <AiSection />
-    </>
-  );
-}

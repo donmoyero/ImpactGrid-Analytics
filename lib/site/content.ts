@@ -27,6 +27,12 @@ export interface HomepageContent {
   work: { title: string; category: string; url: string; imageUrl: string; blurb: string }[];
   reviews: { quote: string; name: string; role: string }[];
   cta: { heading: string; button: string };
+  idea: { eyebrow: string; heading: string; items: { title: string; detail: string }[] };
+  domain: { eyebrow: string; heading: string; text: string; label: string; placeholder: string; button: string };
+  how: { eyebrow: string; steps: { label: string; detail: string }[] };
+  ai: { eyebrow: string; heading: string; items: { area: string; prompt: string }[] };
+  careplan: { eyebrow: string; heading: string; text: string; healthTitle: string; rows: { k: string; v: string }[] };
+  services: { eyebrow: string; heading: string; linkLabel: string; items: { name: string; detail: string }[] };
   /** Ordered list of everything shown on the page. Delete a block to hide it; add it back from the picker. */
   blocks: Block[];
 }
@@ -49,10 +55,73 @@ export const DEFAULT_HOMEPAGE: HomepageContent = {
   work: [],
   reviews: [],
   cta: { heading: "Tell us what you do. We'll take it from there.", button: "Start your project" },
+  idea: {
+    eyebrow: "Start with an idea",
+    heading: "You bring the idea. We build the infrastructure.",
+    items: [
+      { title: "Tell us", detail: "Describe your business and what you need." },
+      { title: "Show us", detail: "Upload a design, screenshot or inspiration." },
+      { title: "Draw it", detail: "Sketch your idea and we build the prototype." },
+    ],
+  },
+  domain: {
+    eyebrow: "Your domain",
+    heading: "Your website starts with the right address.",
+    text: "Tell us the address you want. We check it and register it as part of your build.",
+    label: "Domain you would like",
+    placeholder: "yourbusiness.co.uk",
+    button: "Continue",
+  },
+  how: {
+    eyebrow: "How it works",
+    steps: [
+      { label: "Choose", detail: "Package and domain." },
+      { label: "Show", detail: "Tell us what you want or draw your idea." },
+      { label: "Approve", detail: "We review the project and issue your invoice." },
+      { label: "Build", detail: "Design, development, testing." },
+      { label: "Launch", detail: "Your website goes live." },
+      { label: "Manage", detail: "You control your website through ImpactGrid Analytics where your package supports it." },
+    ],
+  },
+  ai: {
+    eyebrow: "AI, Business package",
+    heading: "AI that works with your business.",
+    items: [
+      { area: "Content", prompt: "Write a product description." },
+      { area: "Marketing", prompt: "Create a campaign for our weekend sale." },
+      { area: "Products", prompt: "Suggest descriptions for these 20 products." },
+      { area: "Website", prompt: "Create a new promotional section." },
+      { area: "Business", prompt: "Summarise this month's sales." },
+    ],
+  },
+  careplan: {
+    eyebrow: "Care Plan",
+    heading: "Your website stays looked after. First year included.",
+    text: "Hosting, SSL, backups, security updates and monitoring.",
+    healthTitle: "Website health",
+    rows: [
+      { k: "SSL", v: "Protected" },
+      { k: "Hosting", v: "Active" },
+      { k: "Backups", v: "Daily" },
+      { k: "Monitoring", v: "Active" },
+      { k: "Care Plan", v: "Active" },
+    ],
+  },
+  services: {
+    eyebrow: "What we build",
+    heading: "One studio, every piece of your web presence.",
+    linkLabel: "All services →",
+    items: [
+      { name: "Business websites", detail: "Clean, fast sites that convert visitors into enquiries." },
+      { name: "E-commerce & booking", detail: "Sell products or take bookings without the friction." },
+      { name: "Brand identity", detail: "Logo, colour, and voice, sorted before launch." },
+      { name: "SEO & Google Business", detail: "Be findable the day your site goes live." },
+    ],
+  },
   blocks: DEFAULT_BLOCKS,
 };
 
-export const LIMITS = { stats: 4, work: 6, reviews: 6, blocks: 40, cards: 6, faq: 10, gallery: 8 };
+export const LIMITS = { services: 8, health: 8, stats: 4, work: 6, reviews: 6, blocks: 40, cards: 6, faq: 10, gallery: 8 };
 
 export const BUILTIN_LABELS: Record<BuiltinType, string> = {
   announcement: "Announcement bar", hero: "Top section", stats: "Numbers", idea: "Start with an idea",
@@ -60,8 +129,8 @@ export const BUILTIN_LABELS: Record<BuiltinType, string> = {
   ai: "AI examples", work: "Our work", reviews: "Client reviews", careplan: "Care Plan",
   services: "What we build", packages: "Packages", cta: "Bottom call to action",
 };
-/** Built-ins whose words you can edit here. The rest are fixed layouts you can still show, hide and reorder. */
-export const EDITABLE_BUILTINS: BuiltinType[] = ["announcement", "hero", "stats", "work", "reviews", "cta"];
+/** Built-ins whose words you can edit here. Industry examples, Business platform and Packages stay fixed (Packages follows your prices in code). */
+export const EDITABLE_BUILTINS: BuiltinType[] = ["announcement", "hero", "stats", "idea", "domain", "how", "ai", "work", "reviews", "careplan", "services", "cta"];
 
 export const WIDGET_LABELS: Record<WidgetType, { name: string; hint: string }> = {
   text: { name: "Text", hint: "Heading, paragraph and optional button." },
@@ -165,6 +234,17 @@ function sanitizeBlocks(v: unknown): Block[] {
   return out;
 }
 
+/** Fixed-length list: keeps the layout's item count, takes any edited text, never lets a field go blank. */
+function fixedList<T extends Record<string, string>>(v: unknown, defaults: T[], max: Record<keyof T, number>): T[] {
+  const src = Array.isArray(v) ? v : [];
+  return defaults.map((d, i) => {
+    const x = obj(src[i]);
+    const out = {} as Record<string, string>;
+    for (const k of Object.keys(d)) out[k] = req(x[k], max[k as keyof T], d[k]);
+    return out as T;
+  });
+}
+
 /** Accepts anything (database value or admin form) and returns safe, complete content. Used on both write and read. */
 export function sanitizeHomepage(input: unknown): HomepageContent {
   const d = DEFAULT_HOMEPAGE;
@@ -172,6 +252,7 @@ export function sanitizeHomepage(input: unknown): HomepageContent {
   const a = obj(i.announcement);
   const h = obj(i.hero);
   const c = obj(i.cta);
+  const id = obj(i.idea), dm = obj(i.domain), hw = obj(i.how), ai = obj(i.ai), cp = obj(i.careplan), sv = obj(i.services);
   const text = opt(a.text, 140);
   return {
     announcement: { text, href: text ? href(a.href) : "" },
@@ -197,6 +278,42 @@ export function sanitizeHomepage(input: unknown): HomepageContent {
       return quote && name ? { quote, name, role: opt(x.role, 60) } : null;
     }),
     cta: { heading: req(c.heading, 120, d.cta.heading), button: req(c.button, 30, d.cta.button) },
+    idea: {
+      eyebrow: opt(id.eyebrow, 40, d.idea.eyebrow),
+      heading: req(id.heading, 120, d.idea.heading),
+      items: fixedList(id.items, d.idea.items, { title: 40, detail: 140 }),
+    },
+    domain: {
+      eyebrow: opt(dm.eyebrow, 40, d.domain.eyebrow),
+      heading: req(dm.heading, 120, d.domain.heading),
+      text: req(dm.text, 260, d.domain.text),
+      label: req(dm.label, 60, d.domain.label),
+      placeholder: req(dm.placeholder, 60, d.domain.placeholder),
+      button: req(dm.button, 30, d.domain.button),
+    },
+    how: { eyebrow: opt(hw.eyebrow, 40, d.how.eyebrow), steps: fixedList(hw.steps, d.how.steps, { label: 24, detail: 140 }) },
+    ai: {
+      eyebrow: opt(ai.eyebrow, 40, d.ai.eyebrow),
+      heading: req(ai.heading, 120, d.ai.heading),
+      items: fixedList(ai.items, d.ai.items, { area: 24, prompt: 120 }),
+    },
+    careplan: {
+      eyebrow: opt(cp.eyebrow, 40, d.careplan.eyebrow),
+      heading: req(cp.heading, 120, d.careplan.heading),
+      text: req(cp.text, 260, d.careplan.text),
+      healthTitle: req(cp.healthTitle, 40, d.careplan.healthTitle),
+      rows: Array.isArray(cp.rows)
+        ? list(cp.rows, LIMITS.health, (x) => { const k = opt(x.k, 30), v = opt(x.v, 30); return k && v ? { k, v } : null; })
+        : d.careplan.rows,
+    },
+    services: {
+      eyebrow: opt(sv.eyebrow, 40, d.services.eyebrow),
+      heading: req(sv.heading, 120, d.services.heading),
+      linkLabel: opt(sv.linkLabel, 30, d.services.linkLabel),
+      items: Array.isArray(sv.items)
+        ? list(sv.items, LIMITS.services, (x) => { const name = opt(x.name, 50), detail = opt(x.detail, 160); return name ? { name, detail } : null; })
+        : d.services.items,
+    },
     blocks: sanitizeBlocks(i.blocks),
   };
 }
