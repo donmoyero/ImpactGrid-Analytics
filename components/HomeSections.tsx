@@ -18,10 +18,8 @@ const aiExamples = [
   { area: "Business", prompt: "Summarise this month's sales." },
 ];
 
-export default function HomeSections() {
+export function HowItWorks() {
   return (
-    <>
-      {/* How it works */}
       <section id="how" className="border-b border-line bg-ink2">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
           <p className="label-tag text-slate">How it works</p>
@@ -38,8 +36,11 @@ export default function HomeSections() {
           </ol>
         </div>
       </section>
+  );
+}
 
-      {/* Industry examples */}
+export function Examples() {
+  return (
       <section className="border-b border-line">
         <div className="mx-auto max-w-4xl px-6 py-20 lg:px-10">
           <p className="label-tag text-slate">Examples</p>
@@ -47,8 +48,11 @@ export default function HomeSections() {
           <IndustryTabs />
         </div>
       </section>
+  );
+}
 
-      {/* Business platform */}
+export function Platform() {
+  return (
       <section className="border-b border-white/10 bg-[#0c0d10] text-white">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
           <p className="label-tag text-white/60">Business package</p>
@@ -59,8 +63,11 @@ export default function HomeSections() {
           <PlatformFlow />
         </div>
       </section>
+  );
+}
 
-      {/* AI */}
+export function AiSection() {
+  return (
       <section className="border-b border-line">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
           <p className="label-tag text-slate">AI, Business package</p>
@@ -75,6 +82,16 @@ export default function HomeSections() {
           </ul>
         </div>
       </section>
+  );
+}
+
+export default function HomeSections() {
+  return (
+    <>
+      <HowItWorks />
+      <Examples />
+      <Platform />
+      <AiSection />
     </>
   );
 }

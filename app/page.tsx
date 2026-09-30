@@ -2,11 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, Palette, Search, ShoppingBag, LayoutDashboard, MessageSquare, Upload, PenLine } from "lucide-react";
 import HeroScene from "@/components/HeroScene";
-import HomeSections from "@/components/HomeSections";
+import { HowItWorks, Examples, Platform, AiSection } from "@/components/HomeSections";
 import PackageCard from "@/components/PackageCard";
 import { packages } from "@/lib/packages";
-import { getHomepageContent } from "@/lib/site/content";
+import { getHomepageContent, type Block, type HomepageContent } from "@/lib/site/content";
 import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
+import { Widget } from "@/components/home/HomeWidgets";
 
 const ideas = [
   { icon: MessageSquare, title: "Tell us", detail: "Describe your business and what you need.", live: true },
@@ -31,10 +32,11 @@ const services = [
 
 export const revalidate = 60; // homepage is cached; saving in /admin/homepage refreshes it straight away
 
-export default async function Home() {
-  const c = await getHomepageContent();
+type C = HomepageContent;
+
+function Announcement({ c }: { c: C }) {
   return (
-    <main>
+    <>
       {c.announcement.text &&
         (c.announcement.href ? (
           <Link href={c.announcement.href} className="block bg-blueprint2 px-6 py-2 text-center text-sm text-white hover:opacity-90">
@@ -43,7 +45,13 @@ export default async function Home() {
         ) : (
           <p className="bg-blueprint2 px-6 py-2 text-center text-sm text-white">{c.announcement.text}</p>
         ))}
-      {/* Hero */}
+    </>
+  );
+}
+
+function Hero({ c }: { c: C }) {
+  void c;
+  return (
       <section className="relative isolate overflow-hidden border-b border-line bg-[#0c0d10] text-white">
         <div
           aria-hidden
@@ -106,10 +114,12 @@ export default async function Home() {
           )}
         </div>
       </section>
+  );
+}
 
-      <HomeStats stats={c.stats} />
-
-      {/* Start with an idea */}
+function Idea({ c }: { c: C }) {
+  void c;
+  return (
       <section className="border-b border-line">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
           <p className="label-tag text-slate">Start with an idea</p>
@@ -141,8 +151,12 @@ export default async function Home() {
           </div>
         </div>
       </section>
+  );
+}
 
-      {/* Domain */}
+function Domain({ c }: { c: C }) {
+  void c;
+  return (
       <section className="border-b border-line bg-ink2">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-2 lg:px-10">
           <div>
@@ -166,13 +180,12 @@ export default async function Home() {
           </form>
         </div>
       </section>
+  );
+}
 
-      <HomeSections />
-
-      <HomeWork work={c.work} />
-      <HomeReviews reviews={c.reviews} />
-
-      {/* Care Plan */}
+function CarePlan({ c }: { c: C }) {
+  void c;
+  return (
       <section className="border-b border-line">
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-20 lg:grid-cols-2 lg:px-10">
           <div>
@@ -201,8 +214,12 @@ export default async function Home() {
           </div>
         </div>
       </section>
+  );
+}
 
-      {/* Services + image */}
+function Services({ c }: { c: C }) {
+  void c;
+  return (
       <section className="border-b border-line">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
           <div className="flex items-end justify-between">
@@ -238,8 +255,12 @@ export default async function Home() {
           </div>
         </div>
       </section>
+  );
+}
 
-      {/* Packages preview */}
+function Packages({ c }: { c: C }) {
+  void c;
+  return (
       <section className="border-b border-line bg-ink2">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
           <p className="label-tag text-slate">Packages</p>
@@ -252,8 +273,12 @@ export default async function Home() {
           </div>
         </div>
       </section>
+  );
+}
 
-      {/* CTA */}
+function Cta({ c }: { c: C }) {
+  void c;
+  return (
       <section>
         <div className="mx-auto max-w-7xl px-6 py-24 text-center lg:px-10">
           <h2 className="mx-auto max-w-2xl font-display text-3xl lg:text-4xl">
@@ -268,6 +293,32 @@ export default async function Home() {
           </Link>
         </div>
       </section>
-    </main>
   );
+}
+
+
+function renderBlock(b: Block, c: C) {
+  switch (b.type) {
+    case "announcement": return <Announcement key={b.id} c={c} />;
+    case "hero": return <Hero key={b.id} c={c} />;
+    case "stats": return <HomeStats key={b.id} stats={c.stats} />;
+    case "idea": return <Idea key={b.id} c={c} />;
+    case "domain": return <Domain key={b.id} c={c} />;
+    case "how": return <HowItWorks key={b.id} />;
+    case "examples": return <Examples key={b.id} />;
+    case "platform": return <Platform key={b.id} />;
+    case "ai": return <AiSection key={b.id} />;
+    case "work": return <HomeWork key={b.id} work={c.work} />;
+    case "reviews": return <HomeReviews key={b.id} reviews={c.reviews} />;
+    case "careplan": return <CarePlan key={b.id} c={c} />;
+    case "services": return <Services key={b.id} c={c} />;
+    case "packages": return <Packages key={b.id} c={c} />;
+    case "cta": return <Cta key={b.id} c={c} />;
+    default: return <Widget key={b.id} block={b} />;
+  }
+}
+
+export default async function Home() {
+  const c = await getHomepageContent();
+  return <main>{c.blocks.map((b) => renderBlock(b, c))}</main>;
 }

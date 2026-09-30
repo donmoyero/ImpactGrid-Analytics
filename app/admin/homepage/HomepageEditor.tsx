@@ -3,7 +3,10 @@
 
 import { useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { LIMITS, type HomepageContent } from "@/lib/site/content";
+import {
+  BUILTIN_LABELS, BUILTIN_TYPES, EDITABLE_BUILTINS, LIMITS, WIDGET_LABELS, WIDGET_TYPES, newWidget,
+  type Block, type BuiltinType, type HomepageContent,
+} from "@/lib/site/content";
 import { createUploadUrl, saveHomepage } from "./actions";
 
 type Work = HomepageContent["work"][number];
@@ -15,6 +18,106 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
   const [dirty, setDirty] = useState(false);
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const [openId, setOpenId] = useState<string | null>(null);
+  const isBuiltin = (b: Block): b is Extract<Block, { type: BuiltinType }> => (BUILTIN_TYPES as readonly string[]).includes(b.type);
+  const missing = BUILTIN_TYPES.filter((t) => !c.blocks.some((b) => b.type === t));
+  const addBlock = (b: Block) => { edit((d) => ({ ...d, blocks: [...d.blocks, b] })); setOpenId(b.id); };
+  const deleteBlock = (i: number) => {
+    const b = c.blocks[i];
+    const name = isBuiltin(b) ? BUILTIN_LABELS[b.type] : WIDGET_LABELS[b.type].name;
+    if (!window.confirm(`Delete "${name}" from the homepage? You can add it back later${isBuiltin(b) ? "" : ", but this widget's text will be lost"}.`)) return;
+    edit((d) => ({ ...d, blocks: d.blocks.filter((_, n) => n !== i) }));
+  };
+  const moveBlock = (i: number, dir: -1 | 1) =>
+    edit((d) => {
+      const j = i + dir;
+      if (j < 0 || j >= d.blocks.length) return d;
+      const blocks = [...d.blocks];
+      [blocks[i], blocks[j]] = [blocks[j], blocks[i]];
+      return { ...d, blocks };
+    });
+  const patchBlock = (id: string, patch: Record<string, unknown>) =>
+    edit((d) => ({ ...d, blocks: d.blocks.map((b) => (b.id === id ? ({ ...b, ...patch } as Block) : b)) }));
+
+  const builtinBody = (t: BuiltinType) => {
+    switch (t) {
+      case "announcement":
+        return (
+          <>
+        <Field label="Message" value={c.announcement.text} max={140} onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, text: v } }))} />
+        <Field label="Link (optional)" value={c.announcement.href} placeholder="/book-project or https://…" onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, href: v } }))} />
+          </>
+        );
+      case "hero":
+        return (
+          <>
+        <Field label="Small label" value={c.hero.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, eyebrow: v } }))} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Headline, line 1" value={c.hero.line1} max={60} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, line1: v } }))} />
+          <Field label="Headline, line 2 (coloured)" value={c.hero.line2} max={60} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, line2: v } }))} />
+        </div>
+        <Field label="Description" value={c.hero.sub} max={260} multiline onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, sub: v } }))} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Main button" value={c.hero.primaryLabel} max={30} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, primaryLabel: v } }))} />
+          <Field label="Second link (empty hides it)" value={c.hero.secondaryLabel} max={30} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, secondaryLabel: v } }))} />
+        </div>
+        <ImageField label="Photo (optional, replaces the 3D animation)" value={c.hero.imageUrl} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, imageUrl: v } }))} />
+          </>
+        );
+      case "stats":
+        return (
+          <>
+        {c.stats.map((s, i) => (
+          <Row key={i} onRemove={() => edit((d) => ({ ...d, stats: d.stats.filter((_, n) => n !== i) }))}>
+            <Field label="Number" value={s.value} max={16} placeholder="25+" onChange={(v) => edit((d) => ({ ...d, stats: setAt<Stat>(d.stats, i, { value: v }) }))} />
+            <Field label="What it counts" value={s.label} max={50} placeholder="Websites launched" onChange={(v) => edit((d) => ({ ...d, stats: setAt<Stat>(d.stats, i, { label: v }) }))} />
+          </Row>
+        ))}
+        <Add disabled={c.stats.length >= LIMITS.stats} onClick={() => edit((d) => ({ ...d, stats: [...d.stats, { value: "", label: "" }] }))} label="Add a number" />
+          </>
+        );
+      case "work":
+        return (
+          <>
+        {c.work.map((w, i) => (
+          <Row key={i} onRemove={() => edit((d) => ({ ...d, work: d.work.filter((_, n) => n !== i) }))}>
+            <Field label="Name" value={w.title} max={80} onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { title: v }) }))} />
+            <Field label="Type of business" value={w.category} max={40} placeholder="Fashion retailer" onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { category: v }) }))} />
+            <Field label="Short description" value={w.blurb} max={200} multiline onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { blurb: v }) }))} />
+            <Field label="Website link (optional)" value={w.url} placeholder="https://…" onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { url: v }) }))} />
+            <ImageField label="Screenshot or photo" value={w.imageUrl} onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { imageUrl: v }) }))} />
+          </Row>
+        ))}
+        <Add disabled={c.work.length >= LIMITS.work} onClick={() => edit((d) => ({ ...d, work: [...d.work, { title: "", category: "", url: "", imageUrl: "", blurb: "" }] }))} label="Add a website" />
+          </>
+        );
+      case "reviews":
+        return (
+          <>
+        {c.reviews.map((r, i) => (
+          <Row key={i} onRemove={() => edit((d) => ({ ...d, reviews: d.reviews.filter((_, n) => n !== i) }))}>
+            <Field label="Review" value={r.quote} max={400} multiline onChange={(v) => edit((d) => ({ ...d, reviews: setAt<Review>(d.reviews, i, { quote: v }) }))} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Name" value={r.name} max={60} onChange={(v) => edit((d) => ({ ...d, reviews: setAt<Review>(d.reviews, i, { name: v }) }))} />
+              <Field label="Business (optional)" value={r.role} max={60} onChange={(v) => edit((d) => ({ ...d, reviews: setAt<Review>(d.reviews, i, { role: v }) }))} />
+            </div>
+          </Row>
+        ))}
+        <Add disabled={c.reviews.length >= LIMITS.reviews} onClick={() => edit((d) => ({ ...d, reviews: [...d.reviews, { quote: "", name: "", role: "" }] }))} label="Add a review" />
+          </>
+        );
+      case "cta":
+        return (
+          <>
+        <Field label="Heading" value={c.cta.heading} max={120} onChange={(v) => edit((d) => ({ ...d, cta: { ...d.cta, heading: v } }))} />
+        <Field label="Button" value={c.cta.button} max={30} onChange={(v) => edit((d) => ({ ...d, cta: { ...d.cta, button: v } }))} />
+          </>
+        );
+      default:
+        return <p className="text-sm text-slate">This section has a fixed layout and wording. You can move it, delete it, or add it back, but its text isn&apos;t editable here.</p>;
+    }
+  };
 
   const edit = (fn: (d: HomepageContent) => HomepageContent) => { setC(fn); setDirty(true); setMsg(null); };
   const setAt = <T,>(arr: T[], i: number, patch: Partial<T>) => arr.map((x, n) => (n === i ? { ...x, ...patch } : x));
@@ -30,65 +133,51 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
       <h1 className="font-display text-3xl">Homepage</h1>
       <p className="mt-1 text-slate">Change what visitors see. Sections with nothing in them stay hidden, so nothing looks half-finished.</p>
 
-      <Card title="Announcement bar" hint="A slim banner across the top of the homepage. Leave the text empty to hide it.">
-        <Field label="Message" value={c.announcement.text} max={140} onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, text: v } }))} />
-        <Field label="Link (optional)" value={c.announcement.href} placeholder="/book-project or https://…" onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, href: v } }))} />
-      </Card>
+      <div className="mt-8 rounded-2xl border border-line bg-ink2 p-6">
+        <h2 className="font-display text-xl">Page sections</h2>
+        <p className="mt-1 text-sm text-slate">Everything on your homepage, top to bottom. Move sections with the arrows, delete ones you don&apos;t want, or add more below. Nothing changes on the live site until you press Save.</p>
+      </div>
 
-      <Card title="Top section" hint="The first thing visitors see.">
-        <Field label="Small label" value={c.hero.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, eyebrow: v } }))} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Headline, line 1" value={c.hero.line1} max={60} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, line1: v } }))} />
-          <Field label="Headline, line 2 (coloured)" value={c.hero.line2} max={60} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, line2: v } }))} />
-        </div>
-        <Field label="Description" value={c.hero.sub} max={260} multiline onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, sub: v } }))} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Main button" value={c.hero.primaryLabel} max={30} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, primaryLabel: v } }))} />
-          <Field label="Second link (empty hides it)" value={c.hero.secondaryLabel} max={30} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, secondaryLabel: v } }))} />
-        </div>
-        <ImageField label="Photo (optional, replaces the 3D animation)" value={c.hero.imageUrl} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, imageUrl: v } }))} />
-      </Card>
+      {c.blocks.length === 0 && <p className="mt-6 rounded-xl border border-dashed border-line2 p-6 text-center text-sm text-slate">The homepage is empty. Add a section below.</p>}
 
-      <Card title="Numbers" hint={`Up to ${LIMITS.stats} real figures, e.g. websites launched. Only add numbers that are true.`}>
-        {c.stats.map((s, i) => (
-          <Row key={i} onRemove={() => edit((d) => ({ ...d, stats: d.stats.filter((_, n) => n !== i) }))}>
-            <Field label="Number" value={s.value} max={16} placeholder="25+" onChange={(v) => edit((d) => ({ ...d, stats: setAt<Stat>(d.stats, i, { value: v }) }))} />
-            <Field label="What it counts" value={s.label} max={50} placeholder="Websites launched" onChange={(v) => edit((d) => ({ ...d, stats: setAt<Stat>(d.stats, i, { label: v }) }))} />
-          </Row>
-        ))}
-        <Add disabled={c.stats.length >= LIMITS.stats} onClick={() => edit((d) => ({ ...d, stats: [...d.stats, { value: "", label: "" }] }))} label="Add a number" />
-      </Card>
+      {c.blocks.map((b, idx) => (
+        <BlockShell
+          key={b.id}
+          title={isBuiltin(b) ? BUILTIN_LABELS[b.type] : WIDGET_LABELS[b.type].name}
+          kind={isBuiltin(b) ? (EDITABLE_BUILTINS.includes(b.type) ? "Standard section" : "Standard section, fixed layout") : "Widget"}
+          first={idx === 0}
+          last={idx === c.blocks.length - 1}
+          open={openId === b.id}
+          onToggle={() => setOpenId(openId === b.id ? null : b.id)}
+          onMove={(dir) => moveBlock(idx, dir)}
+          onDelete={() => deleteBlock(idx)}
+        >
+          {isBuiltin(b) ? builtinBody(b.type) : <WidgetEditor block={b} onChange={(patch) => patchBlock(b.id, patch)} />}
+        </BlockShell>
+      ))}
 
-      <Card title="Our work" hint={`Up to ${LIMITS.work} real websites you've built, shown as cards with a photo.`}>
-        {c.work.map((w, i) => (
-          <Row key={i} onRemove={() => edit((d) => ({ ...d, work: d.work.filter((_, n) => n !== i) }))}>
-            <Field label="Name" value={w.title} max={80} onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { title: v }) }))} />
-            <Field label="Type of business" value={w.category} max={40} placeholder="Fashion retailer" onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { category: v }) }))} />
-            <Field label="Short description" value={w.blurb} max={200} multiline onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { blurb: v }) }))} />
-            <Field label="Website link (optional)" value={w.url} placeholder="https://…" onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { url: v }) }))} />
-            <ImageField label="Screenshot or photo" value={w.imageUrl} onChange={(v) => edit((d) => ({ ...d, work: setAt<Work>(d.work, i, { imageUrl: v }) }))} />
-          </Row>
-        ))}
-        <Add disabled={c.work.length >= LIMITS.work} onClick={() => edit((d) => ({ ...d, work: [...d.work, { title: "", category: "", url: "", imageUrl: "", blurb: "" }] }))} label="Add a website" />
-      </Card>
-
-      <Card title="Client reviews" hint={`Up to ${LIMITS.reviews}. Use words your clients actually said, with their permission.`}>
-        {c.reviews.map((r, i) => (
-          <Row key={i} onRemove={() => edit((d) => ({ ...d, reviews: d.reviews.filter((_, n) => n !== i) }))}>
-            <Field label="Review" value={r.quote} max={400} multiline onChange={(v) => edit((d) => ({ ...d, reviews: setAt<Review>(d.reviews, i, { quote: v }) }))} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Name" value={r.name} max={60} onChange={(v) => edit((d) => ({ ...d, reviews: setAt<Review>(d.reviews, i, { name: v }) }))} />
-              <Field label="Business (optional)" value={r.role} max={60} onChange={(v) => edit((d) => ({ ...d, reviews: setAt<Review>(d.reviews, i, { role: v }) }))} />
+      <div className="mt-8 rounded-2xl border border-line bg-ink2 p-6">
+        <h2 className="font-display text-xl">Add a section</h2>
+        {missing.length > 0 && (
+          <>
+            <p className="mt-4 text-sm font-medium">Standard sections you removed</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {missing.map((t) => (
+                <button key={t} type="button" onClick={() => addBlock({ id: t, type: t })} className="rounded-full border border-line2 px-4 py-2 text-sm font-medium hover:bg-sand">+ {BUILTIN_LABELS[t]}</button>
+              ))}
             </div>
-          </Row>
-        ))}
-        <Add disabled={c.reviews.length >= LIMITS.reviews} onClick={() => edit((d) => ({ ...d, reviews: [...d.reviews, { quote: "", name: "", role: "" }] }))} label="Add a review" />
-      </Card>
-
-      <Card title="Bottom call to action">
-        <Field label="Heading" value={c.cta.heading} max={120} onChange={(v) => edit((d) => ({ ...d, cta: { ...d.cta, heading: v } }))} />
-        <Field label="Button" value={c.cta.button} max={30} onChange={(v) => edit((d) => ({ ...d, cta: { ...d.cta, button: v } }))} />
-      </Card>
+          </>
+        )}
+        <p className="mt-5 text-sm font-medium">New widgets</p>
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          {WIDGET_TYPES.map((t) => (
+            <button key={t} type="button" disabled={c.blocks.length >= LIMITS.blocks} onClick={() => addBlock(newWidget(t))} className="rounded-xl border border-line p-4 text-left hover:bg-sand disabled:opacity-40">
+              <span className="block text-sm font-medium">+ {WIDGET_LABELS[t].name}</span>
+              <span className="mt-1 block text-xs text-slate">{WIDGET_LABELS[t].hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 px-6 py-3 backdrop-blur lg:left-[230px]">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-4">
@@ -178,4 +267,118 @@ function ImageField({ label, value, onChange }: { label: string; value: string; 
       {err && <p role="alert" className="mt-2 text-red-700">{err}</p>}
     </div>
   );
+}
+
+function BlockShell({ title, kind, first, last, open, onToggle, onMove, onDelete, children }: {
+  title: string; kind: string; first: boolean; last: boolean; open: boolean;
+  onToggle: () => void; onMove: (d: -1 | 1) => void; onDelete: () => void; children: React.ReactNode;
+}) {
+  const btn = "rounded-full border border-line2 px-3 py-1.5 text-sm hover:bg-sand disabled:opacity-30";
+  return (
+    <section className="mt-4 rounded-2xl border border-line bg-ink2">
+      <div className="flex flex-wrap items-center gap-3 p-4">
+        <button type="button" onClick={onToggle} aria-expanded={open} className="min-w-0 flex-1 text-left">
+          <span className="block font-display text-lg">{title}</span>
+          <span className="block text-xs text-slateLight">{kind} · {open ? "click to close" : "click to edit"}</span>
+        </button>
+        <button type="button" onClick={() => onMove(-1)} disabled={first} className={btn} aria-label={`Move ${title} up`}>↑</button>
+        <button type="button" onClick={() => onMove(1)} disabled={last} className={btn} aria-label={`Move ${title} down`}>↓</button>
+        <button type="button" onClick={onDelete} className="rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">Delete</button>
+      </div>
+      {open && <div className="space-y-4 border-t border-line p-5">{children}</div>}
+    </section>
+  );
+}
+
+function WidgetEditor({ block, onChange }: { block: Block; onChange: (patch: Record<string, unknown>) => void }) {
+  const b = block as Record<string, unknown> & { type: string };
+  const str = (k: string) => (typeof b[k] === "string" ? (b[k] as string) : "");
+  const F = (k: string, label: string, max: number, extra: { multiline?: boolean; placeholder?: string } = {}) => (
+    <Field label={label} value={str(k)} max={max} multiline={extra.multiline} placeholder={extra.placeholder} onChange={(v) => onChange({ [k]: v })} />
+  );
+  const button = (
+    <div className="grid gap-4 sm:grid-cols-2">
+      {F("buttonLabel", "Button text (optional)", 30)}
+      {F("buttonHref", "Button link", 500, { placeholder: "/book-project or https://…" })}
+    </div>
+  );
+  const items = (Array.isArray(b.items) ? b.items : []) as Record<string, string>[];
+  const setItem = (i: number, patch: Record<string, string>) => onChange({ items: items.map((x, n) => (n === i ? { ...x, ...patch } : x)) });
+  const dropItem = (i: number) => onChange({ items: items.filter((_, n) => n !== i) });
+
+  switch (b.type) {
+    case "text":
+      return (<>
+        {F("eyebrow", "Small label (optional)", 40)}
+        {F("heading", "Heading", 120)}
+        {F("body", "Text", 1500, { multiline: true })}
+        <label className="block text-sm">Alignment
+          <select className="input mt-1" value={str("align")} onChange={(e) => onChange({ align: e.target.value })}>
+            <option value="left">Left</option><option value="center">Centred</option>
+          </select>
+        </label>
+        {button}
+      </>);
+    case "imageText":
+      return (<>
+        {F("heading", "Heading", 120)}
+        {F("body", "Text", 1200, { multiline: true })}
+        <ImageField label="Image" value={str("imageUrl")} onChange={(v) => onChange({ imageUrl: v })} />
+        <label className="block text-sm">Image position
+          <select className="input mt-1" value={str("imageSide")} onChange={(e) => onChange({ imageSide: e.target.value })}>
+            <option value="right">Right</option><option value="left">Left</option>
+          </select>
+        </label>
+        {button}
+      </>);
+    case "cards":
+      return (<>
+        {F("eyebrow", "Small label (optional)", 40)}
+        {F("heading", "Heading", 120)}
+        {items.map((it, i) => (
+          <Row key={i} onRemove={() => dropItem(i)}>
+            <Field label="Card title" value={it.title ?? ""} max={60} onChange={(v) => setItem(i, { title: v })} />
+            <Field label="Card text" value={it.text ?? ""} max={240} multiline onChange={(v) => setItem(i, { text: v })} />
+          </Row>
+        ))}
+        <Add disabled={items.length >= LIMITS.cards} onClick={() => onChange({ items: [...items, { title: "", text: "" }] })} label="Add a card" />
+      </>);
+    case "faq":
+      return (<>
+        {F("heading", "Heading", 120, { placeholder: "Questions" })}
+        {items.map((it, i) => (
+          <Row key={i} onRemove={() => dropItem(i)}>
+            <Field label="Question" value={it.q ?? ""} max={160} onChange={(v) => setItem(i, { q: v })} />
+            <Field label="Answer" value={it.a ?? ""} max={800} multiline onChange={(v) => setItem(i, { a: v })} />
+          </Row>
+        ))}
+        <Add disabled={items.length >= LIMITS.faq} onClick={() => onChange({ items: [...items, { q: "", a: "" }] })} label="Add a question" />
+      </>);
+    case "video":
+      return (<>
+        {F("heading", "Heading (optional)", 120)}
+        {F("url", "YouTube or Vimeo link", 300, { placeholder: "https://www.youtube.com/watch?v=…" })}
+        <p className="text-xs text-slate">Only YouTube and Vimeo links work. Anything else is ignored.</p>
+      </>);
+    case "gallery": {
+      const images = (Array.isArray(b.images) ? b.images : []) as string[];
+      return (<>
+        {F("heading", "Heading (optional)", 120)}
+        {images.map((u, i) => (
+          <Row key={i} onRemove={() => onChange({ images: images.filter((_, n) => n !== i) })}>
+            <ImageField label={`Photo ${i + 1}`} value={u} onChange={(v) => onChange({ images: images.map((x, n) => (n === i ? v : x)) })} />
+          </Row>
+        ))}
+        <Add disabled={images.length >= LIMITS.gallery} onClick={() => onChange({ images: [...images, ""] })} label="Add a photo" />
+      </>);
+    }
+    case "banner":
+      return (<>
+        {F("heading", "Heading", 120)}
+        {F("text", "Text (optional)", 300, { multiline: true })}
+        {button}
+      </>);
+    default:
+      return <p className="text-sm text-slate">Adds empty space between sections. Nothing to edit.</p>;
+  }
 }
