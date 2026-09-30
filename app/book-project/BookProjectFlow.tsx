@@ -38,6 +38,7 @@ export default function BookProjectFlow() {
     phone: "",
     notes: "",
     palette: palettes[0].name,
+    website: "", // honeypot
   });
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -55,11 +56,26 @@ export default function BookProjectFlow() {
   const selectedAddons = addons.filter((a) => form.addonIds.includes(a.id));
   const total = selectedPackage.price + selectedAddons.reduce((sum, a) => sum + a.price, 0);
 
-  async function handleCheckout() {
+  const [done, setDone] = useState(false);
+  const [domainState, setDomainState] = useState<"idle" | "checking" | "available" | "taken" | "unknown" | "invalid">("idle");
+
+  async function checkDomain() {
+    if (!form.domain.trim()) return;
+    setDomainState("checking");
+    try {
+      const res = await fetch(`/api/domain-check?domain=${encodeURIComponent(form.domain)}`);
+      const data = await res.json();
+      setDomainState(data.status ?? "unknown");
+    } catch {
+      setDomainState("unknown");
+    }
+  }
+
+  async function handleSubmit() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/checkout", {
+      const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -71,19 +87,33 @@ export default function BookProjectFlow() {
           phone: form.phone,
           notes: form.notes,
           palette: form.palette,
+          website: form.website, // honeypot, must stay empty
         }),
       });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        setDone(true);
       } else {
-        setError(data.error ?? "Something went wrong starting checkout. Please try again.");
+        setError(data.error ?? "Something went wrong sending your request. Please try again.");
       }
     } catch {
-      setError("Couldn't reach checkout. Check your connection and try again.");
+      setError("Couldn't reach us. Check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (done) {
+    return (
+      <div className="crosshair rounded-2xl border border-line bg-ink2 p-8">
+        <Check className="h-8 w-8 text-green-600" aria-hidden />
+        <h2 className="mt-4 font-display text-2xl">Request received</h2>
+        <p className="mt-3 text-slate">
+          Thanks{form.businessName ? `, ${form.businessName}` : ""}. We'll look over what you've asked for and email{" "}
+          <span className="font-medium text-paper">{form.email}</span> as soon as it's approved. You don't need to pay anything yet.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -123,14 +153,30 @@ export default function BookProjectFlow() {
         )}
 
         {step === 1 && (
-          <Field label="Domain you'd like (optional). We'll check availability and set it up for you">
-            <input
-              value={form.domain}
-              onChange={(e) => update("domain", e.target.value)}
-              placeholder="yourbusiness.co.uk"
-              className="input"
-            />
-          </Field>
+          <div>
+            <Field label="Domain you'd like (optional). Type it and check if it's free. We'll confirm and set it up for you">
+              <div className="flex gap-2">
+                <input
+                  value={form.domain}
+                  onChange={(e) => { update("domain", e.target.value); setDomainState("idle"); }}
+                  placeholder="yourbusiness.co.uk"
+                  className="input"
+                />
+                <button
+                  type="button"
+                  onClick={checkDomain}
+                  disabled={!form.domain.trim() || domainState === "checking"}
+                  className="shrink-0 rounded-full border border-line2 px-5 text-sm font-medium hover:bg-sand disabled:opacity-50"
+                >
+                  {domainState === "checking" ? "Checking…" : "Check"}
+                </button>
+              </div>
+            </Field>
+            {domainState === "available" && <p role="status" className="mt-3 text-sm text-green-700">Looks available. We'll confirm before we register it.</p>}
+            {domainState === "taken" && <p role="status" className="mt-3 text-sm text-red-700">That one is already registered. Try another name, or keep it and tell us in your notes.</p>}
+            {domainState === "unknown" && <p role="status" className="mt-3 text-sm text-slate">We couldn't check that one automatically. No problem, we'll check it for you.</p>}
+            {domainState === "invalid" && <p role="status" className="mt-3 text-sm text-red-700">That doesn't look like a domain name, e.g. yourbusiness.co.uk</p>}
+          </div>
         )}
 
         {step === 2 && (
@@ -185,6 +231,9 @@ export default function BookProjectFlow() {
 
         {step === 4 && (
           <div className="space-y-6">
+            <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+              <label>Leave this empty<input tabIndex={-1} autoComplete="off" value={form.website} onChange={(e) => update("website", e.target.value)} /></label>
+            </div>
             <Field label="Email">
               <input
                 type="email"
@@ -202,12 +251,12 @@ export default function BookProjectFlow() {
                 className="input"
               />
             </Field>
-            <Field label="Anything we should know?">
+            <Field label="What do you want your website to do? Tell us as much as you can">
               <textarea
                 value={form.notes}
                 onChange={(e) => update("notes", e.target.value)}
-                rows={3}
-                placeholder="e.g. we already have a logo, launch date, competitors you like…"
+                rows={6}
+                placeholder="e.g. what your business does, pages you need, a logo you already have, launch date, websites you like…"
                 className="input resize-none"
               />
             </Field>
@@ -240,7 +289,7 @@ export default function BookProjectFlow() {
 
         {step === 6 && (
           <div>
-            <h3 className="font-display text-xl">Review your order</h3>
+            <h3 className="font-display text-xl">Review your request</h3>
             <dl className="mt-6 space-y-3 text-sm">
               <Row label="Business" value={form.businessName || "—"} />
               <Row label="Domain" value={form.domain || "To be chosen"} />
@@ -254,7 +303,7 @@ export default function BookProjectFlow() {
             </dl>
             <div className="mt-6 space-y-3 border-t border-line pt-4 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-slate">Website build (invoiced by bank transfer)</span>
+                <span className="text-slate">Website build (invoiced by bank transfer once approved)</span>
                 <span className="font-display text-xl">{formatGBP(total)}</span>
               </div>
               <div className="flex items-center justify-between">
@@ -263,17 +312,15 @@ export default function BookProjectFlow() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate">Care Plan, from year 2</span>
-                <span className="font-medium">{formatGBP(selectedPackage.carePlanYearly)} / year</span>
+                <span className="font-medium">{formatGBP(selectedPackage.carePlanYearly)} / year (invoiced)</span>
               </div>
             </div>
 
             <div className="mt-6 rounded-xl border border-line bg-ink p-4 text-sm text-slate">
-              <p className="font-medium text-paper">Next: register your card for the Care Plan</p>
+              <p className="font-medium text-paper">What happens next</p>
               <p className="mt-1">
-                You pay nothing today. Stripe securely saves your card and you agree to a yearly debit of{" "}
-                {formatGBP(selectedPackage.carePlanYearly)} starting after your free first year. Cancel any time
-                before then and you won&apos;t be charged. We&apos;ll email your build invoice with bank transfer
-                details.
+                You pay nothing today and there's no card to enter. We review your request and email you when it's approved,
+                then send your invoice by email.
               </p>
             </div>
           </div>
@@ -301,12 +348,12 @@ export default function BookProjectFlow() {
           </button>
         ) : (
           <button
-            onClick={handleCheckout}
+            onClick={handleSubmit}
             disabled={submitting || !form.email}
             className="flex items-center gap-2 rounded-full bg-signal px-6 py-2.5 text-sm font-medium text-ink hover:bg-blueprint2 disabled:opacity-50"
           >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Register card — pay £0 today
+            Send my request
           </button>
         )}
       </div>

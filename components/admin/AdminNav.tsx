@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const items = [
+  { href: "/admin/bookings", label: "Bookings", exact: false },
   { href: "/admin", label: "Customers", exact: true },
   { href: "/admin/homepage", label: "Homepage", exact: false },
 ];
 
-export default function AdminNav() {
+export default function AdminNav({ pending = 0 }: { pending?: number }) {
   const path = usePathname();
   return (
     <nav aria-label="Admin" className="flex gap-1 lg:flex-col">
@@ -23,6 +24,9 @@ export default function AdminNav() {
             className={cn("rounded-lg px-3 py-2 text-sm font-medium", active ? "bg-paper text-ink" : "text-slate hover:bg-sand hover:text-paper")}
           >
             {i.label}
+            {i.href === "/admin/bookings" && pending > 0 && (
+              <span className="ml-2 rounded-full bg-signal px-2 py-0.5 text-xs text-ink">{pending}</span>
+            )}
           </Link>
         );
       })}
