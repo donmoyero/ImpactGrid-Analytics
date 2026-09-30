@@ -1,5 +1,12 @@
 /** Minimal Resend sender (same REST call as the contact form). Returns false instead of throwing. */
-export async function sendEmail(opts: { to: string; subject: string; text: string; replyTo?: string }): Promise<boolean> {
+export async function sendEmail(opts: {
+  to: string;
+  subject: string;
+  text: string;
+  replyTo?: string;
+  /** content is base64 */
+  attachments?: { filename: string; content: string }[];
+}): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.error("RESEND_API_KEY is not set; email not sent:", opts.subject);
@@ -16,6 +23,7 @@ export async function sendEmail(opts: { to: string; subject: string; text: strin
         reply_to: opts.replyTo,
         subject: opts.subject,
         text: opts.text,
+        attachments: opts.attachments,
       }),
     });
     if (!res.ok) {

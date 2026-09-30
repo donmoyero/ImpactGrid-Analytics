@@ -7,6 +7,11 @@ import { loadInvoiceSettings } from "./settings";
 
 export const INVOICE_BUCKET = "invoices";
 
+/** Yearly maintenance invoices start their first line with this, which is how the system tells them from build invoices. */
+export const CARE_PLAN_LINE_PREFIX = "Care Plan";
+export const isCarePlanInvoice = (inv: { line_items?: InvoiceLine[] | null }) =>
+  !!inv.line_items?.[0]?.description?.startsWith(CARE_PLAN_LINE_PREFIX);
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Package + add-ons as line items, but only if they add up to the invoice amount; otherwise one plain line. */
@@ -37,7 +42,7 @@ async function getInvoice(db: SupabaseClient, ref: string): Promise<Invoice> {
 
 /** Creates the invoice for a project's build fee and issues it (assigns number, dates, PDF). */
 export async function createInvoice(
-  opts: { projectId: string; amount?: number; allowAdditional?: boolean },
+  opts: { projectId: string; amount?: number; allowAdditional?: boolean; description?: string },
   db: SupabaseClient = getAdminDb()
 ): Promise<{ invoice: Invoice; pdf: Uint8Array }> {
   // Fail fast: don't create or number an invoice we can't render (missing/placeholder bank details).
@@ -77,12 +82,9 @@ export async function createInvoice(
   const amount = opts.amount ?? (order ? Number(order.total) : 0);
   if (!(amount > 0)) throw new Error("No amount to invoice: the project has no pending order. Pass an amount.");
 
-  const lineItems = buildLineItems(
-    project.package,
-    opts.amount === undefined && order ? order.addon_ids ?? [] : [],
-    amount,
-    project.business_name
-  );
+  const lineItems = opts.description
+    ? [{ description: opts.description, amount: round2(amount) }]
+    : buildLineItems(project.package, opts.amount === undefined && order ? order.addon_ids ?? [] : [], amount, project.business_name);
 
   const { data: draft, error: iErr } = await db
     .from("invoices")
@@ -200,8 +202,12 @@ export async function recordPayment(
   if (payErr) console.error("Payment recorded on invoice but payments row failed:", payErr.message);
 
   if (updated.status === "paid" && inv.project_id) {
-    await db.from("projects").update({ payment_status: "paid" }).eq("id", inv.project_id);
-    await db.from("orders").update({ status: "paid" }).eq("project_id", inv.project_id).eq("status", "pending");
+    if (isCarePlanInvoice(inv)) {
+      await renewCarePlan(inv.project_id, db); // yearly maintenance paid: another year
+    } else {
+      await db.from("projects").update({ payment_status: "paid" }).eq("id", inv.project_id);
+      await db.from("orders").update({ status: "paid" }).eq("project_id", inv.project_id).eq("status", "pending");
+    }
   }
 
   // Keep the stored PDF showing the current balance. Non-fatal.
@@ -212,6 +218,16 @@ export async function recordPayment(
     console.error("Payment saved but PDF refresh failed:", e);
     return updated as Invoice;
   }
+}
+
+/** A paid maintenance invoice renews the Care Plan for another year (from the current renewal date, or today if it has lapsed). */
+async function renewCarePlan(projectId: string, db: SupabaseClient) {
+  const { data: cp } = await db.from("care_plans").select("id, renewal_at").eq("project_id", projectId).maybeSingle();
+  if (!cp) return;
+  const base = cp.renewal_at && new Date(cp.renewal_at).getTime() > Date.now() ? new Date(cp.renewal_at) : new Date();
+  const next = new Date(base.getTime() + 365 * 86_400_000).toISOString();
+  const { error } = await db.from("care_plans").update({ status: "active", renewal_at: next, grace_period_ends_at: null }).eq("id", cp.id);
+  if (error) console.error("Invoice paid but Care Plan renewal failed:", error.message);
 }
 
 export async function voidInvoice(ref: string, db: SupabaseClient = getAdminDb()): Promise<Invoice> {
