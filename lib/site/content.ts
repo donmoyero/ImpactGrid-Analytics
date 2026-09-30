@@ -37,8 +37,15 @@ export interface HomepageContent {
   blocks: Block[];
 }
 
-export const DEFAULT_BLOCKS: Block[] = BUILTIN_TYPES.map((t) => ({ id: t, type: t }));
-// Original page order: announcement, hero, stats, idea, domain, how..ai, work, reviews, careplan, services, packages, cta.
+/** A lean homepage. How it works, Domain, Examples, Platform and AI live on their own pages; Packages and Care Plan live on Pricing. */
+export const HOME_DEFAULT: BuiltinType[] = ["announcement", "hero", "stats", "idea", "work", "reviews", "cta"];
+export const DEFAULT_BLOCKS: Block[] = HOME_DEFAULT.map((t) => ({ id: t, type: t }));
+/** Standard sections that also appear on another page, so they can still be edited when they're not on the homepage. */
+export const OTHER_PAGE: Partial<Record<BuiltinType, string>> = {
+  how: "How it works page",
+  domain: "How it works page",
+  ai: "Services page",
+};
 
 export const DEFAULT_HOMEPAGE: HomepageContent = {
   announcement: { text: "", href: "" },

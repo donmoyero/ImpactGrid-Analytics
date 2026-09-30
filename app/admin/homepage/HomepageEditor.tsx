@@ -4,7 +4,7 @@
 import { useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
-  BUILTIN_LABELS, BUILTIN_TYPES, EDITABLE_BUILTINS, LIMITS, WIDGET_LABELS, WIDGET_TYPES, newWidget,
+  BUILTIN_LABELS, BUILTIN_TYPES, EDITABLE_BUILTINS, LIMITS, OTHER_PAGE, WIDGET_LABELS, WIDGET_TYPES, newWidget,
   type Block, type BuiltinType, type HomepageContent,
 } from "@/lib/site/content";
 import { createUploadUrl, saveHomepage } from "./actions";
@@ -21,6 +21,7 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
 
   const [openId, setOpenId] = useState<string | null>(null);
   const isBuiltin = (b: Block): b is Extract<Block, { type: BuiltinType }> => (BUILTIN_TYPES as readonly string[]).includes(b.type);
+  const otherPage = (Object.keys(OTHER_PAGE) as BuiltinType[]).filter((t) => !c.blocks.some((b) => b.type === t));
   const missing = BUILTIN_TYPES.filter((t) => !c.blocks.some((b) => b.type === t));
   const addBlock = (b: Block) => { edit((d) => ({ ...d, blocks: [...d.blocks, b] })); setOpenId(b.id); };
   const deleteBlock = (i: number) => {
@@ -219,7 +220,7 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
 
       <div className="mt-8 rounded-2xl border border-line bg-ink2 p-6">
         <h2 className="font-display text-xl">Page sections</h2>
-        <p className="mt-1 text-sm text-slate">Everything on your homepage, top to bottom. Move sections with the arrows, delete ones you don&apos;t want, or add more below. Nothing changes on the live site until you press Save.</p>
+        <p className="mt-1 text-sm text-slate">Everything on your homepage, top to bottom. How it works, Services extras and Packages have their own pages now. Move sections with the arrows, delete ones you don&apos;t want, or add more below. Nothing changes on the live site until you press Save.</p>
       </div>
 
       {c.blocks.length > 0 && (
@@ -246,6 +247,24 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
           {isBuiltin(b) ? builtinBody(b.type) : <WidgetEditor block={b} onChange={(patch) => patchBlock(b.id, patch)} />}
         </BlockShell>
       ))}
+
+      {otherPage.length > 0 && (
+        <div className="mt-8">
+          <h2 className="font-display text-xl">Text on other pages</h2>
+          <p className="mt-1 text-sm text-slate">These sections are not on the homepage. They show on their own pages, and you edit their words here.</p>
+          {otherPage.map((t) => (
+            <BlockShell
+              key={t}
+              title={BUILTIN_LABELS[t]}
+              kind={OTHER_PAGE[t] ?? ""}
+              open={openId === `o-${t}` || openId === "*"}
+              onToggle={() => setOpenId(openId === `o-${t}` ? null : `o-${t}`)}
+            >
+              {builtinBody(t)}
+            </BlockShell>
+          ))}
+        </div>
+      )}
 
       <div className="mt-8 rounded-2xl border border-line bg-ink2 p-6">
         <h2 className="font-display text-xl">Add a section</h2>
@@ -361,8 +380,8 @@ function ImageField({ label, value, onChange }: { label: string; value: string; 
 }
 
 function BlockShell({ title, kind, first, last, open, onToggle, onMove, onDelete, children }: {
-  title: string; kind: string; first: boolean; last: boolean; open: boolean;
-  onToggle: () => void; onMove: (d: -1 | 1) => void; onDelete: () => void; children: React.ReactNode;
+  title: string; kind: string; first?: boolean; last?: boolean; open: boolean;
+  onToggle: () => void; onMove?: (d: -1 | 1) => void; onDelete?: () => void; children: React.ReactNode;
 }) {
   const btn = "rounded-full border border-line2 px-3 py-1.5 text-sm hover:bg-sand disabled:opacity-30";
   return (
@@ -372,9 +391,9 @@ function BlockShell({ title, kind, first, last, open, onToggle, onMove, onDelete
           <span className="block font-display text-lg">{title}</span>
           <span className="block text-xs text-slateLight">{kind} · {open ? "click to close" : "click to edit"}</span>
         </button>
-        <button type="button" onClick={() => onMove(-1)} disabled={first} className={btn} aria-label={`Move ${title} up`}>↑</button>
-        <button type="button" onClick={() => onMove(1)} disabled={last} className={btn} aria-label={`Move ${title} down`}>↓</button>
-        <button type="button" onClick={onDelete} className="rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">Delete</button>
+        {onMove && <button type="button" onClick={() => onMove(-1)} disabled={first} className={btn} aria-label={`Move ${title} up`}>↑</button>}
+        {onMove && <button type="button" onClick={() => onMove(1)} disabled={last} className={btn} aria-label={`Move ${title} down`}>↓</button>}
+        {onDelete && <button type="button" onClick={onDelete} className="rounded-full border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">Delete</button>}
       </div>
       {open && <div className="space-y-4 border-t border-line p-5">{children}</div>}
     </section>

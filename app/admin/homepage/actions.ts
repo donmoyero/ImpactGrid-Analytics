@@ -19,6 +19,8 @@ export async function saveHomepage(payload: string): Promise<{ ok: boolean; mess
   if (error) return { ok: false, message: error.message.includes("site_content") ? "The site_content table is missing. Run the homepage migration in Supabase first." : error.message };
   revalidateTag("homepage");
   revalidatePath("/");
+  revalidatePath("/services");
+  revalidatePath("/how-it-works");
   return { ok: true, message: "Saved. Your homepage is updated." };
 }
 

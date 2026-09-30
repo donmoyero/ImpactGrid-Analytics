@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Examples, Platform, AiSection } from "@/components/HomeSections";
+import { getHomepageContent } from "@/lib/site/content";
 
 const services = [
   { name: "Business website", detail: "A credible site that explains what you do and how to book you." },
@@ -16,9 +18,13 @@ const services = [
 
 export const metadata = { title: "Services — ImpactGrid Analytics" };
 
-export default function ServicesPage() {
+export const revalidate = 60;
+
+export default async function ServicesPage() {
+  const c = await getHomepageContent();
   return (
-    <main className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+    <main>
+      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
       <p className="label-tag text-slate">Services</p>
       <h1 className="mt-3 max-w-2xl font-display text-4xl lg:text-5xl">
         Everything a business needs to be online, done for you.
@@ -34,7 +40,13 @@ export default function ServicesPage() {
         ))}
       </div>
 
-      <div className="mt-16 text-center">
+      </div>
+
+      <Examples />
+      <Platform />
+      <AiSection ai={c.ai} />
+
+      <div className="px-6 py-20 text-center">
         <Link
           href="/book-project"
           className="inline-flex items-center gap-2 rounded-full bg-signal px-7 py-3.5 text-sm font-medium text-ink hover:bg-blueprint2"
