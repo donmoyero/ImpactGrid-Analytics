@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
+import { PLATFORM_LOGIN_URL } from "@/lib/platform";
 
 const columns = [
   {
@@ -11,11 +12,8 @@ const columns = [
     ],
   },
   {
-    title: "Buy",
-    links: [
-      { href: "/pricing", label: "Packages" },
-      { href: "/book-project", label: "Start a project" },
-    ],
+    title: "Platform",
+    links: [{ href: PLATFORM_LOGIN_URL, label: "Get started" }],
   },
   {
     title: "Help",
@@ -34,8 +32,7 @@ export default function Footer() {
               ImpactGrid Analytics
             </div>
             <p className="mt-4 max-w-xs text-sm text-slate">
-              A done-for-you web studio. Pick a package and we design, build, and
-              launch your website.
+              Run your business, your team and your website from one dashboard.
             </p>
           </div>
 
