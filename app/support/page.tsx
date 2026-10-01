@@ -1,33 +1,19 @@
 import Link from "next/link";
-import { packages } from "@/lib/packages";
-import { formatGBP } from "@/lib/utils";
 
 export const metadata = { title: "Support & FAQ — ImpactGrid Analytics" };
 
 const faqs = [
   {
-    q: "How do I pay for my website?",
-    a: "The website build is invoiced by bank transfer. After you complete the project form we email your invoice with our bank details, and we start once it's paid.",
+    q: "How do I get started?",
+    a: "Choose Get started, create an account and sign in. Once your account is approved and linked to your business, you will see your business dashboard.",
   },
   {
-    q: "What is the Care Plan?",
-    a: "Hosting, SSL, daily backups, uptime monitoring, software updates and small content edits, all looked after by us so your site stays live and secure.",
+    q: "Can I add my team?",
+    a: "Yes. Business owners and admins can invite staff by email from the Team page and choose a role for each person. Each person accepts by signing in with the email address the invitation was sent to.",
   },
   {
-    q: "Is the first year really free?",
-    a: "Yes. You register a card with Stripe when you order, but nothing is charged for 12 months.",
-  },
-  {
-    q: "What happens after the free year?",
-    a: `Your card is charged once a year (${packages.map((p) => `${p.name} ${formatGBP(p.carePlanYearly)}`).join(", ")}) until you cancel. Stripe emails you before the first charge.`,
-  },
-  {
-    q: "Can I cancel the Care Plan?",
-    a: "Yes, any time. Cancel before your free year ends and you will never be charged. Email us and we will cancel it for you.",
-  },
-  {
-    q: "Do you set up my domain?",
-    a: "Yes. Tell us the domain you want and we check availability and set it up as part of the build.",
+    q: "Is my business data kept separate?",
+    a: "Yes. Each business's information is kept separate, and only people who belong to that business can see it.",
   },
 ];
 

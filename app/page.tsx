@@ -3,11 +3,10 @@ import Image from "next/image";
 import { ArrowUpRight, Palette, Search, ShoppingBag, LayoutDashboard, MessageSquare, Upload, PenLine } from "lucide-react";
 import HeroScene from "@/components/HeroScene";
 import { HowItWorks, Examples, Platform, AiSection } from "@/components/HomeSections";
-import PackageCard from "@/components/PackageCard";
-import { packages } from "@/lib/packages";
 import { getHomepageContent, type Block, type HomepageContent } from "@/lib/site/content";
 import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
 import { Widget } from "@/components/home/HomeWidgets";
+import { PLATFORM_LOGIN_URL } from "@/lib/platform";
 
 const IDEA_ICONS = [MessageSquare, Upload, PenLine];
 const SERVICE_ICONS = [LayoutDashboard, ShoppingBag, Palette, Search];
@@ -57,30 +56,12 @@ function Hero({ c }: { c: C }) {
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
-                href="/book-project"
+                href={PLATFORM_LOGIN_URL}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-paper transition-colors hover:bg-blueprint2 hover:text-white"
               >
                 {c.hero.primaryLabel}
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
-              {c.hero.secondaryLabel && (
-                <Link href="/pricing" className="text-sm text-white/80 hover:text-white">
-                  {c.hero.secondaryLabel}
-                </Link>
-              )}
-            </div>
-
-            <div className="mt-10 flex flex-wrap gap-3">
-              {packages.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/book-project?package=${p.id}`}
-                  className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur transition-colors hover:border-[#8b5cff]"
-                >
-                  <span className="block text-sm font-medium">{p.name}</span>
-                  <span className="block font-mono text-xs text-white/60">{p.priceLabel}</span>
-                </Link>
-              ))}
             </div>
           </div>
         </div>
@@ -112,7 +93,7 @@ function Idea({ c }: { c: C }) {
               return (
               <Link
                 key={i.title}
-                href="/book-project"
+                href={PLATFORM_LOGIN_URL}
                 className="crosshair group rounded-2xl border border-line bg-ink2 p-6 transition-colors hover:border-paper"
               >
                 <div className="flex items-center justify-between">
@@ -131,69 +112,6 @@ function Idea({ c }: { c: C }) {
             <span className="rounded-full border border-line2 px-4 py-2">Prototype</span>
             <span aria-hidden>→</span>
             <span className="rounded-full bg-signal px-4 py-2 text-ink">Website</span>
-          </div>
-        </div>
-      </section>
-  );
-}
-
-function Domain({ c }: { c: C }) {
-  void c;
-  return (
-      <section className="border-b border-line bg-ink2">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-2 lg:px-10">
-          <div>
-            {c.domain.eyebrow && <p className="label-tag text-slate">{c.domain.eyebrow}</p>}
-            <h2 className="mt-3 font-display text-3xl lg:text-4xl">{c.domain.heading}</h2>
-            <p className="mt-4 max-w-md text-slate">
-              {c.domain.text}
-            </p>
-          </div>
-          <form action="/book-project" method="get" className="self-center">
-            <label htmlFor="domain" className="label-tag text-slate">{c.domain.label}</label>
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <input id="domain" name="domain" placeholder={c.domain.placeholder} className="input" />
-              <button
-                type="submit"
-                className="shrink-0 rounded-full bg-signal px-7 py-3 text-sm font-medium text-ink hover:bg-blueprint2"
-              >
-                {c.domain.button}
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
-  );
-}
-
-function CarePlan({ c }: { c: C }) {
-  void c;
-  return (
-      <section className="border-b border-line">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 py-20 lg:grid-cols-2 lg:px-10">
-          <div>
-            {c.careplan.eyebrow && <p className="label-tag text-slate">{c.careplan.eyebrow}</p>}
-            <h2 className="mt-3 font-display text-3xl lg:text-4xl">{c.careplan.heading}</h2>
-            <p className="mt-4 max-w-md text-slate">
-              {c.careplan.text} Then{" "}
-              {packages.map((p) => `${p.name} £${p.carePlanYearly}`).join(", ")} a year.
-            </p>
-          </div>
-          <div className="rounded-2xl bg-[#0c0d10] p-6 text-white">
-            <div className="flex items-center justify-between">
-              <span className="label-tag text-white/60">{c.careplan.healthTitle}</span>
-              <span className="label-tag flex items-center gap-2 text-white/60">
-                <span className="h-2 w-2 rounded-full bg-blueprint2" /> Live · example
-              </span>
-            </div>
-            <dl className="mt-5 divide-y divide-white/10">
-              {c.careplan.rows.map(({ k, v }) => (
-                <div key={k} className="flex items-center justify-between py-3 text-sm">
-                  <dt className="text-white/60">{k}</dt>
-                  <dd className="font-mono">{v}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
         </div>
       </section>
@@ -240,24 +158,6 @@ function Services({ c }: { c: C }) {
   );
 }
 
-function Packages({ c }: { c: C }) {
-  void c;
-  return (
-      <section className="border-b border-line bg-ink2">
-        <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
-          <p className="label-tag text-slate">Packages</p>
-          <h2 className="mt-3 font-display text-3xl lg:text-4xl">Choose how far you want to go.</h2>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {packages.map((pkg, i) => (
-              <PackageCard key={pkg.id} pkg={pkg} index={i} />
-            ))}
-          </div>
-        </div>
-      </section>
-  );
-}
-
 function Cta({ c }: { c: C }) {
   void c;
   return (
@@ -267,7 +167,7 @@ function Cta({ c }: { c: C }) {
             {c.cta.heading}
           </h2>
           <Link
-            href="/book-project"
+            href={PLATFORM_LOGIN_URL}
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-signal px-7 py-3.5 text-sm font-medium text-ink hover:bg-blueprint2"
           >
             {c.cta.button}
@@ -285,16 +185,17 @@ function renderBlock(b: Block, c: C) {
     case "hero": return <Hero key={b.id} c={c} />;
     case "stats": return <HomeStats key={b.id} stats={c.stats} />;
     case "idea": return <Idea key={b.id} c={c} />;
-    case "domain": return <Domain key={b.id} c={c} />;
+    case "domain":
+    case "careplan":
+    case "packages":
+      return null; // retired sections (old package/care-plan model)
     case "how": return <HowItWorks key={b.id} how={c.how} />;
     case "examples": return <Examples key={b.id} />;
     case "platform": return <Platform key={b.id} />;
     case "ai": return <AiSection key={b.id} ai={c.ai} />;
     case "work": return <HomeWork key={b.id} work={c.work} />;
     case "reviews": return <HomeReviews key={b.id} reviews={c.reviews} />;
-    case "careplan": return <CarePlan key={b.id} c={c} />;
     case "services": return <Services key={b.id} c={c} />;
-    case "packages": return <Packages key={b.id} c={c} />;
     case "cta": return <Cta key={b.id} c={c} />;
     default: return <Widget key={b.id} block={b} />;
   }
