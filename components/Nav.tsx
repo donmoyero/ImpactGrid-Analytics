@@ -8,10 +8,10 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import BrandMark from "@/components/BrandMark";
 import SignOutButton from "@/components/dashboard/SignOutButton";
+import { PLATFORM_LOGIN_URL } from "@/lib/platform";
 
 const links = [
   { href: "/services", label: "Services" },
-  { href: "/pricing", label: "Packages" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -102,13 +102,13 @@ export default function Nav() {
             />
           )}
           <Link
-            href="/book-project"
+            href={PLATFORM_LOGIN_URL}
             className={cn(
               "group flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-blueprint2 hover:text-white",
               dark ? "bg-white text-paper" : "bg-paper text-ink"
             )}
           >
-            Start a project
+            Get started
             <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </Link>
         </div>
@@ -135,11 +135,11 @@ export default function Nav() {
             </Link>
             {signedIn && <SignOutButton className="text-left text-base" onDone={() => setOpen(false)} />}
             <Link
-              href="/book-project"
+              href={PLATFORM_LOGIN_URL}
               className="mt-2 rounded-full bg-paper px-4 py-3 text-center text-sm font-medium text-ink"
               onClick={() => setOpen(false)}
             >
-              Start a project
+              Get started
             </Link>
           </div>
         </div>
