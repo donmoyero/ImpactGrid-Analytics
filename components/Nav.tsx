@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import BrandMark from "@/components/BrandMark";
 import SignOutButton from "@/components/dashboard/SignOutButton";
-import { PLATFORM_LOGIN_URL } from "@/lib/platform";
+import { PLATFORM_LOGIN_URL, PLATFORM_URL } from "@/lib/platform";
 
 const links = [
   { href: "/services", label: "Services" },
@@ -23,7 +23,7 @@ export default function Nav() {
   const [signedIn, setSignedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Display only: the dashboard and admin pages re-check the session on the server (requireAdmin).
+  // Display only: the admin pages re-check the session on the server (requireAdmin).
   useEffect(() => {
     const supabase = createClient();
     let cancelled = false;
@@ -51,8 +51,8 @@ export default function Nav() {
     };
   }, []);
 
-  const dashHref = isAdmin ? "/admin" : "/dashboard";
-  const dashLabel = isAdmin ? "Admin dashboard" : "My dashboard";
+  const dashHref = isAdmin ? "/admin" : PLATFORM_URL;
+  const dashLabel = isAdmin ? "Admin dashboard" : "Open platform";
 
   // On the homepage the bar sits dark over the hero, then turns solid cream after scrolling.
   const dark = isHome && !scrolled && !open;
