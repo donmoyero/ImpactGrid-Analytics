@@ -52,7 +52,7 @@ The platform has its own, separate admin at `platform.impactgridanalytics.com/ad
 
 It also refreshes the signed-in session on `/admin` pages.
 
-Status: this logic still reads the old agency data. How hostname-based suspension works for business websites in the new architecture is an open decision, to be settled during database reconciliation.
+Status: the `site_status_for_host` database function this lookup calls no longer exists, so the check fails open and currently does nothing. Hostname-based suspension for business websites will be rebuilt on the platform's `businesses.status` when website integration is built.
 
 ## Environment variables
 
@@ -88,18 +88,18 @@ app/          Pages and API routes (App Router): public pages, /login, /auth, /a
 components/   Shared UI (nav, footer, home sections, admin nav, sign-out button)
 lib/          Supabase clients, admin check, platform URLs, homepage content, utils
 public/       Static assets
-supabase/     SQL files (see below)
+supabase/     SQL for the Homepage Editor's content table
 middleware.ts Suspension and maintenance enforcement, admin session refresh
 ```
 
 ## Database
 
-Supabase is shared with the platform. The platform's schema is meant to become the canonical one for overlapping business functionality, so this site's old tables are being reconciled rather than extended.
+This site uses the same Supabase project as the platform: one project, one source of truth. The platform's schema is canonical for everything business-related.
 
-The SQL files in `supabase/` are kept as a historical reference of the old agency schema, except `migrations-site-content.sql`, which relates to the Homepage Editor's content table. Do not run the old files against the shared database.
+The only SQL file here is `supabase/migrations-site-content.sql`, which creates the `site_content` table and the `site-media` storage bucket used by the Homepage Editor. The old agency SQL files were removed; they are available in Git history.
 
 ## Status
 
-This repository is being consolidated into one coherent product. The old agency model (Stripe, payments, checkout, invoices, Care Plans, packages, project booking, the customer dashboard and the payment-reminder workflow) has been removed from the code. Its old database tables are untouched and will be handled during database reconciliation.
+This repository is being consolidated into one coherent product. The old agency model (Stripe, payments, checkout, invoices, Care Plans, packages, project booking, the customer dashboard and the payment-reminder workflow) has been removed from the code, and its old database tables and SQL files are gone.
 
 The previous README, which describes that old model, is available in the Git history.
