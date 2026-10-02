@@ -188,7 +188,7 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
 
       <div className="mt-8 rounded-2xl border border-line bg-ink2 p-6">
         <h2 className="font-display text-xl">Page sections</h2>
-        <p className="mt-1 text-sm text-slate">Everything on your homepage, top to bottom. How it works, Services extras and Packages have their own pages now. Move sections with the arrows, delete ones you don&apos;t want, or add more below. Nothing changes on the live site until you press Save.</p>
+        <p className="mt-1 text-sm text-slate">Everything on your homepage, top to bottom. Move sections with the arrows, delete ones you don&apos;t want, or add more below. Nothing changes on the live site until you press Save.</p>
       </div>
 
       {c.blocks.length > 0 && (
