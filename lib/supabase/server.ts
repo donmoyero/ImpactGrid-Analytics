@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cookieOptions } from "@/lib/supabase/cookie";
 
 /**
  * Use inside Server Components, Route Handlers, and Server Actions.
@@ -11,6 +12,7 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions,
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookieOptions } from "@/lib/supabase/cookie";
 
 /**
  * Application-layer enforcement of website suspension and maintenance mode.
@@ -78,6 +79,7 @@ async function refreshSession(req: NextRequest): Promise<NextResponse> {
   if (!url || !anon) return res;
   try {
     const supabase = createServerClient(url, anon, {
+      cookieOptions,
       cookies: {
         getAll: () => req.cookies.getAll(),
         setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
