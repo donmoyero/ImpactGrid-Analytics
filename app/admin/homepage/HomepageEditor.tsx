@@ -47,7 +47,7 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         return (
           <>
         <Field label="Message" value={c.announcement.text} max={140} onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, text: v } }))} />
-        <Field label="Link (optional)" value={c.announcement.href} placeholder="/book-project or https://…" onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, href: v } }))} />
+        <Field label="Link (optional)" value={c.announcement.href} placeholder="/services or https://…" onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, href: v } }))} />
           </>
         );
       case "hero":
@@ -61,7 +61,6 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         <Field label="Description" value={c.hero.sub} max={260} multiline onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, sub: v } }))} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Main button" value={c.hero.primaryLabel} max={30} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, primaryLabel: v } }))} />
-          <Field label="Second link (empty hides it)" value={c.hero.secondaryLabel} max={30} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, secondaryLabel: v } }))} />
         </div>
         <ImageField label="Photo (optional, replaces the 3D animation)" value={c.hero.imageUrl} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, imageUrl: v } }))} />
           </>
@@ -121,19 +120,6 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
             ))}
           </>
         );
-      case "domain":
-        return (
-          <>
-            <Field label="Small label" value={c.domain.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, eyebrow: v } }))} />
-            <Field label="Heading" value={c.domain.heading} max={120} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, heading: v } }))} />
-            <Field label="Text" value={c.domain.text} max={260} multiline onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, text: v } }))} />
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Box label" value={c.domain.label} max={60} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, label: v } }))} />
-              <Field label="Box example" value={c.domain.placeholder} max={60} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, placeholder: v } }))} />
-              <Field label="Button" value={c.domain.button} max={30} onChange={(v) => edit((d) => ({ ...d, domain: { ...d.domain, button: v } }))} />
-            </div>
-          </>
-        );
       case "how":
         return (
           <>
@@ -157,24 +143,6 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
                 <Field label="Example request" value={it.prompt} max={120} onChange={(v) => edit((d) => ({ ...d, ai: { ...d.ai, items: setAt(d.ai.items, i, { prompt: v }) } }))} />
               </div>
             ))}
-          </>
-        );
-      case "careplan":
-        return (
-          <>
-            <Field label="Small label" value={c.careplan.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, eyebrow: v } }))} />
-            <Field label="Heading" value={c.careplan.heading} max={120} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, heading: v } }))} />
-            <Field label="Text (yearly prices are added after it automatically)" value={c.careplan.text} max={260} multiline onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, text: v } }))} />
-            <Field label="Example box title" value={c.careplan.healthTitle} max={40} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, healthTitle: v } }))} />
-            {c.careplan.rows.map((r, i) => (
-              <Row key={i} onRemove={() => edit((d) => ({ ...d, careplan: { ...d.careplan, rows: d.careplan.rows.filter((_, n) => n !== i) } }))}>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Item" value={r.k} max={30} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, rows: setAt(d.careplan.rows, i, { k: v }) } }))} />
-                  <Field label="Status" value={r.v} max={30} onChange={(v) => edit((d) => ({ ...d, careplan: { ...d.careplan, rows: setAt(d.careplan.rows, i, { v }) } }))} />
-                </div>
-              </Row>
-            ))}
-            <Add disabled={c.careplan.rows.length >= LIMITS.health} onClick={() => edit((d) => ({ ...d, careplan: { ...d.careplan, rows: [...d.careplan.rows, { k: "", v: "" }] } }))} label="Add a row" />
           </>
         );
       case "services":
@@ -423,7 +391,7 @@ function WidgetEditor({ block, onChange }: { block: Block; onChange: (patch: Rec
   const button = (
     <div className="grid gap-4 sm:grid-cols-2">
       {F("buttonLabel", "Button text (optional)", 30)}
-      {F("buttonHref", "Button link", 500, { placeholder: "/book-project or https://…" })}
+      {F("buttonHref", "Button link", 500, { placeholder: "/services or https://…" })}
     </div>
   );
   const items = (Array.isArray(b.items) ? b.items : []) as Record<string, string>[];
