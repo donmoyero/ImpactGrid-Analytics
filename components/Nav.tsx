@@ -91,7 +91,7 @@ export default function Nav() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <Link
-            href={signedIn ? dashHref : "/login"}
+            href={signedIn ? dashHref : PLATFORM_LOGIN_URL}
             className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
           >
             {signedIn ? dashLabel : "Sign in"}
@@ -130,7 +130,7 @@ export default function Nav() {
                 {l.label}
               </Link>
             ))}
-            <Link href={signedIn ? dashHref : "/login"} className="text-base" onClick={() => setOpen(false)}>
+            <Link href={signedIn ? dashHref : PLATFORM_LOGIN_URL} className="text-base" onClick={() => setOpen(false)}>
               {signedIn ? dashLabel : "Sign in"}
             </Link>
             {signedIn && <SignOutButton className="text-left text-base" onDone={() => setOpen(false)} />}
