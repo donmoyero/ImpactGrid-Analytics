@@ -1,194 +1,105 @@
-# ImpactGrid Analytics
+# ImpactGrid Analytics - main site
 
-A done-for-you website studio platform: customers pick a
-package, pay online, then your team builds the site.
+The public front door for ImpactGrid. Visitors read about the product here, then sign in or get started on the platform.
 
-Built with Next.js 14 (App Router) + TypeScript + Tailwind CSS + Framer Motion,
-Supabase (auth/DB), and Stripe (payments).
+The business product itself (businesses, customers, staff, services, appointments, products, inventory, website management, settings) lives in a separate repository, `donmoyero/business-platform`, served at `platform.impactgridanalytics.com`.
 
-## 1. Install
+```
+impactgridanalytics.com            this repo: public marketing site
+        |
+  Sign in / Get started
+        |
+        v
+platform.impactgridanalytics.com   business-platform repo: the SaaS product
+        |
+     Supabase                      shared source of truth
+```
+
+Main site = front door. Platform = product. Supabase = source of truth.
+
+Built with Next.js (App Router), TypeScript, Tailwind CSS, Framer Motion and Supabase.
+
+## What this site does
+
+- Public pages: Home, About, Services, Support & FAQ, Contact.
+- Contact form at `/api/contact`, sent through Resend. Without `RESEND_API_KEY` the Contact page shows a plain email link instead.
+- Sign in at `/login` (see below). "Get started" links to the platform's login page.
+- A small admin area at `/admin` with one tool: the Homepage Editor.
+
+This site is not a business dashboard and has no customer accounts. Business users sign in here and are handed to the platform.
+
+## Sign-in flow
+
+1. `/login` signs the user in with email and password, or with Google.
+2. `/auth/callback` exchanges the sign-in code (Google, email confirmation links) for a session.
+3. `/auth/continue` decides where to go next:
+   - users with `is_admin` set on their `profiles` row go to `/admin`
+   - everyone else goes to the platform (`NEXT_PUBLIC_PLATFORM_URL`)
+
+## Admin: Homepage Editor
+
+`/admin/homepage` edits the homepage sections (order, text, links, images). Only users with `profiles.is_admin = true` can open `/admin`.
+
+- Editor UI and save actions: `app/admin/homepage/`
+- Default content and loading logic: `lib/site/content.ts`
+- Saved content is stored in the `site_content` table in Supabase.
+
+The platform has its own, separate admin at `platform.impactgridanalytics.com/admin`.
+
+## Website suspension (middleware)
+
+`middleware.ts` returns HTTP 503 for hostnames that belong to a suspended or maintenance-mode website, before any page runs. It asks Supabase through the `site_status_for_host` function and fails open if that lookup errors. This site's own hosts (localhost, `*.vercel.app`, `impactgridanalytics.com`, anything in `OWN_HOSTS`) are never checked.
+
+It also refreshes the signed-in session on `/admin` pages.
+
+Status: this logic still reads the old agency data. How hostname-based suspension works for business websites in the new architecture is an open decision, to be settled during database reconciliation.
+
+## Environment variables
+
+Copy `.env.example` to `.env.local` and fill in the values.
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase access (admin checks, middleware lookup). Never expose it. |
+| `NEXT_PUBLIC_PLATFORM_URL` | Where the platform lives. Defaults to `https://platform.impactgridanalytics.com`. |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `CONTACT_EMAIL` | Contact form email |
+| `NEXT_PUBLIC_APP_URL` | This site's own URL |
+| `OWN_HOSTS` | Optional. Extra hostnames the suspension check should skip (comma-separated). |
+
+## Run it locally
 
 ```bash
 npm install
-```
-
-## 2. Environment variables
-
-Copy `.env.example` to `.env.local` and fill in your **existing** Supabase and
-Stripe project keys (both already set up on your side):
-
-```bash
-cp .env.example .env.local
-```
-
-Required to run locally:
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
-
-Everything else (Cloudinary, Resend, Google, OpenAI, domain registrar, your
-Render API base) is optional until you wire up that feature — the app runs
-fine without them.
-
-## 3. Database
-
-Run `supabase/schema.sql` against your Supabase project (SQL editor, or via
-the CLI). It creates every table from the spec — `clients`, `projects`,
-`domains`, `orders`, `payments`, `services`, `addons`, `messages`,
-`appointments`, `files`, `tasks`, `notifications` — plus a `profiles` table
-with an `is_admin` flag and Row Level Security policies so clients only see
-their own data while admins see everything.
-
-If you already have some of these tables from another project, review the
-script before running it — it uses `create table if not exists`, so it won't
-overwrite existing tables, but check column names line up.
-
-## 4. Billing: bank transfer build + Stripe Care Plan
-
-- The **website build** is invoiced by **bank transfer** (not through Stripe).
-- The **Care Plan** (hosting, SSL, backups, updates) is a **Stripe subscription**: the customer
-  registers a card and agrees to a yearly debit. The **first year is free** (a 365-day trial), then
-  Stripe charges the card once a year. Yearly prices per package are `carePlanYearly` in
-  `lib/packages.ts` (and mirrored in the API's `lib/catalog.js`).
-- Point a webhook at `/api/webhooks/stripe` (locally: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`)
-  and set `STRIPE_WEBHOOK_SECRET`. Events to send: `checkout.session.completed`,
-  `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
-- On card registration the webhook creates the client, project (build `payment_status = pending`) and order,
-  and emails you (via Resend, if set) to raise the build invoice. Mark the project paid once the transfer lands.
-- Existing database? Run `supabase/migrations-care-plan.sql` once.
-- Existing database? Then also run `supabase/migrations-operations.sql` once (safe to re-run). It adds the payment and
-  Care Plan lifecycle: `care_plans`, `invoices` (with a state machine and `IGA-YYYY-NNNNN` numbering), `payment_reminders`,
-  `websites` + `website_events` (audit log), `business_settings` (bank details for invoices), and the full domain statuses.
-  New installs get all of this from `schema.sql`.
-- `care_plans` is the source of truth for the Care Plan. `projects.care_plan_*` columns are read-only mirrors kept in sync by a trigger.
-- In Stripe: Settings > Billing > Subscriptions and emails, turn on the trial-ending reminder email.
-
-## 5b. Invoices (bank-transfer build fee)
-
-One-time setup, in order:
-1. `npm install pdf-lib` and `npm install -D tsx`
-2. Supabase SQL editor: run `supabase/migrations-invoicing.sql` (new installs get it from `schema.sql`).
-3. Copy `supabase/business-settings.example.sql`, replace every `REPLACE:` value with your real bank details and address, and run it.
-   Bank details are stored admin-only in `business_settings` and injected into each PDF. Invoices refuse to generate while they are missing or placeholders.
-
-Then, from the project folder (needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`):
-
-```
-npx tsx scripts/invoice.ts pending                    what still needs an invoice
-npx tsx scripts/invoice.ts create "ABC Fashion"       issue an invoice (PDF saved to invoices-out\)
-npx tsx scripts/invoice.ts pay IGA-2026-00001 400     record a bank transfer (partial payments supported)
-npx tsx scripts/invoice.ts list
-npx tsx scripts/invoice.ts pdf IGA-2026-00001         re-save the PDF
-```
-
-Recording the final payment marks the invoice paid, the project's build fee paid, and the order paid.
-
-## 5c. Payment suspension system
-
-Invoice chain (a state machine enforced by database triggers, so no code path can skip a step):
-
-```
-issued -> partially_paid -> reminder 1 -> reminder 2 -> final reminder -> overdue
-                                                                            |
-                                              admin sees "SUSPEND WEBSITE" -+-> websites.status = suspended
- full payment (or void) of that invoice  ------------------------------------> website restored automatically
-```
-
-Timing (days after the invoice due date; edit `RULES` in `lib/payments/schedule.ts`): reminder 1 = day 1, reminder 2 = day 8,
-final reminder = day 15, overdue = day 22 (only after the final reminder has actually been sent). One step per run, so a missed
-day never skips a reminder. Reminders go out via Resend from `RESEND_FROM_EMAIL` and state the outstanding balance.
-
-One-time setup:
-1. Supabase SQL editor: run `supabase/migrations-suspension.sql` (after `migrations-operations.sql`).
-2. Set `CRON_SECRET`, `ADMIN_API_KEY`, `SITE_STATUS_TOKEN` (long random strings) in Vercel. `vercel.json` schedules the daily job at 08:00 UTC.
-3. Make sure the client's domain is stored in `domains.domain_name` (or `projects.domain`), because that is how a request is matched to a website.
-
-Day to day:
-
-```
-npx tsx scripts/website.ts queue                 overdue invoices and the action for each (SUSPEND WEBSITE / SUSPENDED)
-npx tsx scripts/website.ts suspend "ABC Fashion" suspend (refused unless an invoice is overdue; --force overrides)
-npx tsx scripts/website.ts restore "ABC Fashion"
-npx tsx scripts/website.ts status abcfashion.co.uk
-npx tsx scripts/website.ts cycle --dry           preview what the reminder job would do
-```
-
-You are also emailed "payment overdue: suspend website?" when an invoice goes overdue. The same actions are available at
-`GET/POST /api/admin/websites` (Bearer `ADMIN_API_KEY`).
-
-**Where suspension is enforced.** In the database (`websites.status`) and at the server: `middleware.ts` returns HTTP 503 for every
-request to a suspended website's hostname, before any page or API route runs. It fails open if the database can't be reached.
-This covers any client domain that is pointed at this app. Client sites hosted elsewhere must check
-`GET /api/site-status?host=<domain>` (Bearer `SITE_STATUS_TOKEN`) at their own server or edge and return 503 when `offline` is true (suspended or maintenance);
-for example in their middleware:
-
-```ts
-const r = await fetch(`https://www.impactgridanalytics.com/api/site-status?host=${host}`, { headers: { Authorization: `Bearer ${process.env.SITE_STATUS_TOKEN}` } });
-if ((await r.json()).offline) return new Response("Temporarily unavailable", { status: 503 }); // suspended or maintenance
-```
-
-Resend only sends the emails; it can't take a site offline, so it isn't part of enforcement.
-
-## 5d. Care Plan expiry
-
-`care_plans` is the source of truth (statuses: trialing, active, past_due, cancelled, expired, suspended); each project mirrors
-`care_plan_status`, `care_plan_start_date`, `care_plan_renewal_date` and `care_plan_price`.
-
-```
-PAST DUE -> grace period (7 days) -> reminder -> final reminder -> website MAINTENANCE MODE
-day 0                  day 7            day 7        day 14              day 21
-```
-
-The database starts the grace period the moment Stripe reports the plan past due. Stripe keeps retrying the card throughout: if it
-succeeds, the plan returns to active, the website comes back automatically and the reminder chain resets. The same daily job as the
-invoice chain (`/api/cron/payment-reminders`) sends the reminders and applies maintenance mode. A site that is suspended (item 21)
-or still being built is never moved into maintenance. A cancelled plan whose paid period has ended becomes `expired` and you are
-emailed; the website is left as it is until you decide.
-
-One-time setup: run `supabase/migrations-care-plan-expiry.sql` (after `migrations-suspension.sql`).
-
-```
-npx tsx scripts/website.ts careplan               all Care Plans:  Active / Renews: 29 September 2027 / £200/year
-npx tsx scripts/website.ts careplan "ABC"         one client, with where a PAST DUE plan is up to
-npx tsx scripts/website.ts maintenance "ABC" on   manual maintenance mode (off to bring it back)
-npx tsx scripts/website.ts cycle --dry            preview both the invoice and Care Plan chains
-```
-
-The same data is at `GET /api/admin/care-plans` (Bearer `ADMIN_API_KEY`). Maintenance is enforced exactly like suspension: `middleware.ts`
-returns HTTP 503 (a "Down for maintenance" page) for that site's hostname.
-
-## 5. Run it
-
-```bash
+copy .env.example .env.local
 npm run dev
 ```
 
-## What works
+Type-check without building:
 
-- Marketing pages: home, services, pricing, about, support, contact
-- Contact form (needs `RESEND_API_KEY`; without it the page shows a plain email link)
-- 7-step project booking flow, Stripe Care Plan checkout (free first year), success page
-- Stripe webhook: on card registration, creates the client, project and order in Supabase, and tracks Care Plan status
+```bash
+npx tsc --noEmit
+```
 
-## Removed until they're real
-
-These were demo-only and have been removed so the site doesn't show anything untrue:
-portfolio (invented clients), domain search (fake availability), client dashboard and
-admin dashboard (demo data, no accounts), client login. Add them back when they are backed
-by real data. The removed code is in your original upload / git history.
-
-## Not built yet
-
-Automatic build invoices, customer welcome emails and an admin web dashboard button for suspension (use the CLI or `/api/admin/websites` for now) (you currently get an admin email and send the invoice yourself), and a real domain registrar lookup.
-
-## Folder structure
+## Project layout
 
 ```
-app/            Pages and API routes (App Router)
-components/     Shared UI components
-lib/            Supabase clients, Stripe client, pricing data, utils
-hooks/          Client-side React hooks
-types/          Shared TypeScript types
-supabase/       Database schema (schema.sql)
-emails/         Email template notes (Resend)
-stripe/         Stripe integration notes
+app/          Pages and API routes (App Router): public pages, /login, /auth, /admin, /api/contact, /api/me
+components/   Shared UI (nav, footer, home sections, admin nav, sign-out button)
+lib/          Supabase clients, admin check, platform URLs, homepage content, utils
+public/       Static assets
+supabase/     SQL files (see below)
+middleware.ts Suspension and maintenance enforcement, admin session refresh
 ```
+
+## Database
+
+Supabase is shared with the platform. The platform's schema is meant to become the canonical one for overlapping business functionality, so this site's old tables are being reconciled rather than extended.
+
+The SQL files in `supabase/` are kept as a historical reference of the old agency schema, except `migrations-site-content.sql`, which relates to the Homepage Editor's content table. Do not run the old files against the shared database.
+
+## Status
+
+This repository is being consolidated into one coherent product. The old agency model (Stripe, payments, checkout, invoices, Care Plans, packages, project booking, the customer dashboard and the payment-reminder workflow) has been removed from the code. Its old database tables are untouched and will be handled during database reconciliation.
+
+The previous README, which describes that old model, is available in the Git history.
