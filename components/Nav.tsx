@@ -7,7 +7,7 @@ import { Menu, X, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import BrandMark from "@/components/BrandMark";
-import SignOutButton from "@/components/dashboard/SignOutButton";
+import SignOutButton from "@/components/SignOutButton";
 import { PLATFORM_LOGIN_URL, PLATFORM_URL } from "@/lib/platform";
 
 const links = [
