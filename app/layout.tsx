@@ -26,7 +26,7 @@ const mono = DM_Mono({
 export const metadata: Metadata = {
   title: "ImpactGrid Analytics — Websites built for you",
   description:
-    "A done-for-you website studio. Pick a package and we design, build, and launch your site, including domain setup. Your first year of care is free.",
+    "Run your business from one place: customers, staff, appointments, products and your own website, built and managed with ImpactGrid Analytics.",
 };
 
 export default function RootLayout({
