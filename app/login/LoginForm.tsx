@@ -16,7 +16,7 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
 
   const callback = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
-  // Full page load so the server sees the fresh session; /auth/continue sends admins to /admin, customers to /dashboard.
+  // Full page load so the server sees the fresh session; /auth/continue sends admins to /admin and everyone else to the platform.
   const goAfterLogin = () => window.location.assign(`/auth/continue?next=${encodeURIComponent(next)}`);
 
   async function google() {
@@ -116,12 +116,6 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
           {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
         </button>
       </form>
-
-      {mode === "signup" && (
-        <p className="mt-4 text-xs text-slateLight">
-          Use the same email you booked your project with and we'll connect your website to your account automatically.
-        </p>
-      )}
     </div>
   );
 }
