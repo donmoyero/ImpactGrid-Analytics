@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/admin/auth";
 import AdminNav from "@/components/admin/AdminNav";
-import SignOutButton from "@/components/dashboard/SignOutButton";
+import SignOutButton from "@/components/SignOutButton";
 import { PLATFORM_URL } from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
