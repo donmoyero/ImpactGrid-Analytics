@@ -8,18 +8,13 @@ export default function AboutPage() {
       <div className="grid items-center gap-12 lg:grid-cols-2">
         <div>
           <p className="label-tag text-slate">About</p>
-          <h1 className="mt-3 font-display text-4xl lg:text-5xl">A studio, not a self-serve tool.</h1>
+          <h1 className="mt-3 font-display text-4xl lg:text-5xl">One place to run your business.</h1>
           <div className="mt-8 space-y-5 text-slate">
             <p>
-              ImpactGrid Analytics is the website studio inside the ImpactGrid
-              ecosystem. Where most page builders hand you a blank canvas and
-              hope for the best, we work the way a good agency always has: you
-              tell us about your business, and we design and build it for you.
+              ImpactGrid Analytics is the business platform inside the ImpactGrid ecosystem. Customers, staff, appointments, products and your own website live in one place, so you spend less time juggling tools and more time running your business.
             </p>
             <p>
-              We keep the studio focused: domains, design, build, and the
-              ongoing care a live site needs. Nothing you don&apos;t need,
-              nothing you have to configure yourself.
+              We keep it focused on what a working business needs. Nothing you don&apos;t need, and nothing you have to piece together yourself.
             </p>
           </div>
         </div>
