@@ -7,8 +7,8 @@ import { Menu, X, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import BrandMark from "@/components/BrandMark";
-import SignOutButton from "@/components/dashboard/SignOutButton";
-import { PLATFORM_LOGIN_URL } from "@/lib/platform";
+import SignOutButton from "@/components/SignOutButton";
+import { PLATFORM_LOGIN_URL, PLATFORM_URL } from "@/lib/platform";
 
 const links = [
   { href: "/services", label: "Services" },
@@ -23,7 +23,7 @@ export default function Nav() {
   const [signedIn, setSignedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Display only: the dashboard and admin pages re-check the session on the server (requireAdmin).
+  // Display only: the admin pages re-check the session on the server (requireAdmin).
   useEffect(() => {
     const supabase = createClient();
     let cancelled = false;
@@ -51,8 +51,8 @@ export default function Nav() {
     };
   }, []);
 
-  const dashHref = isAdmin ? "/admin" : "/dashboard";
-  const dashLabel = isAdmin ? "Admin dashboard" : "My dashboard";
+  const dashHref = isAdmin ? "/admin" : PLATFORM_URL;
+  const dashLabel = isAdmin ? "Admin dashboard" : "Open platform";
 
   // On the homepage the bar sits dark over the hero, then turns solid cream after scrolling.
   const dark = isHome && !scrolled && !open;
@@ -91,7 +91,7 @@ export default function Nav() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <Link
-            href={signedIn ? dashHref : "/login"}
+            href={signedIn ? dashHref : PLATFORM_LOGIN_URL}
             className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
           >
             {signedIn ? dashLabel : "Sign in"}
@@ -130,7 +130,7 @@ export default function Nav() {
                 {l.label}
               </Link>
             ))}
-            <Link href={signedIn ? dashHref : "/login"} className="text-base" onClick={() => setOpen(false)}>
+            <Link href={signedIn ? dashHref : PLATFORM_LOGIN_URL} className="text-base" onClick={() => setOpen(false)}>
               {signedIn ? dashLabel : "Sign in"}
             </Link>
             {signedIn && <SignOutButton className="text-left text-base" onDone={() => setOpen(false)} />}

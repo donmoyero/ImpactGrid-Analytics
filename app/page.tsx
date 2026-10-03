@@ -185,10 +185,6 @@ function renderBlock(b: Block, c: C) {
     case "hero": return <Hero key={b.id} c={c} />;
     case "stats": return <HomeStats key={b.id} stats={c.stats} />;
     case "idea": return <Idea key={b.id} c={c} />;
-    case "domain":
-    case "careplan":
-    case "packages":
-      return null; // retired sections (old package/care-plan model)
     case "how": return <HowItWorks key={b.id} how={c.how} />;
     case "examples": return <Examples key={b.id} />;
     case "platform": return <Platform key={b.id} />;

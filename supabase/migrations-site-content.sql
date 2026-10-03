@@ -13,7 +13,7 @@ create policy "Anyone can read site_content" on public.site_content for select u
 
 drop policy if exists "Admins manage site_content" on public.site_content;
 create policy "Admins manage site_content" on public.site_content
-  for all using (public.is_admin()) with check (public.is_admin());
+  for all using (public.is_platform_admin()) with check (public.is_platform_admin());
 
 -- Public bucket for homepage images (uploads are signed by the server after an admin check).
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

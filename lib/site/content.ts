@@ -1,8 +1,8 @@
 /** Homepage content: types, defaults (= the original copy), validation, and the public read. */
 
 export const BUILTIN_TYPES = [
-  "announcement", "hero", "stats", "idea", "domain", "how", "examples", "platform", "ai",
-  "work", "reviews", "careplan", "services", "packages", "cta",
+  "announcement", "hero", "stats", "idea", "how", "examples", "platform", "ai",
+  "work", "reviews", "services", "cta",
 ] as const;
 export const WIDGET_TYPES = ["text", "imageText", "cards", "faq", "video", "gallery", "banner", "divider"] as const;
 export type BuiltinType = (typeof BUILTIN_TYPES)[number];
@@ -22,16 +22,14 @@ export type Block = { id: string; type: BuiltinType } | ({ id: string } & Widget
 
 export interface HomepageContent {
   announcement: { text: string; href: string };
-  hero: { eyebrow: string; line1: string; line2: string; sub: string; primaryLabel: string; secondaryLabel: string; imageUrl: string };
+  hero: { eyebrow: string; line1: string; line2: string; sub: string; primaryLabel: string; imageUrl: string };
   stats: { value: string; label: string }[];
   work: { title: string; category: string; url: string; imageUrl: string; blurb: string }[];
   reviews: { quote: string; name: string; role: string }[];
   cta: { heading: string; button: string };
   idea: { eyebrow: string; heading: string; items: { title: string; detail: string }[] };
-  domain: { eyebrow: string; heading: string; text: string; label: string; placeholder: string; button: string };
   how: { eyebrow: string; steps: { label: string; detail: string }[] };
   ai: { eyebrow: string; heading: string; items: { area: string; prompt: string }[] };
-  careplan: { eyebrow: string; heading: string; text: string; healthTitle: string; rows: { k: string; v: string }[] };
   services: { eyebrow: string; heading: string; linkLabel: string; items: { name: string; detail: string }[] };
   /** The /services page (separate from the homepage "What we build" section). */
   servicesPage: { eyebrow: string; heading: string; intro: string; items: { name: string; detail: string; imageUrl: string }[] };
@@ -39,13 +37,12 @@ export interface HomepageContent {
   blocks: Block[];
 }
 
-/** A lean homepage. How it works, Domain, Examples, Platform and AI live on their own pages; Packages and Care Plan live on Pricing. */
+/** A lean homepage. How it works, Examples, Platform and AI live on their own pages. */
 export const HOME_DEFAULT: BuiltinType[] = ["announcement", "hero", "stats", "idea", "work", "reviews", "cta"];
 export const DEFAULT_BLOCKS: Block[] = HOME_DEFAULT.map((t) => ({ id: t, type: t }));
 /** Standard sections that also appear on another page, so they can still be edited when they're not on the homepage. */
 export const OTHER_PAGE: Partial<Record<BuiltinType, string>> = {
   how: "How it works page",
-  domain: "How it works page",
   ai: "Services page",
 };
 
@@ -57,7 +54,6 @@ export const DEFAULT_HOMEPAGE: HomepageContent = {
     line2: "Built for the web.",
     sub: "Websites, e-commerce and digital business systems designed around how you actually work.",
     primaryLabel: "Start building",
-    secondaryLabel: "Explore packages",
     imageUrl: "",
   },
   stats: [],
@@ -72,14 +68,6 @@ export const DEFAULT_HOMEPAGE: HomepageContent = {
       { title: "Show us", detail: "Upload a design, screenshot or inspiration." },
       { title: "Draw it", detail: "Sketch your idea and we build the prototype." },
     ],
-  },
-  domain: {
-    eyebrow: "Your domain",
-    heading: "Your website starts with the right address.",
-    text: "Tell us the address you want. We check it and register it as part of your build.",
-    label: "Domain you would like",
-    placeholder: "yourbusiness.co.uk",
-    button: "Continue",
   },
   how: {
     eyebrow: "How it works",
@@ -101,19 +89,6 @@ export const DEFAULT_HOMEPAGE: HomepageContent = {
       { area: "Products", prompt: "Suggest descriptions for these 20 products." },
       { area: "Website", prompt: "Create a new promotional section." },
       { area: "Business", prompt: "Summarise this month's sales." },
-    ],
-  },
-  careplan: {
-    eyebrow: "Care Plan",
-    heading: "Your website stays looked after. First year included.",
-    text: "Hosting, SSL, backups, security updates and monitoring.",
-    healthTitle: "Website health",
-    rows: [
-      { k: "SSL", v: "Protected" },
-      { k: "Hosting", v: "Active" },
-      { k: "Backups", v: "Daily" },
-      { k: "Monitoring", v: "Active" },
-      { k: "Care Plan", v: "Active" },
     ],
   },
   services: {
@@ -141,23 +116,22 @@ export const DEFAULT_HOMEPAGE: HomepageContent = {
       { name: "SEO", detail: "Technical setup and content structure so you're found on Google.", imageUrl: "" },
       { name: "Brand identity", detail: "Logo, palette, and a short guide so everything looks consistent.", imageUrl: "" },
       { name: "Logo design", detail: "A mark that works everywhere — from favicon to signage.", imageUrl: "" },
-      { name: "Care Plan", detail: "Hosting, SSL, backups, monitoring and small edits. First year free, then yearly.", imageUrl: "" },
       { name: "Google Business setup", detail: "A verified, complete listing so you show up on Maps.", imageUrl: "" },
     ],
   },
   blocks: DEFAULT_BLOCKS,
 };
 
-export const LIMITS = { servicesPage: 12, services: 8, health: 8, stats: 4, work: 6, reviews: 6, blocks: 40, cards: 6, faq: 10, gallery: 8 };
+export const LIMITS = { servicesPage: 12, services: 8, stats: 4, work: 6, reviews: 6, blocks: 40, cards: 6, faq: 10, gallery: 8 };
 
 export const BUILTIN_LABELS: Record<BuiltinType, string> = {
   announcement: "Announcement bar", hero: "Top section", stats: "Numbers", idea: "Start with an idea",
-  domain: "Domain search", how: "How it works", examples: "Industry examples", platform: "Business platform",
-  ai: "AI examples", work: "Our work", reviews: "Client reviews", careplan: "Care Plan",
-  services: "What we build", packages: "Packages", cta: "Bottom call to action",
+  how: "How it works", examples: "Industry examples", platform: "Business platform",
+  ai: "AI examples", work: "Our work", reviews: "Client reviews",
+  services: "What we build", cta: "Bottom call to action",
 };
-/** Built-ins whose words you can edit here. Industry examples, Business platform and Packages stay fixed (Packages follows your prices in code). */
-export const EDITABLE_BUILTINS: BuiltinType[] = ["announcement", "hero", "stats", "idea", "domain", "how", "ai", "work", "reviews", "careplan", "services", "cta"];
+/** Built-ins whose words you can edit here. Industry examples and Business platform stay fixed. */
+export const EDITABLE_BUILTINS: BuiltinType[] = ["announcement", "hero", "stats", "idea", "how", "ai", "work", "reviews", "services", "cta"];
 
 export const WIDGET_LABELS: Record<WidgetType, { name: string; hint: string }> = {
   text: { name: "Text", hint: "Heading, paragraph and optional button." },
@@ -280,7 +254,7 @@ export function sanitizeHomepage(input: unknown): HomepageContent {
   const h = obj(i.hero);
   const c = obj(i.cta);
   const sp = obj(i.servicesPage);
-  const id = obj(i.idea), dm = obj(i.domain), hw = obj(i.how), ai = obj(i.ai), cp = obj(i.careplan), sv = obj(i.services);
+  const id = obj(i.idea), hw = obj(i.how), ai = obj(i.ai), sv = obj(i.services);
   const text = opt(a.text, 140);
   return {
     announcement: { text, href: text ? href(a.href) : "" },
@@ -290,7 +264,6 @@ export function sanitizeHomepage(input: unknown): HomepageContent {
       line2: req(h.line2, 60, d.hero.line2),
       sub: req(h.sub, 260, d.hero.sub),
       primaryLabel: req(h.primaryLabel, 30, d.hero.primaryLabel),
-      secondaryLabel: opt(h.secondaryLabel, 30, d.hero.secondaryLabel),
       imageUrl: img(h.imageUrl),
     },
     stats: list(i.stats, LIMITS.stats, (x) => {
@@ -311,28 +284,11 @@ export function sanitizeHomepage(input: unknown): HomepageContent {
       heading: req(id.heading, 120, d.idea.heading),
       items: fixedList(id.items, d.idea.items, { title: 40, detail: 140 }),
     },
-    domain: {
-      eyebrow: opt(dm.eyebrow, 40, d.domain.eyebrow),
-      heading: req(dm.heading, 120, d.domain.heading),
-      text: req(dm.text, 260, d.domain.text),
-      label: req(dm.label, 60, d.domain.label),
-      placeholder: req(dm.placeholder, 60, d.domain.placeholder),
-      button: req(dm.button, 30, d.domain.button),
-    },
     how: { eyebrow: opt(hw.eyebrow, 40, d.how.eyebrow), steps: fixedList(hw.steps, d.how.steps, { label: 24, detail: 140 }) },
     ai: {
       eyebrow: opt(ai.eyebrow, 40, d.ai.eyebrow),
       heading: req(ai.heading, 120, d.ai.heading),
       items: fixedList(ai.items, d.ai.items, { area: 24, prompt: 120 }),
-    },
-    careplan: {
-      eyebrow: opt(cp.eyebrow, 40, d.careplan.eyebrow),
-      heading: req(cp.heading, 120, d.careplan.heading),
-      text: req(cp.text, 260, d.careplan.text),
-      healthTitle: req(cp.healthTitle, 40, d.careplan.healthTitle),
-      rows: Array.isArray(cp.rows)
-        ? list(cp.rows, LIMITS.health, (x) => { const k = opt(x.k, 30), v = opt(x.v, 30); return k && v ? { k, v } : null; })
-        : d.careplan.rows,
     },
     services: {
       eyebrow: opt(sv.eyebrow, 40, d.services.eyebrow),

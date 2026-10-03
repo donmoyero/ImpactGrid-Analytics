@@ -12,7 +12,7 @@ export default function ContactPage() {
       <p className="label-tag text-slate">Contact</p>
       <h1 className="mt-3 font-display text-4xl">Get in touch.</h1>
       <p className="mt-4 text-slate">
-        Have a question before you start a project? Send us a message.
+        Have a question about ImpactGrid Analytics? Send us a message.
       </p>
 
       {formEnabled ? (

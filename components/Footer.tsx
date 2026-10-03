@@ -4,7 +4,7 @@ import { PLATFORM_LOGIN_URL } from "@/lib/platform";
 
 const columns = [
   {
-    title: "Studio",
+    title: "Company",
     links: [
       { href: "/about", label: "About" },
       { href: "/services", label: "Services" },
