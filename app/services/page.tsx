@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Platform, AiSection } from "@/components/HomeSections";
 import { getHomepageContent } from "@/lib/site/content";
-import { PLATFORM_LOGIN_URL } from "@/lib/platform";
+import { LOGIN_URL } from "@/lib/platform";
 
 export const metadata = { title: "Services — ImpactGrid Analytics" };
 export const revalidate = 60; // edited in Admin → Homepage → Services page
@@ -51,7 +51,7 @@ export default async function ServicesPage() {
                     <h2 className="font-display text-2xl leading-tight">{s.name}</h2>
                     {s.detail && <p className="mt-3 flex-1 text-sm leading-relaxed text-slate">{s.detail}</p>}
                     <Link
-                      href={PLATFORM_LOGIN_URL}
+                      href={LOGIN_URL}
                       className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-paper transition-colors hover:text-blueprint2"
                     >
                       Get started
@@ -72,7 +72,7 @@ export default async function ServicesPage() {
         <div className="mx-auto max-w-7xl px-6 py-24 text-center lg:px-10">
           <h2 className="mx-auto max-w-2xl font-display text-3xl lg:text-4xl">{c.cta.heading}</h2>
           <Link
-            href={PLATFORM_LOGIN_URL}
+            href={LOGIN_URL}
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-signal px-7 py-3.5 text-sm font-medium text-ink hover:bg-blueprint2"
           >
             {c.cta.button}

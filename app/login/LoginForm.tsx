@@ -2,17 +2,23 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+
+type Mode = "signin" | "signup";
 
 export default function LoginForm({ next, linkError }: { next: string; linkError: boolean }) {
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(linkError ? "That sign-in link didn't work. Please try again." : null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const callback = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  const qs = next ? `?next=${encodeURIComponent(next)}` : "";
+  const callback = () => `${window.location.origin}/auth/callback${qs}`;
 
-  // Full page load so the server sees the fresh session; /auth/continue sends admins to /admin and everyone else to the platform.
-  const goAfterLogin = () => window.location.assign(`/auth/continue?next=${encodeURIComponent(next)}`);
+  // Full page load so the server sees the fresh session; /auth/continue hands everyone to the platform (or to the validated ?next=).
+  const goAfterLogin = () => window.location.assign(`/auth/continue${qs}`);
 
   async function google() {
     setBusy(true);
@@ -28,15 +34,31 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setNotice(null);
     const supabase = createClient();
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError("Those details didn't match. Please try again.");
-      setBusy(false);
+    if (mode === "signin") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError("Those details didn't match. Please try again.");
+        setBusy(false);
+        return;
+      }
+      goAfterLogin();
       return;
     }
-    goAfterLogin();
+
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: callback() } });
+    setBusy(false);
+    if (error) {
+      setError(error.message.toLowerCase().includes("password") ? "Please choose a stronger password (at least 8 characters)." : "We couldn't create that account. Please try again.");
+      return;
+    }
+    if (data.session) {
+      goAfterLogin();
+    } else {
+      setNotice("Check your email and click the link to finish creating your account.");
+    }
   }
 
   return (
@@ -57,6 +79,21 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
         <span className="h-px flex-1 bg-line" />
       </div>
 
+      <div role="tablist" aria-label="Sign in or create account" className="mb-4 grid grid-cols-2 rounded-full bg-sand p-1 text-sm">
+        {(["signin", "signup"] as Mode[]).map((m) => (
+          <button
+            key={m}
+            role="tab"
+            type="button"
+            aria-selected={mode === m}
+            onClick={() => { setMode(m); setError(null); setNotice(null); }}
+            className={cn("rounded-full py-2 font-medium transition-colors", mode === m ? "bg-ink2 text-paper shadow-sm" : "text-slate")}
+          >
+            {m === "signin" ? "Sign in" : "Create account"}
+          </button>
+        ))}
+      </div>
+
       <form onSubmit={submit} className="space-y-4">
         <label className="block text-sm">
           Email
@@ -68,16 +105,24 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
             className="input mt-1"
             type="password"
             required
-            autoComplete="current-password"
+            minLength={mode === "signup" ? 8 : undefined}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
         {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+        {notice && <p role="status" className="rounded-xl bg-sand px-4 py-3 text-sm">{notice}</p>}
         <button disabled={busy} className="w-full rounded-full bg-signal px-5 py-3 text-sm font-medium text-ink disabled:opacity-60">
-          {busy ? "One moment…" : "Sign in"}
+          {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
         </button>
       </form>
+
+      {mode === "signup" && (
+        <p className="mt-4 text-xs text-slateLight">
+          Business owners are connected to their business by the platform administrator. Customer accounts are connected to the business they belong to.
+        </p>
+      )}
     </div>
   );
 }
