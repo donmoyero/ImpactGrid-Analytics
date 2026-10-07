@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import BrandMark from "@/components/BrandMark";
 import SignOutButton from "@/components/SignOutButton";
-import { PLATFORM_LOGIN_URL, PLATFORM_URL } from "@/lib/platform";
+import { LOGIN_URL, PLATFORM_CONTINUE_URL } from "@/lib/platform";
 
 const links = [
   { href: "/services", label: "Services" },
@@ -51,8 +51,9 @@ export default function Nav() {
     };
   }, []);
 
-  const dashHref = isAdmin ? "/admin" : PLATFORM_URL;
-  const dashLabel = isAdmin ? "Admin dashboard" : "Open platform";
+  // Everyone (owners, admins, staff...) uses the platform; it routes platform admins to its own /admin.
+  const dashHref = PLATFORM_CONTINUE_URL;
+  const dashLabel = "Open platform";
 
   // On the homepage the bar sits dark over the hero, then turns solid cream after scrolling.
   const dark = isHome && !scrolled && !open;
@@ -91,18 +92,23 @@ export default function Nav() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <Link
-            href={signedIn ? dashHref : PLATFORM_LOGIN_URL}
+            href={signedIn ? dashHref : LOGIN_URL}
             className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
           >
             {signedIn ? dashLabel : "Sign in"}
           </Link>
+          {signedIn && isAdmin && (
+            <Link href="/admin" className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}>
+              Edit homepage
+            </Link>
+          )}
           {signedIn && (
             <SignOutButton
               className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
             />
           )}
           <Link
-            href={PLATFORM_LOGIN_URL}
+            href={LOGIN_URL}
             className={cn(
               "group flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-blueprint2 hover:text-white",
               dark ? "bg-white text-paper" : "bg-paper text-ink"
@@ -130,12 +136,17 @@ export default function Nav() {
                 {l.label}
               </Link>
             ))}
-            <Link href={signedIn ? dashHref : PLATFORM_LOGIN_URL} className="text-base" onClick={() => setOpen(false)}>
+            <Link href={signedIn ? dashHref : LOGIN_URL} className="text-base" onClick={() => setOpen(false)}>
               {signedIn ? dashLabel : "Sign in"}
             </Link>
+            {signedIn && isAdmin && (
+              <Link href="/admin" className="text-base" onClick={() => setOpen(false)}>
+                Edit homepage
+              </Link>
+            )}
             {signedIn && <SignOutButton className="text-left text-base" onDone={() => setOpen(false)} />}
             <Link
-              href={PLATFORM_LOGIN_URL}
+              href={LOGIN_URL}
               className="mt-2 rounded-full bg-paper px-4 py-3 text-center text-sm font-medium text-ink"
               onClick={() => setOpen(false)}
             >

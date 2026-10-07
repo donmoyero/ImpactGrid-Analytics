@@ -6,7 +6,7 @@ import { HowItWorks, Examples, Platform, AiSection } from "@/components/HomeSect
 import { getHomepageContent, type Block, type HomepageContent } from "@/lib/site/content";
 import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
 import { Widget } from "@/components/home/HomeWidgets";
-import { PLATFORM_LOGIN_URL } from "@/lib/platform";
+import { LOGIN_URL } from "@/lib/platform";
 
 const IDEA_ICONS = [MessageSquare, Upload, PenLine];
 const SERVICE_ICONS = [LayoutDashboard, ShoppingBag, Palette, Search];
@@ -56,7 +56,7 @@ function Hero({ c }: { c: C }) {
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
-                href={PLATFORM_LOGIN_URL}
+                href={LOGIN_URL}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-paper transition-colors hover:bg-blueprint2 hover:text-white"
               >
                 {c.hero.primaryLabel}
@@ -93,7 +93,7 @@ function Idea({ c }: { c: C }) {
               return (
               <Link
                 key={i.title}
-                href={PLATFORM_LOGIN_URL}
+                href={LOGIN_URL}
                 className="crosshair group rounded-2xl border border-line bg-ink2 p-6 transition-colors hover:border-paper"
               >
                 <div className="flex items-center justify-between">
@@ -167,7 +167,7 @@ function Cta({ c }: { c: C }) {
             {c.cta.heading}
           </h2>
           <Link
-            href={PLATFORM_LOGIN_URL}
+            href={LOGIN_URL}
             className="mt-8 inline-flex items-center gap-2 rounded-full bg-signal px-7 py-3.5 text-sm font-medium text-ink hover:bg-blueprint2"
           >
             {c.cta.button}

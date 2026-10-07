@@ -1,6 +1,6 @@
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
-import { PLATFORM_LOGIN_URL } from "@/lib/platform";
+import { LOGIN_URL } from "@/lib/platform";
 
 const columns = [
   {
@@ -13,7 +13,7 @@ const columns = [
   },
   {
     title: "Platform",
-    links: [{ href: PLATFORM_LOGIN_URL, label: "Get started" }],
+    links: [{ href: LOGIN_URL, label: "Get started" }],
   },
   {
     title: "Help",
