@@ -6,6 +6,7 @@ import { HowItWorks, Examples, Platform, AiSection } from "@/components/HomeSect
 import { getHomepageContent, type Block, type HomepageContent } from "@/lib/site/content";
 import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
 import { Widget } from "@/components/home/HomeWidgets";
+import Showcase, { CtaStrip } from "@/components/home/Showcase";
 import { LOGIN_URL } from "@/lib/platform";
 
 const IDEA_ICONS = [MessageSquare, Upload, PenLine];
@@ -160,27 +161,7 @@ function Services({ c }: { c: C }) {
 }
 
 function Cta({ c }: { c: C }) {
-  void c;
-  return (
-      <section className="px-6 py-20 lg:px-10 lg:py-28">
-        <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-charcoal px-8 py-20 text-center text-white shadow-lift lg:px-16 lg:py-24">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_55%_80%_at_50%_0%,rgba(45,110,219,0.28),transparent),radial-gradient(ellipse_40%_60%_at_100%_100%,rgba(139,92,255,0.16),transparent)]"
-          />
-          <h2 className="relative mx-auto max-w-2xl font-display text-3xl leading-tight lg:text-5xl">
-            {c.cta.heading}
-          </h2>
-          <Link
-            href={LOGIN_URL}
-            className="relative mt-10 inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-paper shadow-[0_10px_30px_-10px_rgba(255,255,255,0.45)] transition-all hover:-translate-y-px hover:bg-blueprint2 hover:text-white"
-          >
-            {c.cta.button}
-            <ArrowUpRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
-  );
+  return <CtaStrip heading={c.cta.heading} button={c.cta.button} />;
 }
 
 
@@ -198,6 +179,7 @@ function renderBlock(b: Block, c: C) {
     case "reviews": return <HomeReviews key={b.id} reviews={c.reviews} />;
     case "services": return <Services key={b.id} c={c} />;
     case "cta": return <Cta key={b.id} c={c} />;
+    case "showcase": return <Showcase key={b.id} />;
     default: return <Widget key={b.id} block={b} />;
   }
 }

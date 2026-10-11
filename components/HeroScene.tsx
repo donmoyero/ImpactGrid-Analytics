@@ -36,7 +36,10 @@ export default function HeroScene() {
     const core = new THREE.Group();
     scene.add(core);
     const edgeMat = new THREE.LineBasicMaterial({ color: 0x5b8cff, transparent: true, opacity: 0.55 });
-    const litMat = new THREE.MeshStandardMaterial({ color: 0x2d6edb, emissive: 0x2d6edb, emissiveIntensity: 1.1, metalness: 0.4, roughness: 0.25 });
+    const logoTex = new THREE.TextureLoader().load("/images/brand-mark.png");
+    logoTex.colorSpace = THREE.SRGBColorSpace;
+    // Lit cubes carry the ImpactGrid Business logo tile on every face
+    const litMat = new THREE.MeshStandardMaterial({ map: logoTex, color: 0xffffff, emissive: 0xffd400, emissiveMap: logoTex, emissiveIntensity: 0.35, metalness: 0.1, roughness: 0.45 });
     const darkMat = new THREE.MeshStandardMaterial({ color: 0x14161d, metalness: 0.8, roughness: 0.3 });
     const cubeGeo = new THREE.BoxGeometry(0.78, 0.78, 0.78);
     const edgeGeo = new THREE.EdgesGeometry(cubeGeo);
@@ -161,7 +164,7 @@ export default function HeroScene() {
       shell.rotation.y = -t * 0.12;
       const spread = 1 + Math.abs(prog - sp) * 5 + Math.sin(t * 1.2) * 0.03 + sp * 0.4;
       cubes.forEach((c) => c.position.copy(c.userData.base).multiplyScalar(spread));
-      litMat.emissiveIntensity = 1 + Math.sin(t * 2) * 0.25;
+      litMat.emissiveIntensity = 0.35 + Math.sin(t * 2) * 0.1;
       key.position.x = 4 + tx * 4;
       key.position.y = 3 - ty * 4;
 
@@ -183,7 +186,7 @@ export default function HeroScene() {
       window.removeEventListener("scroll", onScroll);
       ro.disconnect();
       io.disconnect();
-      [cubeGeo, edgeGeo, ringGeo, shellGeo, pGeo, lGeo, edgeMat, litMat, darkMat, pMat, lMat].forEach((d) => d.dispose());
+      [cubeGeo, edgeGeo, ringGeo, shellGeo, pGeo, lGeo, edgeMat, litMat, darkMat, pMat, lMat, logoTex].forEach((d) => d.dispose());
       renderer.dispose();
       renderer.domElement.remove();
     };

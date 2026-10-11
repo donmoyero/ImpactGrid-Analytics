@@ -69,13 +69,13 @@ export default function Nav() {
     <header
       className={cn(
         "sticky top-0 z-50 border-b backdrop-blur-xl transition-colors duration-300",
-        dark ? "border-white/10 bg-[#0c0d10]/92 text-white" : "border-line/80 bg-ink/85 text-paper shadow-[0_1px_0_rgba(255,255,255,0.6)]"
+        dark ? "border-white/10 bg-[#0c0d10]/90 text-white" : "border-line/80 bg-ink/90 text-paper shadow-[0_1px_0_rgba(255,255,255,0.6)]"
       )}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
         <Link href="/" className="flex items-center gap-2 font-display text-lg tracking-tight">
-          <BrandMark dot={cn("inline-block h-2 w-2 rounded-full", dark ? "bg-blueprint2" : "bg-signal")} />
-          ImpactGrid <span className={dark ? "text-white/60" : "text-slate"}>Analytics</span>
+          <BrandMark />
+          ImpactGrid <span className={dark ? "text-white/60" : "text-slate"}>Business</span>
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">

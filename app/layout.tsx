@@ -24,7 +24,7 @@ const mono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ImpactGrid Analytics — Websites built for you",
+  title: "ImpactGrid Business — Your business, built for the web",
   description:
     "Run your business from one place: customers, staff, appointments, products and your own website, built and managed with ImpactGrid Analytics.",
 };
