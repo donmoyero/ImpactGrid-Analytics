@@ -11,7 +11,6 @@ import SignOutButton from "@/components/SignOutButton";
 import { LOGIN_URL, PLATFORM_CONTINUE_URL } from "@/lib/platform";
 
 const links = [
-  { href: "/services", label: "Services" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -19,7 +18,8 @@ const links = [
 export default function Nav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const isHome = usePathname() === "/";
+  const pathname = usePathname();
+  const isHome = pathname === "/";
   const [signedIn, setSignedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -68,8 +68,8 @@ export default function Nav() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b backdrop-blur transition-colors duration-300",
-        dark ? "border-white/10 bg-[#0c0d10]/80 text-white" : "border-line bg-ink/90 text-paper"
+        "sticky top-0 z-50 border-b backdrop-blur-xl transition-colors duration-300",
+        dark ? "border-white/10 bg-[#0c0d10]/92 text-white" : "border-line/80 bg-ink/85 text-paper shadow-[0_1px_0_rgba(255,255,255,0.6)]"
       )}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
@@ -83,7 +83,8 @@ export default function Nav() {
             <Link
               key={l.href}
               href={l.href}
-              className={cn("label-tag transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
+              aria-current={pathname === l.href ? "page" : undefined}
+              className={cn("label-tag link-underline transition-colors", dark ? "text-white/70 hover:text-white" : "text-slate hover:text-paper")}
             >
               {l.label}
             </Link>
@@ -110,8 +111,8 @@ export default function Nav() {
           <Link
             href={LOGIN_URL}
             className={cn(
-              "group flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-blueprint2 hover:text-white",
-              dark ? "bg-white text-paper" : "bg-paper text-ink"
+              "group flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-medium transition-all hover:-translate-y-px hover:bg-blueprint2 hover:text-white",
+              dark ? "bg-white text-paper shadow-[0_8px_24px_-10px_rgba(255,255,255,0.5)]" : "bg-gradient-to-b from-[#232427] to-paper text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_6px_16px_-6px_rgba(13,13,13,0.5)]"
             )}
           >
             Get started

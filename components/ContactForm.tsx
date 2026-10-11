@@ -27,14 +27,14 @@ export default function ContactForm() {
 
   if (status === "sent") {
     return (
-      <p className="mt-10 rounded-2xl border border-blueprint2 bg-ink2 p-6 text-sm">
+      <p className="rounded-2xl border border-blueprint2 bg-ink2 p-6 text-sm">
         Thanks, your message has been sent. We&apos;ll reply by email.
       </p>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-10 space-y-5">
+    <form onSubmit={onSubmit} className="space-y-5">
       <input name="name" required className="input" placeholder="Your name" />
       <input name="email" required type="email" className="input" placeholder="Email" />
       <textarea name="message" required rows={5} className="input resize-none" placeholder="How can we help?" />
@@ -42,7 +42,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="flex items-center gap-2 rounded-full bg-signal px-6 py-3 text-sm font-medium text-ink hover:bg-blueprint2 disabled:opacity-60"
+        className="btn-premium"
       >
         {status === "sending" && <Loader2 className="h-4 w-4 animate-spin" />}
         Send message

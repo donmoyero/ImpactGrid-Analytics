@@ -47,7 +47,7 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         return (
           <>
         <Field label="Message" value={c.announcement.text} max={140} onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, text: v } }))} />
-        <Field label="Link (optional)" value={c.announcement.href} placeholder="/services or https://…" onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, href: v } }))} />
+        <Field label="Link (optional)" value={c.announcement.href} placeholder="/about or https://…" onChange={(v) => edit((d) => ({ ...d, announcement: { ...d.announcement, href: v } }))} />
           </>
         );
       case "hero":
@@ -150,7 +150,6 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
           <>
             <Field label="Small label" value={c.services.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, services: { ...d.services, eyebrow: v } }))} />
             <Field label="Heading" value={c.services.heading} max={120} onChange={(v) => edit((d) => ({ ...d, services: { ...d.services, heading: v } }))} />
-            <Field label="Link text (goes to the Services page; empty hides it)" value={c.services.linkLabel} max={30} onChange={(v) => edit((d) => ({ ...d, services: { ...d.services, linkLabel: v } }))} />
             {c.services.items.map((it, i) => (
               <Row key={i} onRemove={() => edit((d) => ({ ...d, services: { ...d.services, items: d.services.items.filter((_, n) => n !== i) } }))}>
                 <Field label="Name" value={it.name} max={50} onChange={(v) => edit((d) => ({ ...d, services: { ...d.services, items: setAt(d.services.items, i, { name: v }) } }))} />
@@ -183,10 +182,11 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
 
   return (
     <div className="max-w-3xl pb-28">
-      <h1 className="font-display text-3xl">Homepage</h1>
-      <p className="mt-1 text-slate">Change what visitors see. Sections with nothing in them stay hidden, so nothing looks half-finished.</p>
+      <p className="eyebrow">Admin</p>
+      <h1 className="mt-3 font-display text-4xl tracking-tight">Homepage</h1>
+      <p className="mt-2 max-w-xl text-slate">Change what visitors see. Sections with nothing in them stay hidden, so nothing looks half-finished.</p>
 
-      <div className="mt-8 rounded-2xl border border-line bg-ink2 p-6">
+      <div className="admin-card mt-8 p-6">
         <h2 className="font-display text-xl">Page sections</h2>
         <p className="mt-1 text-sm text-slate">Everything on your homepage, top to bottom. Move sections with the arrows, delete ones you don&apos;t want, or add more below. Nothing changes on the live site until you press Save.</p>
       </div>
@@ -234,28 +234,14 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         </div>
       )}
 
-      <Card title="Services page" hint={`The /services page. Add up to ${LIMITS.servicesPage} services, each with an optional photo. Without a photo a soft placeholder is shown.`}>
-        <Field label="Small label" value={c.servicesPage.eyebrow} max={40} onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, eyebrow: v } }))} />
-        <Field label="Heading" value={c.servicesPage.heading} max={140} onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, heading: v } }))} />
-        <Field label="Intro (optional)" value={c.servicesPage.intro} max={300} multiline onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, intro: v } }))} />
-        {c.servicesPage.items.map((it, i) => (
-          <Row key={i} onRemove={() => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: d.servicesPage.items.filter((_, n) => n !== i) } }))}>
-            <Field label="Service name" value={it.name} max={60} onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: setAt(d.servicesPage.items, i, { name: v }) } }))} />
-            <Field label="Description" value={it.detail} max={200} multiline onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: setAt(d.servicesPage.items, i, { detail: v }) } }))} />
-            <ImageField label="Photo" value={it.imageUrl} onChange={(v) => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: setAt(d.servicesPage.items, i, { imageUrl: v }) } }))} />
-          </Row>
-        ))}
-        <Add disabled={c.servicesPage.items.length >= LIMITS.servicesPage} onClick={() => edit((d) => ({ ...d, servicesPage: { ...d.servicesPage, items: [...d.servicesPage.items, { name: "", detail: "", imageUrl: "" }] } }))} label="Add a service" />
-      </Card>
-
-      <div className="mt-8 rounded-2xl border border-line bg-ink2 p-6">
+      <div className="admin-card mt-8 p-6">
         <h2 className="font-display text-xl">Add a section</h2>
         {missing.length > 0 && (
           <>
             <p className="mt-4 text-sm font-medium">Standard sections you removed</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {missing.map((t) => (
-                <button key={t} type="button" onClick={() => addBlock({ id: t, type: t })} className="rounded-full border border-line2 px-4 py-2 text-sm font-medium hover:bg-sand">+ {BUILTIN_LABELS[t]}</button>
+                <button key={t} type="button" onClick={() => addBlock({ id: t, type: t })} className="btn-ghost-premium !px-4 !py-2">+ {BUILTIN_LABELS[t]}</button>
               ))}
             </div>
           </>
@@ -263,7 +249,7 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         <p className="mt-5 text-sm font-medium">New widgets</p>
         <div className="mt-2 grid gap-3 sm:grid-cols-2">
           {WIDGET_TYPES.map((t) => (
-            <button key={t} type="button" disabled={c.blocks.length >= LIMITS.blocks} onClick={() => addBlock(newWidget(t))} className="rounded-xl border border-line p-4 text-left hover:bg-sand disabled:opacity-40">
+            <button key={t} type="button" disabled={c.blocks.length >= LIMITS.blocks} onClick={() => addBlock(newWidget(t))} className="rounded-xl border border-line bg-ink/60 p-4 text-left transition-colors hover:border-line2 hover:bg-sand disabled:opacity-40">
               <span className="block text-sm font-medium">+ {WIDGET_LABELS[t].name}</span>
               <span className="mt-1 block text-xs text-slate">{WIDGET_LABELS[t].hint}</span>
             </button>
@@ -271,9 +257,9 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/95 px-6 py-3 backdrop-blur lg:left-[230px]">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink/85 px-6 py-3.5 shadow-[0_-12px_30px_-18px_rgba(13,13,13,0.25)] backdrop-blur-xl lg:left-[230px]">
         <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-4">
-          <button onClick={save} disabled={pending || !dirty} className="rounded-full bg-signal px-6 py-2.5 text-sm font-medium text-ink disabled:opacity-50">
+          <button onClick={save} disabled={pending || !dirty} className="btn-premium">
             {pending ? "Saving…" : "Save changes"}
           </button>
           <a href="/" target="_blank" rel="noopener noreferrer" className="text-sm underline">View homepage</a>
@@ -288,7 +274,7 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
 
 function Card({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="mt-8 rounded-2xl border border-line bg-ink2 p-6">
+    <section className="admin-card mt-8 p-6">
       <h2 className="font-display text-xl">{title}</h2>
       {hint && <p className="mt-1 text-sm text-slate">{hint}</p>}
       <div className="mt-5 space-y-4">{children}</div>
@@ -298,7 +284,7 @@ function Card({ title, hint, children }: { title: string; hint?: string; childre
 
 function Row({ children, onRemove }: { children: React.ReactNode; onRemove: () => void }) {
   return (
-    <div className="space-y-4 rounded-xl border border-line p-4">
+    <div className="space-y-4 rounded-xl border border-line bg-ink/60 p-4">
       {children}
       <button type="button" onClick={onRemove} className="text-sm text-red-700 underline">Remove</button>
     </div>
@@ -307,7 +293,7 @@ function Row({ children, onRemove }: { children: React.ReactNode; onRemove: () =
 
 function Add({ onClick, label, disabled }: { onClick: () => void; label: string; disabled: boolean }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className="rounded-full border border-line2 px-4 py-2 text-sm font-medium hover:bg-sand disabled:opacity-40">
+    <button type="button" onClick={onClick} disabled={disabled} className="btn-ghost-premium !px-4 !py-2 disabled:opacity-40">
       {disabled ? "Limit reached" : `+ ${label}`}
     </button>
   );
@@ -365,9 +351,9 @@ function BlockShell({ title, kind, first, last, open, onToggle, onMove, onDelete
   title: string; kind: string; first?: boolean; last?: boolean; open: boolean;
   onToggle: () => void; onMove?: (d: -1 | 1) => void; onDelete?: () => void; children: React.ReactNode;
 }) {
-  const btn = "rounded-full border border-line2 px-3 py-1.5 text-sm hover:bg-sand disabled:opacity-30";
+  const btn = "btn-ghost-premium !px-3 !py-1.5";
   return (
-    <section className="mt-4 rounded-2xl border border-line bg-ink2">
+    <section className="admin-card mt-4 transition-shadow hover:shadow-soft">
       <div className="flex flex-wrap items-center gap-3 p-4">
         <button type="button" onClick={onToggle} aria-expanded={open} className="min-w-0 flex-1 text-left">
           <span className="block font-display text-lg">{title}</span>
@@ -391,7 +377,7 @@ function WidgetEditor({ block, onChange }: { block: Block; onChange: (patch: Rec
   const button = (
     <div className="grid gap-4 sm:grid-cols-2">
       {F("buttonLabel", "Button text (optional)", 30)}
-      {F("buttonHref", "Button link", 500, { placeholder: "/services or https://…" })}
+      {F("buttonHref", "Button link", 500, { placeholder: "/about or https://…" })}
     </div>
   );
   const items = (Array.isArray(b.items) ? b.items : []) as Record<string, string>[];

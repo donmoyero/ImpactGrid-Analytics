@@ -78,6 +78,143 @@ h1, h2, h3, h4 {
   color: #8a8578;
 }
 
+/* ───────────── Premium layer ─────────────
+   Additive polish on top of the base styles above. */
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background-image:
+    radial-gradient(ellipse 70% 38% at 50% -8%, rgba(45, 110, 219, 0.07), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 100% 100%, rgba(139, 92, 255, 0.04), transparent 70%);
+  background-attachment: fixed;
+  text-rendering: optimizeLegibility;
+}
+
+:focus-visible {
+  outline: 2px solid #2d6edb;
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* Eyebrow label with a short rule */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #4a4a4a;
+}
+.eyebrow::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+/* Underline that grows in on hover (nav + footer links) */
+.link-underline {
+  position: relative;
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.link-underline:hover::after,
+.link-underline[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+/* Cards */
+.card-premium {
+  border-radius: 1.25rem;
+  border: 1px solid #e6dfd2;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(13, 13, 13, 0.04), 0 14px 34px -18px rgba(13, 13, 13, 0.16);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.3s, border-color 0.3s;
+}
+.card-premium:hover {
+  transform: translateY(-3px);
+  border-color: #d9d0bf;
+  box-shadow: 0 2px 4px rgba(13, 13, 13, 0.05), 0 26px 50px -22px rgba(13, 13, 13, 0.28);
+}
+
+/* Buttons */
+.btn-premium {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #faf7f2;
+  background: linear-gradient(180deg, #232427 0%, #0d0d0d 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 6px 16px -6px rgba(13, 13, 13, 0.5);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.btn-premium:hover {
+  background: linear-gradient(180deg, #3b7cf0 0%, #2d6edb 100%);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 10px 22px -8px rgba(45, 110, 219, 0.6);
+}
+.btn-premium:disabled {
+  opacity: 0.5;
+  transform: none;
+  cursor: not-allowed;
+}
+.btn-ghost-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  border: 1px solid #d9d0bf;
+  background: #ffffff;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-ghost-premium:hover:not(:disabled) {
+  background: #f3ede3;
+  border-color: #161616;
+}
+.btn-ghost-premium:disabled {
+  opacity: 0.35;
+}
+
+/* Hairline divider with a soft fade at the ends */
+.hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #d9d0bf 20%, #d9d0bf 80%, transparent);
+}
+
+/* Inputs: slightly softer, with a blue focus ring */
+.input:focus {
+  border-color: #2d6edb;
+  box-shadow: 0 0 0 4px rgba(45, 110, 219, 0.12);
+}
+
+/* Admin surface */
+.admin-card {
+  border-radius: 1.25rem;
+  border: 1px solid #e6dfd2;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(13, 13, 13, 0.04), 0 14px 34px -22px rgba(13, 13, 13, 0.18);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.001ms !important;

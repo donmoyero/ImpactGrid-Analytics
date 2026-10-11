@@ -125,10 +125,9 @@ function Services({ c }: { c: C }) {
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-10">
           <div className="flex items-end justify-between">
             <div>
-              {c.services.eyebrow && <p className="label-tag text-slate">{c.services.eyebrow}</p>}
+              {c.services.eyebrow && <p className="eyebrow">{c.services.eyebrow}</p>}
               <h2 className="mt-3 font-display text-3xl lg:text-4xl">{c.services.heading}</h2>
             </div>
-            {c.services.linkLabel && (<Link href="/services" className="hidden text-sm text-slate hover:text-paper md:block">{c.services.linkLabel}</Link>)}
           </div>
 
           <div className="mt-10 grid items-center gap-10 lg:grid-cols-5">
@@ -144,10 +143,12 @@ function Services({ c }: { c: C }) {
               {c.services.items.map((s, n) => {
                 const Icon = SERVICE_ICONS[n % SERVICE_ICONS.length];
                 return (
-                <div key={s.name + n} className="crosshair rounded-2xl border border-line p-6">
-                  <Icon className="h-5 w-5 text-blueprint2" />
-                  <h3 className="mt-4 font-display text-lg">{s.name}</h3>
-                  <p className="mt-2 text-sm text-slate">{s.detail}</p>
+                <div key={s.name + n} className="card-premium p-6">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blueprint2/10 text-blueprint2">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-5 font-display text-lg">{s.name}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate">{s.detail}</p>
                 </div>
                 );
               })}
@@ -161,14 +162,18 @@ function Services({ c }: { c: C }) {
 function Cta({ c }: { c: C }) {
   void c;
   return (
-      <section>
-        <div className="mx-auto max-w-7xl px-6 py-24 text-center lg:px-10">
-          <h2 className="mx-auto max-w-2xl font-display text-3xl lg:text-4xl">
+      <section className="px-6 py-20 lg:px-10 lg:py-28">
+        <div className="relative isolate mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-charcoal px-8 py-20 text-center text-white shadow-lift lg:px-16 lg:py-24">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_55%_80%_at_50%_0%,rgba(45,110,219,0.28),transparent),radial-gradient(ellipse_40%_60%_at_100%_100%,rgba(139,92,255,0.16),transparent)]"
+          />
+          <h2 className="relative mx-auto max-w-2xl font-display text-3xl leading-tight lg:text-5xl">
             {c.cta.heading}
           </h2>
           <Link
             href={LOGIN_URL}
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-signal px-7 py-3.5 text-sm font-medium text-ink hover:bg-blueprint2"
+            className="relative mt-10 inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-paper shadow-[0_10px_30px_-10px_rgba(255,255,255,0.45)] transition-all hover:-translate-y-px hover:bg-blueprint2 hover:text-white"
           >
             {c.cta.button}
             <ArrowUpRight className="h-4 w-4" />

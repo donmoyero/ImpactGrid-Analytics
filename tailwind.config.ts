@@ -22,6 +22,8 @@ const config: Config = {
         signal: "#161616",
         slate: "#4a4a4a",
         slateLight: "#6b6b6b",
+        charcoal: "#0c0d10",
+        charcoal2: "#14161b",
       },
       fontFamily: {
         display: ["var(--font-display)", "serif"],
@@ -31,6 +33,10 @@ const config: Config = {
       backgroundImage: {
         grid: "linear-gradient(rgba(13,13,13,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(13,13,13,0.05) 1px, transparent 1px)",
         gridLight: "linear-gradient(rgba(15,17,21,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(15,17,21,0.05) 1px, transparent 1px)",
+      },
+      boxShadow: {
+        soft: "0 1px 2px rgba(13,13,13,0.04), 0 14px 34px -18px rgba(13,13,13,0.16)",
+        lift: "0 2px 4px rgba(13,13,13,0.05), 0 26px 50px -22px rgba(13,13,13,0.28)",
       },
       backgroundSize: {
         grid: "40px 40px",

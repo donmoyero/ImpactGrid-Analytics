@@ -43,7 +43,6 @@ export const DEFAULT_BLOCKS: Block[] = HOME_DEFAULT.map((t) => ({ id: t, type: t
 /** Standard sections that also appear on another page, so they can still be edited when they're not on the homepage. */
 export const OTHER_PAGE: Partial<Record<BuiltinType, string>> = {
   how: "How it works page",
-  ai: "Services page",
 };
 
 export const DEFAULT_HOMEPAGE: HomepageContent = {
@@ -94,7 +93,7 @@ export const DEFAULT_HOMEPAGE: HomepageContent = {
   services: {
     eyebrow: "What we build",
     heading: "One studio, every piece of your web presence.",
-    linkLabel: "All services →",
+    linkLabel: "",
     items: [
       { name: "Business websites", detail: "Clean, fast sites that convert visitors into enquiries." },
       { name: "E-commerce & booking", detail: "Sell products or take bookings without the friction." },
