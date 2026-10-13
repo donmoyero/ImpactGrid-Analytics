@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, Palette, Search, ShoppingBag, LayoutDashboard, MessageSquare, Upload, PenLine } from "lucide-react";
-import HeroScene from "@/components/HeroScene";
+import HeroVideo from "@/components/HeroVideo";
 import { HowItWorks, Examples, Platform, AiSection } from "@/components/HomeSections";
 import { getHomepageContent, type Block, type HomepageContent } from "@/lib/site/content";
 import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
@@ -35,6 +35,7 @@ function Hero({ c }: { c: C }) {
   void c;
   return (
       <section className="relative isolate overflow-hidden border-b border-line bg-[#0c0d10] text-white">
+        <HeroVideo sources={c.hero.videos} />
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_75%_40%,rgba(45,110,219,0.18),transparent)]"
@@ -67,16 +68,14 @@ function Hero({ c }: { c: C }) {
           </div>
         </div>
 
-        <div className="relative z-0 h-72 sm:h-96 lg:absolute lg:inset-0 lg:h-auto">
-          {c.hero.imageUrl ? (
+        {!c.hero.videos.length && c.hero.imageUrl && (
+          <div className="relative z-0 h-72 sm:h-96 lg:absolute lg:inset-0 lg:h-auto">
             <div className="flex h-full items-center justify-center px-6 lg:justify-end lg:pr-10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={c.hero.imageUrl} alt="" className="max-h-full w-full max-w-xl rounded-3xl object-cover shadow-2xl lg:max-h-[75%]" />
             </div>
-          ) : (
-            <HeroScene />
-          )}
-        </div>
+          </div>
+        )}
       </section>
   );
 }

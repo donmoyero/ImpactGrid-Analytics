@@ -22,7 +22,7 @@ export type Block = { id: string; type: BuiltinType } | ({ id: string } & Widget
 
 export interface HomepageContent {
   announcement: { text: string; href: string };
-  hero: { eyebrow: string; line1: string; line2: string; sub: string; primaryLabel: string; imageUrl: string };
+  hero: { eyebrow: string; line1: string; line2: string; sub: string; primaryLabel: string; imageUrl: string; videos: string[] };
   stats: { value: string; label: string }[];
   work: { title: string; category: string; url: string; imageUrl: string; blurb: string }[];
   reviews: { quote: string; name: string; role: string }[];
@@ -54,6 +54,7 @@ export const DEFAULT_HOMEPAGE: HomepageContent = {
     sub: "Websites, e-commerce and digital business systems designed around how you actually work.",
     primaryLabel: "Get started",
     imageUrl: "",
+    videos: [],
   },
   stats: [],
   work: [],
@@ -169,6 +170,11 @@ const img = (v: unknown) => {
   const t = opt(v, 600);
   return /^https:\/\//i.test(t) ? t : "";
 };
+/** Background video: an https link or a file on this site (e.g. /videos/art-1.mp4). Anything else is dropped. */
+const videoSrc = (v: unknown) => {
+  const t = opt(v, 600);
+  return /^https:\/\//i.test(t) || (t.startsWith("/") && !t.startsWith("//")) ? t : "";
+};
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 function list<T>(v: unknown, max: number, map: (x: Record<string, unknown>) => T | null): T[] {
   if (!Array.isArray(v)) return [];
@@ -265,6 +271,7 @@ export function sanitizeHomepage(input: unknown): HomepageContent {
       sub: req(h.sub, 260, d.hero.sub),
       primaryLabel: req(h.primaryLabel, 30, d.hero.primaryLabel),
       imageUrl: img(h.imageUrl),
+      videos: (Array.isArray(h.videos) ? h.videos : []).slice(0, 6).map((v) => videoSrc(v)).filter(Boolean),
     },
     stats: list(i.stats, LIMITS.stats, (x) => {
       const value = opt(x.value, 16), label = opt(x.label, 50);

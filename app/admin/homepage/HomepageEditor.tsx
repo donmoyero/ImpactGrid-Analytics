@@ -62,7 +62,8 @@ export default function HomepageEditor({ initial }: { initial: HomepageContent }
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Main button" value={c.hero.primaryLabel} max={30} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, primaryLabel: v } }))} />
         </div>
-        <ImageField label="Photo (optional, replaces the 3D animation)" value={c.hero.imageUrl} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, imageUrl: v } }))} />
+        <Field label="Background videos (one link per line, up to 6, they play in order and loop)" value={c.hero.videos.join("\n")} max={3600} multiline placeholder={"https://res.cloudinary.com/.../art-1.mp4\n/videos/art-2.mp4"} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, videos: v.split("\n").slice(0, 6) } }))} />
+        <ImageField label="Photo (optional, only used when there are no videos)" value={c.hero.imageUrl} onChange={(v) => edit((d) => ({ ...d, hero: { ...d.hero, imageUrl: v } }))} />
           </>
         );
       case "stats":
