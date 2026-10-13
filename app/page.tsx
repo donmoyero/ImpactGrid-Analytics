@@ -8,6 +8,7 @@ import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
 import { Widget } from "@/components/home/HomeWidgets";
 import Showcase, { CtaStrip } from "@/components/home/Showcase";
 import { GET_STARTED_URL, LOGIN_URL } from "@/lib/platform";
+import { getArtVideos } from "@/lib/pexels";
 
 const IDEA_ICONS = [MessageSquare, Upload, PenLine];
 const SERVICE_ICONS = [LayoutDashboard, ShoppingBag, Palette, Search];
@@ -31,7 +32,7 @@ function Announcement({ c }: { c: C }) {
   );
 }
 
-function Hero({ c }: { c: C }) {
+function Hero({ c, credit }: { c: C; credit?: boolean }) {
   void c;
   return (
       <section className="relative isolate overflow-hidden border-b border-line bg-[#0c0d10] text-white">
@@ -68,6 +69,16 @@ function Hero({ c }: { c: C }) {
           </div>
         </div>
 
+        {credit && (
+          <a
+            href="https://www.pexels.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-4 right-6 z-10 text-xs text-white/60 hover:text-white lg:right-10"
+          >
+            Videos by Pexels
+          </a>
+        )}
         {!c.hero.videos.length && c.hero.imageUrl && (
           <div className="relative z-0 h-72 sm:h-96 lg:absolute lg:inset-0 lg:h-auto">
             <div className="flex h-full items-center justify-center px-6 lg:justify-end lg:pr-10">
@@ -164,10 +175,10 @@ function Cta({ c }: { c: C }) {
 }
 
 
-function renderBlock(b: Block, c: C) {
+function renderBlock(b: Block, c: C, credit = false) {
   switch (b.type) {
     case "announcement": return <Announcement key={b.id} c={c} />;
-    case "hero": return <Hero key={b.id} c={c} />;
+    case "hero": return <Hero key={b.id} c={c} credit={credit} />;
     case "stats": return <HomeStats key={b.id} stats={c.stats} />;
     case "idea": return <Idea key={b.id} c={c} />;
     case "how": return <HowItWorks key={b.id} how={c.how} />;
@@ -185,5 +196,8 @@ function renderBlock(b: Block, c: C) {
 
 export default async function Home() {
   const c = await getHomepageContent();
-  return <main>{c.blocks.map((b) => renderBlock(b, c))}</main>;
+  // Videos you paste in /admin win. Otherwise the hero plays free art videos from Pexels (needs PEXELS_API_KEY).
+  const stock = c.hero.videos.length ? [] : await getArtVideos();
+  const shown: C = stock.length ? { ...c, hero: { ...c.hero, videos: stock } } : c;
+  return <main>{shown.blocks.map((b) => renderBlock(b, shown, stock.length > 0))}</main>;
 }
