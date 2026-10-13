@@ -1,0 +1,10 @@
+Drop 4 photos from pexels.com into this folder, named exactly:
+
+  topic.jpg    step 1 (right side)   portrait, e.g. search "small business owner laptop window"
+  goal.jpg     step 2 (right side)   portrait, e.g. search "hairdresser salon" or "barber shop interior"
+  account.jpg  step 4 (right side)   portrait, e.g. search "entrepreneur portrait studio"
+  preview.jpg  step 3 (website preview, also blurred behind it)   landscape, e.g. search "restaurant interior" or "salon interior"
+
+Tips: portrait photos about 1200 x 1800, landscape about 1800 x 1200, JPEG, under 400 KB each.
+Pexels photos are free to use commercially; credit is optional.
+Until a photo is added, a warm gradient shows in its place, so nothing looks broken.

@@ -26,3 +26,35 @@ test("buildStartUrl with no answers is still a valid platform URL, and is an acc
   assert.equal(buildStartUrl({}), `${PLATFORM_URL}/start`);
   assert.equal(safeDestination(buildStartUrl({ name: "Acme", goal: "team" })), buildStartUrl({ name: "Acme", goal: "team" }));
 });
+
+test("stepUrl: one page per step, carrying only clean answers", async () => {
+  const { stepUrl, STEPS } = await import("../lib/onboarding");
+  assert.equal(STEPS.length, 4);
+  assert.equal(stepUrl(0, {}), "/get-started");
+  assert.equal(stepUrl(1, { type: "Barber shop" }), "/get-started/goal?type=Barber+shop");
+  assert.equal(stepUrl(3, { type: "Barber shop", goal: "bookings", name: "Joe & Sons" }), "/get-started/account?type=Barber+shop&goal=bookings&name=Joe+%26+Sons");
+  assert.equal(stepUrl(2, { goal: "hack" }), "/get-started/name");
+  assert.equal(stepUrl(99, {}), "/get-started/account");
+  assert.equal(stepUrl(-5, {}), "/get-started");
+});
+
+test("answersFromParams and firstMissingStep send people back to what is missing", async () => {
+  const { answersFromParams, firstMissingStep } = await import("../lib/onboarding");
+  const a = answersFromParams({ type: ["Barber shop", "x"], goal: "bookings", name: undefined });
+  assert.deepEqual(a, { name: "", type: "Barber shop", goal: "bookings" });
+  assert.equal(firstMissingStep(0, {}), null);
+  assert.equal(firstMissingStep(1, {}), 0);
+  assert.equal(firstMissingStep(2, { type: "Cafe" }), 1);
+  assert.equal(firstMissingStep(3, { type: "Cafe", goal: "team" }), 2);
+  assert.equal(firstMissingStep(3, { type: "Cafe", goal: "team", name: "A" }), 2);
+  assert.equal(firstMissingStep(3, { type: "Cafe", goal: "team", name: "Ab" }), null);
+});
+
+test("previewCopy follows the goal and never needs a name", async () => {
+  const { previewCopy } = await import("../lib/onboarding");
+  assert.equal(previewCopy({}).title, "Your business");
+  assert.equal(previewCopy({ goal: "bookings", name: "Joe" }).cta, "Book now");
+  assert.equal(previewCopy({ goal: "products" }).links[0], "Shop");
+  assert.equal(previewCopy({ goal: "website", name: "Joe" }).headline, "Welcome to Joe");
+  assert.equal(previewCopy({ type: "Barber shop" }).sub, "Barber shop");
+});

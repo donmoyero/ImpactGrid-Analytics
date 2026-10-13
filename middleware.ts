@@ -32,4 +32,4 @@ export async function middleware(req: NextRequest) {
 }
 
 // Only the pages that read the session on the server.
-export const config = { matcher: ["/admin/:path*", "/login", "/get-started", "/auth/:path*"] };
+export const config = { matcher: ["/admin/:path*", "/login", "/get-started/:path*", "/auth/:path*"] };
