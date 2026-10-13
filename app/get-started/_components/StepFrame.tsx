@@ -106,6 +106,16 @@ export function Split({ step, title, subtitle, children }: { step: number; title
   );
 }
 
+const ROW = "flex items-start gap-4 bg-[#f6f4f0] px-5 py-4 text-left text-sm transition-colors hover:bg-[#eeebe4]";
+
+function Tick({ selected }: { selected: boolean }) {
+  return (
+    <span className={cn("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border", selected ? "border-paper bg-paper text-white" : "border-slateLight bg-white")}>
+      {selected && <Check className="h-3 w-3" />}
+    </span>
+  );
+}
+
 /** A list of single-choice rows, drawn as boxes you tick. */
 export function OptionList<T extends string>({ options, value, onChange, label }: { options: { id: T; label: string; hint?: string }[]; value: string; onChange: (id: T) => void; label: string }) {
   return (
@@ -113,21 +123,29 @@ export function OptionList<T extends string>({ options, value, onChange, label }
       {options.map((o) => {
         const selected = value === o.id;
         return (
-          <button
-            key={o.id}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onChange(o.id)}
-            className={cn("flex items-start gap-4 bg-[#f6f4f0] px-5 py-4 text-left text-sm transition-colors hover:bg-[#eeebe4]", selected && "bg-[#ece8df] ring-1 ring-paper")}
-          >
-            <span className={cn("mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border", selected ? "border-paper bg-paper text-white" : "border-slateLight bg-white")}>
-              {selected && <Check className="h-3 w-3" />}
-            </span>
+          <button key={o.id} type="button" role="radio" aria-checked={selected} onClick={() => onChange(o.id)} className={cn(ROW, selected && "bg-[#ece8df] ring-1 ring-paper")}>
+            <Tick selected={selected} />
             <span>
               <span className="block">{o.label}</span>
               {o.hint && <span className="mt-0.5 block text-xs text-slateLight">{o.hint}</span>}
             </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** A list of rows where any number can be ticked. */
+export function CheckList({ options, value, onToggle, label }: { options: readonly { id: string; label: string }[]; value: readonly string[]; onToggle: (id: string) => void; label: string }) {
+  return (
+    <div role="group" aria-label={label} className="grid gap-2.5 sm:grid-cols-2">
+      {options.map((o) => {
+        const selected = value.includes(o.id);
+        return (
+          <button key={o.id} type="button" role="checkbox" aria-checked={selected} onClick={() => onToggle(o.id)} className={cn(ROW, "items-center", selected && "bg-[#ece8df] ring-1 ring-paper")}>
+            <Tick selected={selected} />
+            <span>{o.label}</span>
           </button>
         );
       })}
