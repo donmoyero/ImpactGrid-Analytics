@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { LOGIN_URL } from "@/lib/platform";
+import { GET_STARTED_URL } from "@/lib/platform";
 
 type Card = {
   kind: string;
@@ -158,7 +158,7 @@ export function CtaStrip({ heading, button }: { heading: string; button: string 
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-5 px-6 py-10 text-center sm:flex-row sm:gap-8 lg:px-10">
         <h2 className="font-display text-xl sm:text-2xl">{heading}</h2>
         <Link
-          href={LOGIN_URL}
+          href={GET_STARTED_URL}
           className="inline-flex items-center gap-2 rounded-full bg-charcoal px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blueprint2"
         >
           {button}

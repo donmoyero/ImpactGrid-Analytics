@@ -7,7 +7,7 @@ import { getHomepageContent, type Block, type HomepageContent } from "@/lib/site
 import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
 import { Widget } from "@/components/home/HomeWidgets";
 import Showcase, { CtaStrip } from "@/components/home/Showcase";
-import { LOGIN_URL } from "@/lib/platform";
+import { GET_STARTED_URL, LOGIN_URL } from "@/lib/platform";
 
 const IDEA_ICONS = [MessageSquare, Upload, PenLine];
 const SERVICE_ICONS = [LayoutDashboard, ShoppingBag, Palette, Search];
@@ -57,7 +57,7 @@ function Hero({ c }: { c: C }) {
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Link
-                href={LOGIN_URL}
+                href={GET_STARTED_URL}
                 className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-medium text-paper transition-colors hover:bg-blueprint2 hover:text-white"
               >
                 {c.hero.primaryLabel}
