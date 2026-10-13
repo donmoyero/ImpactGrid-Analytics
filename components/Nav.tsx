@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import BrandMark from "@/components/BrandMark";
 import SignOutButton from "@/components/SignOutButton";
-import { LOGIN_URL, PLATFORM_CONTINUE_URL } from "@/lib/platform";
+import { GET_STARTED_URL, LOGIN_URL, PLATFORM_CONTINUE_URL } from "@/lib/platform";
 
 const links = [
   { href: "/about", label: "About" },
@@ -109,7 +109,7 @@ export default function Nav() {
             />
           )}
           <Link
-            href={LOGIN_URL}
+            href={GET_STARTED_URL}
             className={cn(
               "group flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-medium transition-all hover:-translate-y-px hover:bg-blueprint2 hover:text-white",
               dark ? "bg-white text-paper shadow-[0_8px_24px_-10px_rgba(255,255,255,0.5)]" : "bg-gradient-to-b from-[#232427] to-paper text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_6px_16px_-6px_rgba(13,13,13,0.5)]"
@@ -147,7 +147,7 @@ export default function Nav() {
             )}
             {signedIn && <SignOutButton className="text-left text-base" onDone={() => setOpen(false)} />}
             <Link
-              href={LOGIN_URL}
+              href={GET_STARTED_URL}
               className="mt-2 rounded-full bg-paper px-4 py-3 text-center text-sm font-medium text-ink"
               onClick={() => setOpen(false)}
             >

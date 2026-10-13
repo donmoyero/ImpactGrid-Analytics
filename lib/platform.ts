@@ -10,6 +10,9 @@ export const PLATFORM_URL = (process.env.NEXT_PUBLIC_PLATFORM_URL || "https://pl
 /** The main site's own sign-in / create-account page. */
 export const LOGIN_URL = "/login";
 
+/** The "Get started" questions, then account creation, then the platform creates the business. Every Get started button points here. */
+export const GET_STARTED_URL = "/get-started";
+
 /**
  * Where a signed-in person goes to use the platform. The platform's /auth/continue decides the rest
  * (platform admins -> /admin, everyone else -> /dashboard).

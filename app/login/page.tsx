@@ -6,7 +6,7 @@ import { safeDestination } from "@/lib/platform";
 export const metadata = { title: "Sign in | ImpactGrid Analytics", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage({ searchParams }: { searchParams: { next?: string; error?: string } }) {
+export default async function LoginPage({ searchParams }: { searchParams: { next?: string; error?: string; mode?: string } }) {
   // "" means "no particular destination": after sign-in the platform decides where this person belongs.
   const next = safeDestination(searchParams.next) ?? "";
 
@@ -17,7 +17,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { next
     <main className="mx-auto max-w-md px-6 py-20">
       <h1 className="font-display text-3xl md:text-4xl">Sign in to ImpactGrid</h1>
       <p className="mt-2 text-slate">One account for your business, your team and your website.</p>
-      <LoginForm next={next} linkError={searchParams.error === "1"} />
+      <LoginForm next={next} linkError={searchParams.error === "1"} initialMode={searchParams.mode === "signup" ? "signup" : "signin"} />
     </main>
   );
 }
