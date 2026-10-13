@@ -5,7 +5,7 @@ export const metadata = { title: "Support & FAQ — ImpactGrid Analytics" };
 const faqs = [
   {
     q: "How do I get started?",
-    a: "Choose Get started, create an account and sign in. Once your account is approved and linked to your business, you will see your business dashboard.",
+    a: "Choose Get started, answer a few quick questions and create your account. You get your own business dashboard straight away, with no approval needed. If you were invited to an existing business, sign in with the email address on the invitation instead.",
   },
   {
     q: "Can I add my team?",

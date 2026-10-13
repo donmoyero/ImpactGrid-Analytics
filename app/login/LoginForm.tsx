@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 
 type Mode = "signin" | "signup";
 
-export default function LoginForm({ next, linkError }: { next: string; linkError: boolean }) {
-  const [mode, setMode] = useState<Mode>("signin");
+export default function LoginForm({ next, linkError, initialMode = "signin" }: { next: string; linkError: boolean; initialMode?: Mode }) {
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(linkError ? "That sign-in link didn't work. Please try again." : null);
@@ -120,7 +120,7 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
 
       {mode === "signup" && (
         <p className="mt-4 text-xs text-slateLight">
-          Business owners are connected to their business by the platform administrator. Customer accounts are connected to the business they belong to.
+          Starting a business? Use Get started and you will have your own dashboard straight away. If you were invited to a business, sign up with the email address on the invitation.
         </p>
       )}
     </div>
