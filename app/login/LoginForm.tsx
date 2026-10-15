@@ -1,24 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useRef, useState } from "react";
+import { ChevronLeft, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
+import { AUTH_BTN, AUTH_SUBMIT, GoogleG } from "@/components/auth/AuthParts";
 
-type Mode = "signin" | "signup";
-
-export default function LoginForm({ next, linkError, initialMode = "signin" }: { next: string; linkError: boolean; initialMode?: Mode }) {
-  const [mode, setMode] = useState<Mode>(initialMode);
+/**
+ * Sign in for people who ALREADY have an account: Google, or email + password. Same layout as the last step of
+ * Get started ("Create Your Account"), but it only signs in. Creating an account happens in Get started.
+ */
+export default function LoginForm({ next, linkError }: { next: string; linkError: boolean }) {
+  const [manual, setManual] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(linkError ? "That sign-in link didn't work. Please try again." : null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(linkError ? "That sign-in link didn't work. Please try again." : null);
+  const emailRef = useRef<HTMLInputElement>(null);
 
   const qs = next ? `?next=${encodeURIComponent(next)}` : "";
   const callback = () => `${window.location.origin}/auth/callback${qs}`;
 
-  // Full page load so the server sees the fresh session; /auth/continue hands everyone to the platform (or to the validated ?next=).
-  const goAfterLogin = () => window.location.assign(`/auth/continue${qs}`);
+  function openManual() {
+    setManual(true);
+    setTimeout(() => emailRef.current?.focus(), 0);
+  }
 
   async function google() {
     setBusy(true);
@@ -30,110 +36,67 @@ export default function LoginForm({ next, linkError, initialMode = "signin" }: {
     }
   }
 
-  async function submit(e: React.FormEvent) {
+  async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    setNotice(null);
-    const supabase = createClient();
-
-    if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setError("Those details didn't match. Please try again.");
-        setBusy(false);
-        return;
-      }
-      goAfterLogin();
-      return;
-    }
-
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: callback() } });
-    setBusy(false);
+    const { error } = await createClient().auth.signInWithPassword({ email, password });
     if (error) {
-      setError(error.message.toLowerCase().includes("password") ? "Please choose a stronger password (at least 8 characters)." : "We couldn't create that account. Please try again.");
+      setError("Those details didn't match. Please try again.");
+      setBusy(false);
       return;
     }
-    if (data.session) {
-      goAfterLogin();
-    } else {
-      setNotice("Check your email and click the link to finish creating your account.");
-    }
+    // Full page load so the server sees the fresh session; /auth/continue hands them to the platform (or the validated ?next=).
+    window.location.assign(`/auth/continue${qs}`);
   }
 
   return (
-    <div className="mt-8">
-      <button
-        type="button"
-        onClick={google}
-        disabled={busy}
-        className="flex w-full items-center justify-center gap-3 rounded-full border border-line2 bg-ink2 px-5 py-3 text-sm font-medium text-paper transition-colors hover:bg-sand disabled:opacity-60"
-      >
-        <GoogleG />
-        Continue with Google
-      </button>
+    <div className="flex h-full flex-col">
+      <header className="flex h-16 shrink-0 items-center justify-between px-6 sm:px-8">
+        <Link href="/" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider hover:opacity-70">
+          <ChevronLeft className="h-4 w-4" /> Back
+        </Link>
+        <Link href="/get-started" className="text-xs font-medium uppercase tracking-wider hover:opacity-70">Get started</Link>
+      </header>
 
-      <div className="my-6 flex items-center gap-3 text-xs text-slateLight" aria-hidden>
-        <span className="h-px flex-1 bg-line" />
-        or use your email
-        <span className="h-px flex-1 bg-line" />
-      </div>
+      <main className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 pb-16">
+        <div className="w-full max-w-[342px] text-center">
+          <h1 className="font-display text-2xl font-semibold">Welcome Back</h1>
+          <p className="mt-3 text-sm text-slate">Sign in to your ImpactGrid account.</p>
 
-      <div role="tablist" aria-label="Sign in or create account" className="mb-4 grid grid-cols-2 rounded-full bg-sand p-1 text-sm">
-        {(["signin", "signup"] as Mode[]).map((m) => (
-          <button
-            key={m}
-            role="tab"
-            type="button"
-            aria-selected={mode === m}
-            onClick={() => { setMode(m); setError(null); setNotice(null); }}
-            className={cn("rounded-full py-2 font-medium transition-colors", mode === m ? "bg-ink2 text-paper shadow-sm" : "text-slate")}
-          >
-            {m === "signin" ? "Sign in" : "Create account"}
-          </button>
-        ))}
-      </div>
+          <div className="mt-8 space-y-[11px]">
+            <button type="button" onClick={google} disabled={busy} className={AUTH_BTN}>
+              <GoogleG />
+              <span className="flex-1 pr-[18px]">Sign in with Google</span>
+            </button>
+            <button type="button" onClick={openManual} disabled={busy} className={AUTH_BTN} aria-expanded={manual}>
+              <Mail className="h-[18px] w-[18px]" aria-hidden />
+              <span className="flex-1 pr-[18px]">Sign in with Email</span>
+            </button>
+          </div>
 
-      <form onSubmit={submit} className="space-y-4">
-        <label className="block text-sm">
-          Email
-          <input className="input mt-1" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <label className="block text-sm">
-          Password
-          <input
-            className="input mt-1"
-            type="password"
-            required
-            minLength={mode === "signup" ? 8 : undefined}
-            autoComplete={mode === "signup" ? "new-password" : "current-password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-        {notice && <p role="status" className="rounded-xl bg-sand px-4 py-3 text-sm">{notice}</p>}
-        <button disabled={busy} className="w-full rounded-full bg-signal px-5 py-3 text-sm font-medium text-ink disabled:opacity-60">
-          {busy ? "One moment…" : mode === "signin" ? "Sign in" : "Create account"}
-        </button>
-      </form>
+          {manual && (
+            <form onSubmit={signIn} className="mt-8 space-y-4 text-left">
+              <label className="block text-sm">
+                Email
+                <input ref={emailRef} className="input mt-1" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </label>
+              <label className="block text-sm">
+                Password
+                <input className="input mt-1" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              </label>
+              <button disabled={busy} className={AUTH_SUBMIT}>{busy ? "One moment…" : "Sign in"}</button>
+            </form>
+          )}
 
-      {mode === "signup" && (
-        <p className="mt-4 text-xs text-slateLight">
-          Starting a business? Use Get started and you will have your own dashboard straight away. If you were invited to a business, sign up with the email address on the invitation.
-        </p>
-      )}
+          {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
+
+          <p className="mt-8 text-sm text-slate">
+            New to ImpactGrid?{" "}
+            <Link href="/get-started" className="font-medium text-paper underline">Get started</Link>
+          </p>
+        </div>
+      </main>
     </div>
-  );
-}
-
-function GoogleG() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
-      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
-      <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z" />
-      <path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z" />
-      <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z" />
-    </svg>
   );
 }

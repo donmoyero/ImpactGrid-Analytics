@@ -7,17 +7,14 @@ export const metadata = { title: "Sign in | ImpactGrid Analytics", robots: { ind
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage({ searchParams }: { searchParams: { next?: string; error?: string; mode?: string } }) {
+  // Old "?mode=signup" links: creating an account now only happens through Get started.
+  if (searchParams.mode === "signup") redirect("/get-started");
+
   // "" means "no particular destination": after sign-in the platform decides where this person belongs.
   const next = safeDestination(searchParams.next) ?? "";
 
   const { data: { user } } = await createClient().auth.getUser();
   if (user) redirect(`/auth/continue${next ? `?next=${encodeURIComponent(next)}` : ""}`);
 
-  return (
-    <main className="mx-auto max-w-md px-6 py-20">
-      <h1 className="font-display text-3xl md:text-4xl">Sign in to ImpactGrid</h1>
-      <p className="mt-2 text-slate">One account for your business, your team and your website.</p>
-      <LoginForm next={next} linkError={searchParams.error === "1"} initialMode={searchParams.mode === "signup" ? "signup" : "signin"} />
-    </main>
-  );
+  return <LoginForm next={next} linkError={searchParams.error === "1"} />;
 }

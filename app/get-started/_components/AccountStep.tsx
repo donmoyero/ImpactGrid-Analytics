@@ -5,14 +5,13 @@ import { useRef, useState } from "react";
 import { ArrowRight, ChevronLeft, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { buildStartUrl, stepUrl, type OnboardingAnswers } from "@/lib/onboarding";
+import { AUTH_BTN as BTN, AUTH_SUBMIT, GoogleG } from "@/components/auth/AuthParts";
 
 /**
  * Fill these in when the pages exist (e.g. "/terms" and "/privacy"). The "By creating an account…" line only
  * shows when both are set, so the page never says people agree to something that isn't there to read.
  */
 const LEGAL = { terms: "", privacy: "" };
-
-const BTN = "flex h-[55px] w-full items-center border border-paper bg-white px-5 text-sm font-medium text-paper transition-colors hover:bg-sand disabled:opacity-60";
 
 /** Last step of Get started: a clean, centred "Create your account" page. Google, email, or "More options" (also email). */
 export default function AccountStep({ answers, signedIn }: { answers: OnboardingAnswers; signedIn: boolean }) {
@@ -24,6 +23,7 @@ export default function AccountStep({ answers, signedIn }: { answers: Onboarding
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [exists, setExists] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
 
   const callback = () => `${window.location.origin}/auth/callback${qs}`;
@@ -48,10 +48,16 @@ export default function AccountStep({ answers, signedIn }: { answers: Onboarding
     setBusy(true);
     setError(null);
     setNotice(null);
+    setExists(false);
     const { data, error } = await createClient().auth.signUp({ email, password, options: { emailRedirectTo: callback() } });
     setBusy(false);
     if (error) {
       setError(error.message.toLowerCase().includes("password") ? "Please choose a stronger password (at least 8 characters)." : "We couldn't create that account. Please try again.");
+      return;
+    }
+    // Supabase hides whether an email is taken: it answers "success" with no identities. Say so, and point to Log in.
+    if (data.user && data.user.identities?.length === 0) {
+      setExists(true);
       return;
     }
     // Full page load so the server sees the new session; /auth/continue then hands them to the platform.
@@ -65,7 +71,7 @@ export default function AccountStep({ answers, signedIn }: { answers: Onboarding
         <Link href={stepUrl(2, answers)} className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider hover:opacity-70">
           <ChevronLeft className="h-4 w-4" /> Back
         </Link>
-        <Link href={`/login${qs}`} className="text-xs font-medium uppercase tracking-wider hover:opacity-70">Log in</Link>
+        <Link href={`/login${qs}`} className="text-xs font-medium uppercase tracking-wider hover:opacity-70">Already have an account? Log in</Link>
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 pb-16">
@@ -117,28 +123,23 @@ export default function AccountStep({ answers, signedIn }: { answers: Onboarding
                   <input className="input mt-1" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
                   <span className="mt-1 block text-xs text-slateLight">At least 8 characters.</span>
                 </label>
-                <button disabled={busy} className="flex h-[55px] w-full items-center justify-center bg-paper text-sm font-medium text-white disabled:opacity-60">
+                <button disabled={busy} className={AUTH_SUBMIT}>
                   {busy ? "One moment…" : "Create account"}
                 </button>
               </form>
             )}
 
+            {exists && (
+              <p role="alert" className="mt-4 bg-sand px-4 py-3 text-sm">
+                That email already has an account.{" "}
+                <Link href={`/login${qs}`} className="font-medium underline">Log in instead</Link>
+              </p>
+            )}
             {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
             {notice && <p role="status" className="mt-4 bg-sand px-4 py-3 text-sm">{notice}</p>}
           </div>
         )}
       </main>
     </div>
-  );
-}
-
-function GoogleG() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
-      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
-      <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z" />
-      <path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z" />
-      <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z" />
-    </svg>
   );
 }
