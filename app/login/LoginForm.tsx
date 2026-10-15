@@ -29,7 +29,8 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
   async function google() {
     setBusy(true);
     setError(null);
-    const { error } = await createClient().auth.signInWithOAuth({ provider: "google", options: { redirectTo: callback() } });
+    // prompt: select_account makes Google show its account chooser every time, so a new email can be used after signing out.
+    const { error } = await createClient().auth.signInWithOAuth({ provider: "google", options: { redirectTo: callback(), queryParams: { prompt: "select_account" } } });
     if (error) {
       setError("Google sign-in isn't available right now. Please use email instead.");
       setBusy(false);
