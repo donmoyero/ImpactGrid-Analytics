@@ -7,6 +7,7 @@ import { getHomepageContent, type Block, type HomepageContent } from "@/lib/site
 import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
 import { Widget } from "@/components/home/HomeWidgets";
 import Showcase, { CtaStrip } from "@/components/home/Showcase";
+import TemplateGallery from "@/components/home/TemplateGallery";
 import { GET_STARTED_URL, LOGIN_URL } from "@/lib/platform";
 import { getArtVideos } from "@/lib/pexels";
 
@@ -190,6 +191,7 @@ function renderBlock(b: Block, c: C, credit = false) {
     case "services": return <Services key={b.id} c={c} />;
     case "cta": return <Cta key={b.id} c={c} />;
     case "showcase": return <Showcase key={b.id} />;
+    case "templates": return <TemplateGallery key={b.id} />;
     default: return <Widget key={b.id} block={b} />;
   }
 }
