@@ -13,15 +13,15 @@ test("120 templates in 18 categories, none empty, ids and slugs unique", () => {
   for (const t of SITE_TEMPLATES) assert.ok(isTemplateCategory(t.category), t.id);
 });
 
-test("every template has a card image in /public/templates (the marketplace image is used where the file is not shipped)", () => {
+test("every template has a card image in /public/templates", () => {
   for (const t of SITE_TEMPLATES) {
-    if (t.thumb.startsWith("/")) assert.ok(existsSync(`public${t.thumb}`), `${t.id} is missing ${t.thumb}`);
-    else assert.match(t.thumb, /^https:\/\/uiuxlabz\.github\.io\//);
+    assert.ok(t.thumb.startsWith("/"), `${t.id} thumb must be a local file`);
+    assert.ok(existsSync(`public${t.thumb}`), `${t.id} is missing ${t.thumb}`);
   }
 });
 
-test("demo address is <host>/<slug>/ and category lookup is exact", () => {
-  assert.equal(templateDemoUrl({ slug: "hair-salon-html-template" }), "https://uiuxlabz.github.io/hair-salon-html-template/");
+test("demo address is <host>/<category>/<slug>-main/ and category lookup is exact", () => {
+  assert.equal(templateDemoUrl({ slug: "hair-salon-html-template", category: "Beauty & Wellness" }), "https://donmoyero.github.io/impactgrid-templates/Beauty%20%26%20Wellness/hair-salon-html-template-main/");
   assert.equal(categoryFor("Beauty & Wellness"), "Beauty & Wellness");
   assert.equal(categoryFor("constructor"), "");
   assert.equal(isTemplateCategory("Beauty"), false);
