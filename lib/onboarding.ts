@@ -1,20 +1,14 @@
 import { PLATFORM_URL } from "@/lib/platform";
+import { TEMPLATE_CATEGORIES, categoryFor } from "@/lib/site-templates";
 
 /**
- * "Get started" questions. Answers travel to the platform as plain URL parameters (name, type, goals), inside the same
+ * "Get started" questions. The business type is one of the 18 template categories (see lib/site-templates.ts), so the platform can
+ * show each business only the website templates made for its kind of business. Answers travel to the platform as plain URL parameters (name, type, goals), inside the same
  * ?next= that already survives Google sign-in and the email-confirmation link, so nothing is stored on this site and
  * the flow still works if the confirmation email is opened on another device. The platform re-validates everything.
  */
-export const BUSINESS_TYPES = [
-  "Hair & beauty",
-  "Barber shop",
-  "Photography & media",
-  "Fitness & wellness",
-  "Restaurant & café",
-  "Retail & products",
-  "Health & clinic",
-  "Consulting & services",
-] as const;
+export const BUSINESS_TYPES = TEMPLATE_CATEGORIES.map((c) => c.label);
+export type BusinessType = string;
 
 /**
  * Everything a person can tick on the goals page. The first one they tick is where the platform starts them; the rest
@@ -60,10 +54,11 @@ export function cleanGoals(raw: readonly string[] | string | null | undefined): 
   return out;
 }
 
-/** Trims, caps lengths and drops unknown goals. Safe to call on anything. */
+/** Trims, caps lengths, keeps only a known business type and known goals. Safe to call on anything. */
 export function cleanAnswers(raw: RawAnswers): OnboardingAnswers {
   const name = String(raw.name ?? "").replace(/\s+/g, " ").trim().slice(0, NAME_MAX);
-  const type = String(raw.type ?? "").replace(/\s+/g, " ").trim().slice(0, TYPE_MAX);
+  // Only one of the 18 categories is kept. The older eight business types are mapped to their category; anything else is dropped.
+  const type = categoryFor(raw.type).slice(0, TYPE_MAX);
   let goals = cleanGoals(raw.goals);
   if (goals.length === 0 && raw.goal) goals = cleanGoals(raw.goal);
   return { name, type, goals };

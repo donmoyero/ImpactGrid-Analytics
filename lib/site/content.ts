@@ -2,7 +2,7 @@
 
 export const BUILTIN_TYPES = [
   "announcement", "hero", "stats", "idea", "how", "examples", "platform", "ai",
-  "work", "reviews", "services", "cta", "showcase",
+  "work", "reviews", "services", "cta", "showcase", "templates",
 ] as const;
 export const WIDGET_TYPES = ["text", "imageText", "cards", "faq", "video", "gallery", "banner", "divider"] as const;
 export type BuiltinType = (typeof BUILTIN_TYPES)[number];
@@ -38,7 +38,7 @@ export interface HomepageContent {
 }
 
 /** A lean homepage. How it works, Examples, Platform and AI live on their own pages. */
-export const HOME_DEFAULT: BuiltinType[] = ["announcement", "hero", "showcase", "stats", "work", "reviews", "cta"];
+export const HOME_DEFAULT: BuiltinType[] = ["announcement", "hero", "showcase", "templates", "stats", "work", "reviews", "cta"];
 export const DEFAULT_BLOCKS: Block[] = HOME_DEFAULT.map((t) => ({ id: t, type: t }));
 /** Standard sections that also appear on another page, so they can still be edited when they're not on the homepage. */
 export const OTHER_PAGE: Partial<Record<BuiltinType, string>> = {
@@ -130,6 +130,7 @@ export const BUILTIN_LABELS: Record<BuiltinType, string> = {
   ai: "AI examples", work: "Our work", reviews: "Client reviews",
   services: "What we build", cta: "Bottom call to action",
   showcase: "Built around your business",
+  templates: "Website templates",
 };
 /** Built-ins whose words you can edit here. Industry examples and Business platform stay fixed. */
 export const EDITABLE_BUILTINS: BuiltinType[] = ["announcement", "hero", "stats", "idea", "how", "ai", "work", "reviews", "services", "cta"];
