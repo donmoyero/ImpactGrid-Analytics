@@ -154,6 +154,11 @@ export const SITE_TEMPLATES: readonly SiteTemplate[] = [
   T("Landing Pages", "app-landing-page", "app-landing-page-html-template", "VitalApp", "Fitness & Diet App for a Healthier You", 2),
 ];
 
+/** The three templates shown on the home page: one for service businesses, one for trades and construction, one for online shops. */
+export const FEATURED_TEMPLATE_IDS = ["beauty-salon", "construction-company", "multi-store"] as const;
+export const featuredTemplates = (): SiteTemplate[] =>
+  FEATURED_TEMPLATE_IDS.map((id) => SITE_TEMPLATES.find((t) => t.id === id)).filter((t): t is SiteTemplate => !!t);
+
 export const templateDemoUrl = (t: Pick<SiteTemplate, "slug">) => `${TEMPLATE_DEMO_BASE}/${t.slug}/`;
 export const templatesIn = (category: string) => SITE_TEMPLATES.filter((t) => t.category === category);
 export const isTemplateCategory = (v: unknown): v is string => typeof v === "string" && TEMPLATE_CATEGORIES.some((c) => c.label === v);

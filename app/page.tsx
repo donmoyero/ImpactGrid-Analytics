@@ -6,8 +6,8 @@ import { HowItWorks, Examples, Platform, AiSection } from "@/components/HomeSect
 import { getHomepageContent, type Block, type HomepageContent } from "@/lib/site/content";
 import { HomeReviews, HomeStats, HomeWork } from "@/components/home/HomeProof";
 import { Widget } from "@/components/home/HomeWidgets";
-import Showcase, { CtaStrip } from "@/components/home/Showcase";
-import TemplateGallery from "@/components/home/TemplateGallery";
+import { CtaStrip } from "@/components/home/CtaStrip";
+import FeaturedTemplates from "@/components/home/FeaturedTemplates";
 import { GET_STARTED_URL, LOGIN_URL } from "@/lib/platform";
 import { getArtVideos } from "@/lib/pexels";
 
@@ -190,8 +190,7 @@ function renderBlock(b: Block, c: C, credit = false) {
     case "reviews": return <HomeReviews key={b.id} reviews={c.reviews} />;
     case "services": return <Services key={b.id} c={c} />;
     case "cta": return <Cta key={b.id} c={c} />;
-    case "showcase": return <Showcase key={b.id} />;
-    case "templates": return <TemplateGallery key={b.id} />;
+    case "showcase": return <FeaturedTemplates key={b.id} />;
     default: return <Widget key={b.id} block={b} />;
   }
 }
