@@ -1,6 +1,6 @@
 // The 120 website templates (uiuxlabz collection) and the 18 business categories they are grouped into.
 // The categories ARE the business types people pick when they sign up, so a business only ever sees templates for its own type.
-// Each template is a finished multi-page site. Its live demo is served by GitHub Pages; the card image is a JPEG kept in /public/templates.
+// Each template is a finished multi-page site. Its live demo is served by our own GitHub Pages site (repo donmoyero/impactgrid-templates); the card image is a JPEG kept in /public/templates.
 
 export type TemplateCategory = { label: string; hint: string };
 export type SiteTemplate = { id: string; slug: string; brand: string; tagline: string; category: string; pages: number; thumb: string };
@@ -26,8 +26,8 @@ export const TEMPLATE_CATEGORIES: readonly TemplateCategory[] = [
   { label: "Landing Pages", hint: "High-converting single-page landing templates" },
 ];
 
-/** Where the live demos are served from: <base>/<slug>/. Change it if the templates move to another host. */
-export const TEMPLATE_DEMO_BASE = process.env.NEXT_PUBLIC_TEMPLATE_DEMO_BASE ?? "https://uiuxlabz.github.io";
+/** Where the live demos are served from: <base>/<category>/<slug>-main/. Change it if the templates move to another host. */
+export const TEMPLATE_DEMO_BASE = (process.env.NEXT_PUBLIC_TEMPLATE_DEMO_BASE ?? "https://donmoyero.github.io/impactgrid-templates").replace(/\/+$/, "");
 
 const T = (category: string, id: string, slug: string, brand: string, tagline: string, pages: number, thumb = `/templates/${slug}.jpg`): SiteTemplate => ({ id, slug, brand, tagline, category, pages, thumb });
 
@@ -38,7 +38,7 @@ export const SITE_TEMPLATES: readonly SiteTemplate[] = [
   T("E-Commerce & Retail", "online-store", "online-store-html-template", "ESHOPPER", "Online Marketplace", 4),
   T("E-Commerce & Retail", "digital-store", "digital-store-html-template", "ESTORE", "Digital Store", 4),
   T("E-Commerce & Retail", "multi-store", "multi-store-html-template", "Mercato", "The Curated Fashion Marketplace", 6),
-  T("E-Commerce & Retail", "multi-vendor-store", "multi-vendor-store-html-template", "VENDORHIVE", "Multi-Vendor Marketplace", 4, "https://uiuxlabz.github.io/multi-vendor-store-html-template/screenshot.png"),
+  T("E-Commerce & Retail", "multi-vendor-store", "multi-vendor-store-html-template", "VENDORHIVE", "Multi-Vendor Marketplace", 4),
   T("Food & Restaurant", "bakery", "bakery-html-template", "Brioche & Co.", "Artisan Bakery & Pastry Shop", 6),
   T("Food & Restaurant", "coffee-shop", "coffee-shop-html-template", "Café Alto", "Artisan Coffee House", 6),
   T("Food & Restaurant", "cafe-bakery", "cafe-bakery-html-template", "CRUMB & CO.", "Artisan Bakery & Cafe", 5),
@@ -159,7 +159,7 @@ export const FEATURED_TEMPLATE_IDS = ["beauty-salon", "construction-company", "m
 export const featuredTemplates = (): SiteTemplate[] =>
   FEATURED_TEMPLATE_IDS.map((id) => SITE_TEMPLATES.find((t) => t.id === id)).filter((t): t is SiteTemplate => !!t);
 
-export const templateDemoUrl = (t: Pick<SiteTemplate, "slug">) => `${TEMPLATE_DEMO_BASE}/${t.slug}/`;
+export const templateDemoUrl = (t: Pick<SiteTemplate, "slug" | "category">) => `${TEMPLATE_DEMO_BASE}/${encodeURIComponent(t.category)}/${t.slug}-main/`;
 export const templatesIn = (category: string) => SITE_TEMPLATES.filter((t) => t.category === category);
 export const isTemplateCategory = (v: unknown): v is string => typeof v === "string" && TEMPLATE_CATEGORIES.some((c) => c.label === v);
 
