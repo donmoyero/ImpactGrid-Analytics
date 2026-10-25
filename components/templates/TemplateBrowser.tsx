@@ -4,17 +4,18 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, ExternalLink, Monitor, Smartphone, X } from "lucide-react";
 import { stepUrl } from "@/lib/onboarding";
-import { SITE_TEMPLATES, TEMPLATE_CATEGORIES, templateDemoUrl, type SiteTemplate } from "@/lib/site-templates";
+import { SITE_TEMPLATES, TEMPLATE_CATEGORIES, categoryFor, templateDemoUrl, type SiteTemplate } from "@/lib/site-templates";
 
 const ALL = "All";
 const PAGE = 8;
 
 /**
- * Home page: every website template, grouped by business type. Click a card to open the whole site (every page, working menu and
- * buttons) in a preview window, with no account needed. "Use this template" starts sign-up with that business type already chosen.
+ * The Templates page: every website template, grouped by business type. Click a card to open the whole site (every page, working menu
+ * and buttons) in a preview window, with no account needed. "Use this template" starts sign-up with that business type already chosen.
  */
-export default function TemplateGallery() {
-  const [tab, setTab] = useState<string>(ALL);
+export default function TemplateBrowser({ initialCategory }: { initialCategory?: string }) {
+  const start = categoryFor(initialCategory) || ALL;
+  const [tab, setTab] = useState<string>(start);
   const [shown, setShown] = useState(PAGE);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -32,11 +33,11 @@ export default function TemplateGallery() {
   }, [list, openAt]);
 
   return (
-    <section id="templates" className="border-b border-line" aria-labelledby="templates-heading">
+    <section id="templates" aria-labelledby="templates-heading">
       <div className="mx-auto max-w-7xl px-6 py-14 lg:px-10 lg:py-20">
-        <p className="label-tag text-slate">{SITE_TEMPLATES.length} website templates</p>
-        <h2 id="templates-heading" className="mt-3 max-w-2xl font-display text-3xl lg:text-4xl">Start from a design made for your business</h2>
-        <p className="mt-3 max-w-xl text-sm text-slate">Browse by business type, then open any template to explore the whole site before you sign up.</p>
+        <p className="eyebrow">{SITE_TEMPLATES.length} website templates</p>
+        <h1 id="templates-heading" className="mt-5 max-w-3xl font-display text-4xl leading-[1.05] tracking-tight lg:text-6xl">ImpactGrid templates</h1>
+        <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate">Choose your type of business to see the designs made for it, then open any template to explore the whole site before you sign up.</p>
 
         <div className="-mx-6 mt-8 overflow-x-auto px-6 pb-2 lg:mx-0 lg:px-0" role="tablist" aria-label="Business type">
           <div className="flex w-max gap-2 lg:w-auto lg:flex-wrap">
@@ -58,20 +59,7 @@ export default function TemplateGallery() {
 
         <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" role="tabpanel">
           {visible.map((t) => (
-            <button key={t.id} type="button" onClick={() => setOpenId(t.id)} aria-label={`Preview ${t.brand}, ${t.category}`} className="group text-left">
-              <span className="relative block aspect-[16/10] overflow-hidden rounded-2xl border border-line bg-sand shadow-soft transition group-hover:border-paper group-hover:shadow-lift">
-                <Thumb t={t} />
-                <span className="absolute inset-x-0 bottom-0 flex justify-end bg-gradient-to-t from-black/55 to-transparent p-3 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-paper">Preview</span>
-                </span>
-              </span>
-              <span className="mt-3 flex items-baseline justify-between gap-3">
-                <span className="font-display text-lg leading-tight">{t.brand}</span>
-                <span className="shrink-0 font-mono text-[11px] text-slateLight">{t.pages} {t.pages === 1 ? "page" : "pages"}</span>
-              </span>
-              <span className="mt-0.5 block text-sm text-slate">{t.tagline}</span>
-              {tab === ALL && <span className="mt-1 block label-tag text-slateLight">{t.category}</span>}
-            </button>
+            <TemplateCard key={t.id} t={t} showCategory={tab === ALL} onOpen={() => setOpenId(t.id)} />
           ))}
         </div>
 
@@ -89,15 +77,35 @@ export default function TemplateGallery() {
   );
 }
 
+/** One template card: picture, brand, tagline and page count. Opens the preview window when clicked. */
+export function TemplateCard({ t, showCategory, onOpen }: { t: SiteTemplate; showCategory?: boolean; onOpen: () => void }) {
+  return (
+    <button type="button" onClick={onOpen} aria-label={`Preview ${t.brand}, ${t.category}`} className="group text-left">
+      <span className="relative block aspect-[16/10] overflow-hidden rounded-2xl border border-line bg-sand shadow-soft transition group-hover:border-paper group-hover:shadow-lift">
+        <Thumb t={t} />
+        <span className="absolute inset-x-0 bottom-0 flex justify-end bg-gradient-to-t from-black/55 to-transparent p-3 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-paper">Preview</span>
+        </span>
+      </span>
+      <span className="mt-3 flex items-baseline justify-between gap-3">
+        <span className="font-display text-lg leading-tight">{t.brand}</span>
+        <span className="shrink-0 font-mono text-[11px] text-slateLight">{t.pages} {t.pages === 1 ? "page" : "pages"}</span>
+      </span>
+      <span className="mt-0.5 block text-sm text-slate">{t.tagline}</span>
+      {showCategory && <span className="mt-1 block label-tag text-slateLight">{t.category}</span>}
+    </button>
+  );
+}
+
 /** The card image. If a picture is missing or cannot load, a plain tile with the template's name shows instead of a broken icon. */
-function Thumb({ t }: { t: SiteTemplate }) {
+export function Thumb({ t }: { t: SiteTemplate }) {
   const [failed, setFailed] = useState(false);
   if (failed) return <span className="grid h-full w-full place-items-center bg-sand px-4 text-center font-display text-xl text-slate">{t.brand}</span>;
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={t.thumb} alt="" width={800} height={500} loading="lazy" decoding="async" onError={() => setFailed(true)} className="h-full w-full object-cover object-top transition duration-500 group-hover:scale-[1.03]" />;
 }
 
-function PreviewWindow({ t, total, onClose, onStep }: { t: SiteTemplate; total: number; onClose: () => void; onStep: (dir: -1 | 1) => void }) {
+export function PreviewWindow({ t, total, onClose, onStep }: { t: SiteTemplate; total: number; onClose: () => void; onStep: (dir: -1 | 1) => void }) {
   const [mobile, setMobile] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
