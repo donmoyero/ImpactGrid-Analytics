@@ -12,6 +12,7 @@ import { GET_STARTED_URL, LOGIN_URL, PLATFORM_CONTINUE_URL } from "@/lib/platfor
 
 const links = [
   { href: "/templates", label: "Templates" },
+  { href: "/domains", label: "Domains" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
