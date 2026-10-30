@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Users, CalendarCheck, ShoppingBag, Globe, LayoutDashboard } from "lucide-react";
 
-export const metadata = { title: "About — ImpactGrid Analytics" };
+export const metadata = { title: "About — ShopPlug" };
 
 const pieces = [
   { icon: Users, label: "Customers & staff" },
@@ -22,7 +22,7 @@ export default function AboutPage() {
             </h1>
             <div className="mt-8 space-y-5 text-lg leading-relaxed text-slate">
               <p>
-                ImpactGrid Analytics is the business platform inside the ImpactGrid ecosystem. Customers, staff, appointments, products and your own website live in one place, so you spend less time juggling tools and more time running your business.
+                ShopPlug is the business platform built for running everything in one place. Customers, staff, appointments, products and your own website all live together, so you spend less time juggling tools and more time running your business.
               </p>
               <p>
                 We keep it focused on what a working business needs. Nothing you don&apos;t need, and nothing you have to piece together yourself.

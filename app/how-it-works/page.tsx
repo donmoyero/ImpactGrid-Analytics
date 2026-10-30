@@ -4,7 +4,7 @@ import { HowItWorks } from "@/components/HomeSections";
 import { getHomepageContent } from "@/lib/site/content";
 import { GET_STARTED_URL } from "@/lib/platform";
 
-export const metadata = { title: "How it works — ImpactGrid Analytics" };
+export const metadata = { title: "How it works — ShopPlug" };
 export const revalidate = 60; // edited in Admin → Homepage
 
 export default async function HowItWorksPage() {

@@ -4,7 +4,7 @@ import SignOutButton from "@/components/SignOutButton";
 import { PLATFORM_CONTINUE_URL } from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Admin | ImpactGrid Analytics", robots: { index: false, follow: false } };
+export const metadata = { title: "Admin | ShopPlug", robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();

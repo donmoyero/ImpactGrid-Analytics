@@ -6,7 +6,7 @@ import type { HomepageContent } from "@/lib/site/content";
 export function HomeStats({ stats }: { stats: HomepageContent["stats"] }) {
   if (!stats.length) return null;
   return (
-    <section className="border-b border-line bg-ink2" aria-label="ImpactGrid in numbers">
+    <section className="border-b border-line bg-ink2" aria-label="ShopPlug in numbers">
       <dl className="mx-auto grid max-w-7xl grid-cols-2 gap-px px-6 py-10 lg:grid-cols-4 lg:px-10">
         {stats.map((s) => (
           <div key={s.label} className="py-2 lg:px-6 lg:first:pl-0">

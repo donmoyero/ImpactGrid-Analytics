@@ -1,7 +1,7 @@
 import TemplateBrowser from "@/components/templates/TemplateBrowser";
 
 export const metadata = {
-  title: "Templates — ImpactGrid Analytics",
+  title: "Templates — ShopPlug",
   description: "Website templates for every type of business. Pick yours and explore the whole site before you sign up.",
 };
 

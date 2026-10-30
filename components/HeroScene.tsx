@@ -38,7 +38,7 @@ export default function HeroScene() {
     const edgeMat = new THREE.LineBasicMaterial({ color: 0x5b8cff, transparent: true, opacity: 0.55 });
     const logoTex = new THREE.TextureLoader().load("/images/brand-mark.png");
     logoTex.colorSpace = THREE.SRGBColorSpace;
-    // Lit cubes carry the ImpactGrid Business logo tile on every face
+    // Lit cubes carry the ShopPlug logo tile on every face
     const litMat = new THREE.MeshStandardMaterial({ map: logoTex, color: 0xffffff, emissive: 0xffd400, emissiveMap: logoTex, emissiveIntensity: 0.35, metalness: 0.1, roughness: 0.45 });
     const darkMat = new THREE.MeshStandardMaterial({ color: 0x14161d, metalness: 0.8, roughness: 0.3 });
     const cubeGeo = new THREE.BoxGeometry(0.78, 0.78, 0.78);

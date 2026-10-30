@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import BrandMark from "@/components/BrandMark";
+import BrandLogo from "@/components/BrandLogo";
 import SignOutButton from "@/components/SignOutButton";
 import { GET_STARTED_URL, LOGIN_URL, PLATFORM_CONTINUE_URL } from "@/lib/platform";
 
@@ -74,9 +74,8 @@ export default function Nav() {
       )}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
-        <Link href="/" className="flex items-center gap-2 font-display text-lg tracking-tight">
-          <BrandMark />
-          ImpactGrid <span className={dark ? "text-white/60" : "text-slate"}>Business</span>
+        <Link href="/" className="flex items-center" aria-label="ShopPlug home">
+          <BrandLogo className="h-7 w-auto sm:h-8" light={dark} />
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">

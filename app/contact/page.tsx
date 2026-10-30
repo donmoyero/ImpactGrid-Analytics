@@ -1,7 +1,7 @@
 import { Mail } from "lucide-react";
 import ContactForm from "@/components/ContactForm";
 
-export const metadata = { title: "Contact — ImpactGrid Analytics" };
+export const metadata = { title: "Contact — ShopPlug" };
 export const dynamic = "force-dynamic"; // reads env vars at request time
 
 export default function ContactPage() {
@@ -14,7 +14,7 @@ export default function ContactPage() {
         <p className="eyebrow">Contact</p>
         <h1 className="mt-5 font-display text-4xl leading-[1.05] tracking-tight lg:text-6xl">Get in touch.</h1>
         <p className="mt-6 max-w-sm text-lg leading-relaxed text-slate">
-          Have a question about ImpactGrid Analytics? Send us a message.
+          Have a question about ShopPlug? Send us a message.
         </p>
         {formEnabled && (
           <a

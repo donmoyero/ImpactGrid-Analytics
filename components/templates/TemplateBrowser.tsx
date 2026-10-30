@@ -36,7 +36,7 @@ export default function TemplateBrowser({ initialCategory }: { initialCategory?:
     <section id="templates" aria-labelledby="templates-heading">
       <div className="mx-auto max-w-7xl px-6 py-14 lg:px-10 lg:py-20">
         <p className="eyebrow">{SITE_TEMPLATES.length} website templates</p>
-        <h1 id="templates-heading" className="mt-5 max-w-3xl font-display text-4xl leading-[1.05] tracking-tight lg:text-6xl">ImpactGrid templates</h1>
+        <h1 id="templates-heading" className="mt-5 max-w-3xl font-display text-4xl leading-[1.05] tracking-tight lg:text-6xl">ShopPlug templates</h1>
         <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate">Choose your type of business to see the designs made for it, then open any template to explore the whole site before you sign up.</p>
 
         <div className="-mx-6 mt-8 overflow-x-auto px-6 pb-2 lg:mx-0 lg:px-0" role="tablist" aria-label="Business type">
