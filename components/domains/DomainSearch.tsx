@@ -7,6 +7,13 @@ type Result = { domain: string; available: true; price: number; renewal: number 
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
+/** Stripe payment link for domain orders. While unset, the button stays on "Coming soon". */
+const PAY_LINK = process.env.NEXT_PUBLIC_DOMAIN_PAYMENT_LINK;
+
+/** Stripe only allows letters, numbers, - and _ in client_reference_id, so dots become underscores (hyphens stay; labels never contain "_"). */
+const payHref = (domain: string) =>
+  PAY_LINK ? `${PAY_LINK}${PAY_LINK.includes("?") ? "&" : "?"}client_reference_id=${encodeURIComponent(domain.replace(/\./g, "_"))}` : null;
+
 export default function DomainSearch() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -76,10 +83,15 @@ export default function DomainSearch() {
                       <span className="block font-display text-lg">{money(r.price)}<span className="text-sm text-slate"> /first year</span></span>
                       {r.renewal !== null && <span className="block text-xs text-slateLight">then {money(r.renewal)}/year</span>}
                     </span>
-                    {/* Checkout is the next step; until then the button is visibly unavailable rather than doing nothing. */}
-                    <button type="button" disabled className="rounded-full border border-line2 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-slateLight" title="Checkout opens soon">
-                      Coming soon
-                    </button>
+                    {payHref(r.domain) ? (
+                      <a href={payHref(r.domain)!} className="btn-premium justify-center" aria-label={`Buy ${r.domain}`}>
+                        Buy
+                      </a>
+                    ) : (
+                      <button type="button" disabled className="rounded-full border border-line2 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-slateLight" title="Checkout opens soon">
+                        Coming soon
+                      </button>
+                    )}
                   </span>
                 ) : (
                   <span className="text-sm text-slateLight">Not available</span>
