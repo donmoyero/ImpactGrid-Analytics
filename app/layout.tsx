@@ -24,9 +24,9 @@ const mono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ImpactGrid Business — Your business, built for the web",
+  title: "ShopPlug — Your business, built for the web",
   description:
-    "Run your business from one place: customers, staff, appointments, products and your own website, built and managed with ImpactGrid Analytics.",
+    "Run your business from one place: customers, staff, appointments, products and your own website, built and managed with ShopPlug.",
 };
 
 export default function RootLayout({

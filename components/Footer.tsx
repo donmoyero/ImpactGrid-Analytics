@@ -1,5 +1,5 @@
 import Link from "next/link";
-import BrandMark from "@/components/BrandMark";
+import BrandLogo from "@/components/BrandLogo";
 import { GET_STARTED_URL } from "@/lib/platform";
 
 const columns = [
@@ -27,12 +27,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-6 pb-10 pt-12 lg:px-10 lg:pt-14">
         <div className="grid grid-cols-2 gap-10 lg:grid-cols-5">
           <div className="col-span-2">
-            <div className="flex items-center gap-2 font-display text-lg">
-              <BrandMark className="h-8 w-8" />
-              <span>
-                ImpactGrid <span className="text-slate">Business</span>
-              </span>
-            </div>
+            <BrandLogo className="h-8 w-auto" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate">
               Run your business, your team and your website from one dashboard.
             </p>
@@ -55,7 +50,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-line pt-6 text-xs text-slateLight lg:flex-row lg:items-center">
-          <span>© {new Date().getFullYear()} ImpactGrid Business. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} ShopPlug. All rights reserved.</span>
         </div>
       </div>
     </footer>

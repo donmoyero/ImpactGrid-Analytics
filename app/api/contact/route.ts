@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: `ImpactGrid Website <${from}>`,
+      from: `ShopPlug Website <${from}>`,
       to: [to],
       reply_to: email,
       subject: `New enquiry from ${String(name).slice(0, 80)}`,

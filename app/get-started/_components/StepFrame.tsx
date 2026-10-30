@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import BrandMark from "@/components/BrandMark";
+import BrandLogo from "@/components/BrandLogo";
 import { STEPS, stepUrl, type OnboardingAnswers } from "@/lib/onboarding";
 
 /** A photo that fills its box. If the file is missing the warm gradient shows instead, so nothing ever looks broken. */
@@ -44,9 +44,8 @@ export default function StepFrame({ step, answers, aside, wide, onNext, canNext 
 
       <div className={cn("flex min-h-0 flex-1 flex-col", wide ? "lg:pr-[46%]" : "lg:pr-[34%]")}>
         <header className="flex h-16 shrink-0 items-center justify-between px-6 sm:px-10">
-          <Link href="/" className="flex items-center gap-2.5" aria-label="ImpactGrid home">
-            <BrandMark className="h-7 w-7" />
-            <span className="font-display text-base font-semibold tracking-tight">ImpactGrid</span>
+          <Link href="/" className="flex items-center" aria-label="ShopPlug home">
+            <BrandLogo className="h-6 w-auto" />
           </Link>
           <Link href="/login" className="text-xs font-semibold uppercase tracking-wider text-slate hover:text-paper">Sign in</Link>
         </header>

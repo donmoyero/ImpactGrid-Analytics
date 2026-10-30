@@ -77,7 +77,7 @@ export const DEFAULT_HOMEPAGE: HomepageContent = {
       { label: "Approve", detail: "We review the project and issue your invoice." },
       { label: "Build", detail: "Design, development, testing." },
       { label: "Launch", detail: "Your website goes live." },
-      { label: "Manage", detail: "You control your website through ImpactGrid Analytics where your package supports it." },
+      { label: "Manage", detail: "You control your website through ShopPlug where your package supports it." },
     ],
   },
   ai: {

@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import LoginForm from "./LoginForm";
 import { safeDestination } from "@/lib/platform";
 
-export const metadata = { title: "Sign in | ImpactGrid Analytics", robots: { index: false } };
+export const metadata = { title: "Sign in | ShopPlug", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage({ searchParams }: { searchParams: { next?: string; error?: string; mode?: string } }) {

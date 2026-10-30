@@ -63,7 +63,7 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
       <main className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 pb-16">
         <div className="w-full max-w-[342px] text-center">
           <h1 className="font-display text-2xl font-semibold">Welcome Back</h1>
-          <p className="mt-3 text-sm text-slate">Sign in to your ImpactGrid account.</p>
+          <p className="mt-3 text-sm text-slate">Sign in to your ShopPlug account.</p>
 
           <div className="mt-8 space-y-[11px]">
             <button type="button" onClick={google} disabled={busy} className={AUTH_BTN}>
@@ -93,7 +93,7 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
           {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
 
           <p className="mt-8 text-sm text-slate">
-            New to ImpactGrid?{" "}
+            New to ShopPlug?{" "}
             <Link href="/get-started" className="font-medium text-paper underline">Get started</Link>
           </p>
         </div>

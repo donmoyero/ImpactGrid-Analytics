@@ -70,7 +70,7 @@ export default function IndustryTabs() {
           ))}
         </div>
       </div>
-      <p className="mt-3 text-xs text-slate">Example layout only, not a client site. Built with ImpactGrid Analytics.</p>
+      <p className="mt-3 text-xs text-slate">Example layout only, not a client site. Built with ShopPlug.</p>
     </div>
   );
 }

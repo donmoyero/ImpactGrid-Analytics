@@ -7,7 +7,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // ImpactGrid design system (matches the Events site): warm cream page,
+      // ShopPlug design system (matches the Events site): warm cream page,
       // white cards, near-black ink. Names kept so existing classes still work:
       //   ink = page background, ink2 = card surface, paper = main text colour.
       colors: {

@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { answersFromParams, firstMissingStep, stepUrl } from "@/lib/onboarding";
 import AccountStep from "../_components/AccountStep";
 
-export const metadata = { title: "Create your account | ImpactGrid", robots: { index: false } };
+export const metadata = { title: "Create your account | ShopPlug", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 export default async function AccountPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
