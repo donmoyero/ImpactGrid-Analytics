@@ -87,6 +87,7 @@ export default function LoginForm({ next, linkError }: { next: string; linkError
                 <input className="input mt-1" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
               </label>
               <button disabled={busy} className={AUTH_SUBMIT}>{busy ? "One moment…" : "Sign in"}</button>
+              <p className="text-center text-sm"><Link href="/forgot-password" className="font-medium underline">Forgot password?</Link></p>
             </form>
           )}
 
