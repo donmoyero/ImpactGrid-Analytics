@@ -1,16 +1,16 @@
-# ImpactGrid Analytics - main site
+# ShopPlug - main site
 
-The public front door for ImpactGrid. Visitors read about the product here, then sign in or get started on the platform.
+The public front door for ShopPlug. Visitors read about the product here, then sign in or get started on the platform.
 
-The business product itself (businesses, customers, staff, services, appointments, products, inventory, website management, settings) lives in a separate repository, `donmoyero/business-platform`, served at `platform.impactgridanalytics.com`.
+The business product itself (businesses, customers, staff, services, appointments, products, inventory, website management, settings) lives in a separate repository, `donmoyero/business-platform`, served at `platform.shopplug.uk`.
 
 ```
-impactgridanalytics.com            this repo: public marketing site
+www.shopplug.uk                    this repo: public marketing site
         |
   Sign in / Get started
         |
         v
-platform.impactgridanalytics.com   business-platform repo: the SaaS product
+platform.shopplug.uk   business-platform repo: the SaaS product
         |
      Supabase                      shared source of truth
 ```
@@ -51,7 +51,7 @@ The two pages share their buttons and styling through `components/auth/AuthParts
 
 Sign-out happens on the platform and returns to this site.
 
-**Production requirements:** `NEXT_PUBLIC_COOKIE_DOMAIN=.impactgridanalytics.com` on both this project and the platform project, and this site's `/auth/callback` in Supabase's Auth redirect URL allow-list. Because `impactgridanalytics.com` redirects to `www.impactgridanalytics.com`, allow-list the `www` address (and `https://platform.impactgridanalytics.com/**`) too.
+**Production requirements:** `NEXT_PUBLIC_COOKIE_DOMAIN=.shopplug.uk` on both this project and the platform project, and this site's `/auth/callback` in Supabase's Auth redirect URL allow-list. Because `impactgridanalytics.com` redirects to `www.shopplug.uk`, allow-list the `www` address (and `https://platform.shopplug.uk/**`) too.
 
 **If Get started ends in a 404:** the platform deployment is missing its `/start` page. Check that the platform's newest production deployment is Ready and built from the latest `main` (see "Deploying" below), and that `NEXT_PUBLIC_PLATFORM_URL` matches where the platform really lives.
 
@@ -63,7 +63,7 @@ Sign-out happens on the platform and returns to this site.
 - Default content and loading logic: `lib/site/content.ts`
 - Saved content is stored in the `site_content` table in Supabase.
 
-The platform has its own, separate admin at `platform.impactgridanalytics.com/admin`.
+The platform has its own, separate admin at `platform.shopplug.uk/admin`.
 
 ## Middleware
 
@@ -77,8 +77,8 @@ Copy `.env.example` to `.env.local` and fill in the values.
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase access (admin checks, middleware lookup). Never expose it. |
-| `NEXT_PUBLIC_COOKIE_DOMAIN` | Production: `.impactgridanalytics.com` (same on the platform). Empty locally. |
-| `NEXT_PUBLIC_PLATFORM_URL` | Where the platform lives. Defaults to `https://platform.impactgridanalytics.com`. |
+| `NEXT_PUBLIC_COOKIE_DOMAIN` | Production: `.shopplug.uk` (same on the platform). Empty locally. |
+| `NEXT_PUBLIC_PLATFORM_URL` | Where the platform lives. Defaults to `https://platform.shopplug.uk`. |
 | `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `CONTACT_EMAIL` | Contact form email |
 | `NEXT_PUBLIC_APP_URL` | This site's own URL |
 
@@ -117,7 +117,7 @@ The only SQL file here is `supabase/migrations-site-content.sql`, which creates 
 
 **Pushing to GitHub does not reliably deploy this project.** Vercel may block the deployment with a message like
 `ogtinzplayandearn-1822 is not a member of this team`. The cause: the GitHub login `donmoyero` is linked to a
-different Vercel account (`ogtinzplayandearn-1822`, used for the ImpactGrid events project), and a GitHub account
+different Vercel account (`ogtinzplayandearn-1822`, used for the events project), and a GitHub account
 can only be linked to one Vercel account. Vercel sees every push as coming from an account that is not in the
 `donmoyero's projects` team, so it blocks it. An empty commit or a pull request does not fix this.
 
