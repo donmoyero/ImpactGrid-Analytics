@@ -5,7 +5,7 @@
  * Every "Get started" / "Sign in" link on the public site uses these, so when a domain changes
  * you only edit this file (or set NEXT_PUBLIC_PLATFORM_URL in Vercel), not every page.
  */
-export const PLATFORM_URL = (process.env.NEXT_PUBLIC_PLATFORM_URL || "https://platform.impactgridanalytics.com").replace(/\/+$/, "");
+export const PLATFORM_URL = (process.env.NEXT_PUBLIC_PLATFORM_URL || "https://platform.shopplug.uk").replace(/\/+$/, "");
 
 /** The main site's own sign-in / create-account page. */
 export const LOGIN_URL = "/login";
