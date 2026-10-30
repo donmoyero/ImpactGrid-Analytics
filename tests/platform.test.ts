@@ -21,7 +21,7 @@ test("refuses open-redirect attempts", () => {
 });
 
 test("resolveDestination: default goes to the platform, paths stay on this site, platform URLs pass through", () => {
-  assert.equal(resolveDestination(null, "https://impactgridanalytics.com"), PLATFORM_CONTINUE_URL);
-  assert.equal(resolveDestination("/admin", "https://impactgridanalytics.com"), "https://impactgridanalytics.com/admin");
-  assert.equal(resolveDestination(`${PLATFORM_URL}/dashboard`, "https://impactgridanalytics.com"), `${PLATFORM_URL}/dashboard`);
+  assert.equal(resolveDestination(null, "https://www.shopplug.uk"), PLATFORM_CONTINUE_URL);
+  assert.equal(resolveDestination("/admin", "https://www.shopplug.uk"), "https://www.shopplug.uk/admin");
+  assert.equal(resolveDestination(`${PLATFORM_URL}/dashboard`, "https://www.shopplug.uk"), `${PLATFORM_URL}/dashboard`);
 });

@@ -5,7 +5,7 @@ export const metadata = { title: "Contact — ShopPlug" };
 export const dynamic = "force-dynamic"; // reads env vars at request time
 
 export default function ContactPage() {
-  const email = process.env.CONTACT_EMAIL ?? "hello@impactgridanalytics.com";
+  const email = process.env.CONTACT_EMAIL ?? "hello@shopplug.uk";
   const formEnabled = Boolean(process.env.RESEND_API_KEY);
 
   return (
