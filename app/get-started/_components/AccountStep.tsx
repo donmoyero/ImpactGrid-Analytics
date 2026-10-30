@@ -19,7 +19,9 @@ export default function AccountStep({ answers, signedIn }: { answers: Onboarding
   const qs = `?next=${encodeURIComponent(startUrl)}`;
   const [manual, setManual] = useState(false);
   const [email, setEmail] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -46,10 +48,18 @@ export default function AccountStep({ answers, signedIn }: { answers: Onboarding
 
   async function createAccount(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
     setError(null);
     setNotice(null);
     setExists(false);
+    if (email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
+      setError("The two email addresses don't match.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("The two passwords don't match.");
+      return;
+    }
+    setBusy(true);
     const { data, error } = await createClient().auth.signUp({ email, password, options: { emailRedirectTo: callback() } });
     setBusy(false);
     if (error) {
@@ -120,9 +130,17 @@ export default function AccountStep({ answers, signedIn }: { answers: Onboarding
                   <input ref={emailRef} className="input mt-1" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </label>
                 <label className="block text-sm">
+                  Retype email
+                  <input className="input mt-1" type="email" autoComplete="off" required value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} onPaste={(e) => e.preventDefault()} />
+                </label>
+                <label className="block text-sm">
                   Password
                   <input className="input mt-1" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
                   <span className="mt-1 block text-xs text-slateLight">At least 8 characters.</span>
+                </label>
+                <label className="block text-sm">
+                  Retype password
+                  <input className="input mt-1" type="password" autoComplete="new-password" required minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </label>
                 <button disabled={busy} className={AUTH_SUBMIT}>
                   {busy ? "One moment…" : "Create account"}
