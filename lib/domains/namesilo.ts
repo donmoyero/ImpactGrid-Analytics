@@ -1,4 +1,5 @@
 import { buildResults, candidatesFor, markupFromEnv, parseAvailability, parsePrices, type Result } from "./search";
+import { singleDomain } from "./checkout";
 
 /** Production by default. Set NAMESILO_API_URL=https://ote.namesilo.com/api to use NameSilo's test environment. */
 const base = () => (process.env.NAMESILO_API_URL || "https://www.namesilo.com/api").replace(/\/+$/, "");
@@ -26,4 +27,16 @@ export async function searchDomains(query: string): Promise<{ ok: true; results:
   const prices = needsList ? parsePrices(await call("getPrices", {}, 3600)) : {};
 
   return { ok: true, results: buildResults(parsedInput.candidates, parsed, prices, markupFromEnv()) };
+}
+
+/** Re-checks one domain with the provider and returns our selling price, or null if it can't be sold right now. */
+export async function quoteDomain(domain: string): Promise<{ domain: string; price: number } | null> {
+  const one = singleDomain(domain);
+  if (!one.ok) return null;
+  const candidates = [{ domain: one.domain, tld: one.tld }];
+  const parsed = parseAvailability(await call("checkRegisterAvailability", { domains: one.domain }));
+  const needsList = parsed.available.some((a) => a.price === null);
+  const prices = needsList ? parsePrices(await call("getPrices", {}, 3600)) : {};
+  const r = buildResults(candidates, parsed, prices, markupFromEnv())[0];
+  return r && r.available ? { domain: r.domain, price: r.price } : null;
 }
