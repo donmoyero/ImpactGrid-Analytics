@@ -7,19 +7,13 @@ type Result = { domain: string; available: true; price: number; renewal: number 
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
-/** Stripe payment link for domain orders. While unset, the button stays on "Coming soon". */
-const PAY_LINK = process.env.NEXT_PUBLIC_DOMAIN_PAYMENT_LINK;
-
-/** Stripe only allows letters, numbers, - and _ in client_reference_id, so dots become underscores (hyphens stay; labels never contain "_"). */
-const payHref = (domain: string) =>
-  PAY_LINK ? `${PAY_LINK}${PAY_LINK.includes("?") ? "&" : "?"}client_reference_id=${encodeURIComponent(domain.replace(/\./g, "_"))}` : null;
-
 export default function DomainSearch() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [error, setError] = useState("");
   const [results, setResults] = useState<Result[]>([]);
   const [searched, setSearched] = useState("");
+  const [buying, setBuying] = useState("");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +32,23 @@ export default function DomainSearch() {
     } catch {
       setError("Couldn't reach the search. Please try again.");
       setStatus("error");
+    }
+  }
+
+  async function buy(domain: string) {
+    setBuying(domain);
+    setError("");
+    try {
+      const res = await fetch("/api/domains/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ domain }) });
+      const json = await res.json();
+      if (!res.ok || !json.url) {
+        setError(json.error ?? "Couldn't start checkout. Please try again.");
+        return setBuying("");
+      }
+      window.location.href = json.url;
+    } catch {
+      setError("Couldn't start checkout. Please try again.");
+      setBuying("");
     }
   }
 
@@ -65,7 +76,7 @@ export default function DomainSearch() {
         </button>
       </form>
 
-      {status === "error" && <p className="mt-5 text-sm text-signal" role="alert">{error}</p>}
+      {(status === "error" || error) && <p className="mt-5 text-sm text-signal" role="alert">{error}</p>}
 
       {status === "done" && (
         <div className="mt-8" aria-live="polite">
@@ -83,15 +94,10 @@ export default function DomainSearch() {
                       <span className="block font-display text-lg">{money(r.price)}<span className="text-sm text-slate"> /first year</span></span>
                       {r.renewal !== null && <span className="block text-xs text-slateLight">then {money(r.renewal)}/year</span>}
                     </span>
-                    {payHref(r.domain) ? (
-                      <a href={payHref(r.domain)!} className="btn-premium justify-center" aria-label={`Buy ${r.domain}`}>
-                        Buy
-                      </a>
-                    ) : (
-                      <button type="button" disabled className="rounded-full border border-line2 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-slateLight" title="Checkout opens soon">
-                        Coming soon
-                      </button>
-                    )}
+                    <button type="button" onClick={() => buy(r.domain)} disabled={buying !== ""} className="btn-premium justify-center" aria-label={`Buy ${r.domain}`}>
+                      {buying === r.domain ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      Buy
+                    </button>
                   </span>
                 ) : (
                   <span className="text-sm text-slateLight">Not available</span>

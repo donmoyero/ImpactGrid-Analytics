@@ -5,7 +5,7 @@ export const metadata = {
   description: "Search for the perfect domain name for your business.",
 };
 
-export default function DomainsPage() {
+export default function DomainsPage({ searchParams }: { searchParams?: { paid?: string } }) {
   return (
     <main className="mx-auto max-w-4xl px-6 py-20 lg:px-10 lg:py-28">
       <p className="eyebrow">Domains</p>
@@ -13,6 +13,11 @@ export default function DomainsPage() {
       <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate">
         Search for the name your customers will type. When you pick one, we&apos;ll connect it to your ShopPlug website.
       </p>
+      {searchParams?.paid === "1" && (
+        <p className="mt-8 rounded-2xl border border-line bg-ink2 px-5 py-4 text-sm" role="status">
+          Thank you, your payment went through. We&apos;ll email you once your domain is registered and connected.
+        </p>
+      )}
       <div className="mt-10">
         <DomainSearch />
       </div>
