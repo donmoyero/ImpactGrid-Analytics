@@ -1,5 +1,6 @@
 import { buildResults, candidatesFor, markupFromEnv, parseAvailability, parsePrices, type Result } from "./search";
 import { singleDomain } from "./checkout";
+import { parseRegisterReply } from "./webhook";
 
 /** Production by default. Set NAMESILO_API_URL=https://ote.namesilo.com/api to use NameSilo's test environment. */
 const base = () => (process.env.NAMESILO_API_URL || "https://www.namesilo.com/api").replace(/\/+$/, "");
@@ -39,4 +40,21 @@ export async function quoteDomain(domain: string): Promise<{ domain: string; pri
   const prices = needsList ? parsePrices(await call("getPrices", {}, 3600)) : {};
   const r = buildResults(candidates, parsed, prices, markupFromEnv())[0];
   return r && r.available ? { domain: r.domain, price: r.price } : null;
+}
+
+/**
+ * Registers a domain for 1 year (WHOIS privacy on, auto-renew off). Pays from the NameSilo account balance, using the account's
+ * default contact unless NAMESILO_CONTACT_ID is set. Returns "taken" if the name is no longer available, so the caller can tell
+ * a permanent problem (taken) from one worth retrying (an error is thrown).
+ */
+export async function registerDomain(domain: string): Promise<"registered" | "taken"> {
+  const one = singleDomain(domain);
+  if (!one.ok) throw new Error(one.error);
+  const avail = parseAvailability(await call("checkRegisterAvailability", { domains: one.domain }));
+  if (!avail.available.some((a) => a.domain === one.domain)) return "taken";
+  const params: Record<string, string> = { domain: one.domain, years: "1", private: "1", auto_renew: "0" };
+  if (process.env.NAMESILO_CONTACT_ID) params.contact_id = process.env.NAMESILO_CONTACT_ID;
+  const r = parseRegisterReply(await call("registerDomain", params));
+  if (!r.ok) throw new Error(r.error);
+  return "registered";
 }
